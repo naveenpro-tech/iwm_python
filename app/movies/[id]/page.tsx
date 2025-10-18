@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { use as usePromise, useEffect, useState } from "react"
 import { ArrowLeft } from "lucide-react"
 import { MovieHeroSection } from "@/components/movie-hero-section"
 import { MovieInfoSection } from "@/components/movie-info-section"
@@ -11,9 +11,10 @@ import { SidduPulseSection } from "@/components/siddu-pulse-section"
 import { WhereToWatchSection } from "@/components/where-to-watch-section"
 import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
-// Mock movie data
-const movieData = {
+// Fallback mock movie data (used when backend is unavailable)
+const fallbackMovieData = {
   id: "tt1375666",
   title: "Inception",
   backdropUrl: "/dark-blue-city-skyline.png",
@@ -447,18 +448,67 @@ const movieData = {
   },
 }
 
-export default function MovieDetailsPage({ params }: { params: { id: string } }) {
+export default function MovieDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const [isLoading, setIsLoading] = useState(true)
-  const movieId = params.id
+  const [movieData, setMovieData] = useState<any>(fallbackMovieData)
+  const [error, setError] = useState<string | null>(null)
+  const { id: movieId } = usePromise(params)
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
+    const fetchMovie = async () => {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+      const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
 
-    return () => clearTimeout(timer)
-  }, [])
+      if (!useBackend || !apiBase) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch movie: ${response.statusText}`)
+        }
+        const data = await response.json()
+
+        // Transform backend data to match component expectations
+        const transformedData = {
+          id: data.id,
+          title: data.title,
+          backdropUrl: data.backdropUrl || fallbackMovieData.backdropUrl,
+          posterUrl: data.posterUrl || fallbackMovieData.posterUrl,
+          year: data.year,
+          duration: data.runtime ? `${Math.floor(data.runtime / 60)}h ${data.runtime % 60}m` : "N/A",
+          language: data.language || "English",
+          rating: data.rating || "Not Rated",
+          sidduScore: data.sidduScore || 0,
+          criticsScore: data.criticsScore || 0,
+          reviewCount: data.reviews?.length || 0,
+          ratingDistribution: fallbackMovieData.ratingDistribution, // TODO: Calculate from reviews
+          sentimentAnalysis: fallbackMovieData.sentimentAnalysis, // TODO: Calculate from reviews
+          synopsis: data.synopsis || data.overview || "",
+          directors: data.directors || [],
+          writers: data.writers || [],
+          producers: data.producers || [],
+          genres: data.genres || [],
+          cast: data.cast || [],
+          streamingOptions: data.streamingOptions || {},
+          relatedMovies: [], // TODO: Fetch related movies
+          pulses: [], // TODO: Fetch pulses
+        }
+
+        setMovieData(transformedData)
+      } catch (err) {
+        console.error("Error fetching movie:", err)
+        setError(err instanceof Error ? err.message : "Failed to load movie")
+        // Keep using fallback data on error
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMovie()
+  }, [movieId])
 
   if (isLoading) {
     return (

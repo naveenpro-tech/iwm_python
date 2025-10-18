@@ -27,19 +27,19 @@ interface ReviewSystemSectionProps {
   movie: {
     id: string
     title: string
-    sidduScore: number
-    reviewCount: number
-    ratingDistribution: {
+    sidduScore?: number
+    reviewCount?: number
+    ratingDistribution?: {
       rating: number
       count: number
     }[]
-    sentimentAnalysis: {
+    sentimentAnalysis?: {
       positive: number
       neutral: number
       negative: number
       keyPhrases: string[]
     }
-    reviews: Review[]
+    reviews?: Review[]
   }
 }
 
@@ -49,8 +49,13 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
   const [visibleSpoilers, setVisibleSpoilers] = useState<Record<string, boolean>>({})
   const [reviewVotes, setReviewVotes] = useState<Record<string, "helpful" | "unhelpful" | null>>({})
 
+  // Safe defaults
+  const distribution = Array.isArray(movie.ratingDistribution) ? movie.ratingDistribution : []
+  const sentiments = movie.sentimentAnalysis || { positive: 0, neutral: 0, negative: 0, keyPhrases: [] }
+  const reviews = Array.isArray(movie.reviews) ? movie.reviews : []
+
   // Find the max count for scaling the distribution bars
-  const maxCount = Math.max(...movie.ratingDistribution.map((item) => item.count))
+  const maxCount = distribution.length ? Math.max(...distribution.map((item) => item.count)) : 0
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -144,7 +149,7 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
             <div className="mb-6">
               <h3 className="text-[#E0E0E0] font-inter font-medium text-lg mb-3">Rating Distribution</h3>
               <div className="space-y-2">
-                {movie.ratingDistribution.map((item, index) => (
+                {distribution.map((item, index) => (
                   <div key={item.rating} className="flex items-center gap-2">
                     <span className="text-[#A0A0A0] font-dmsans w-6 text-right">{item.rating}</span>
                     <div className="h-4 bg-[#282828] rounded-full flex-1 overflow-hidden">
@@ -167,14 +172,14 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
             <div>
               <h3 className="text-[#E0E0E0] font-inter font-medium text-lg mb-3">What People Are Saying</h3>
               <div className="flex gap-2 mb-3">
-                <span className="text-[#00BFFF] font-dmsans">{movie.sentimentAnalysis.positive}% Positive</span>
+                <span className="text-[#00BFFF] font-dmsans">{sentiments.positive}% Positive</span>
                 <span className="text-[#A0A0A0]">•</span>
-                <span className="text-[#E0E0E0] font-dmsans">{movie.sentimentAnalysis.neutral}% Neutral</span>
+                <span className="text-[#E0E0E0] font-dmsans">{sentiments.neutral}% Neutral</span>
                 <span className="text-[#A0A0A0]">•</span>
-                <span className="text-[#FF4500] font-dmsans">{movie.sentimentAnalysis.negative}% Negative</span>
+                <span className="text-[#FF4500] font-dmsans">{sentiments.negative}% Negative</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {movie.sentimentAnalysis.keyPhrases.map((phrase, index) => (
+                {sentiments.keyPhrases.map((phrase, index) => (
                   <motion.span
                     key={index}
                     className="bg-[#282828] text-[#E0E0E0] px-3 py-1 rounded-full text-sm font-dmsans"
@@ -225,7 +230,7 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
 
       {/* Review Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {movie.reviews.map((review, index) => (
+        {reviews.map((review, index) => (
           <motion.div key={review.id} variants={itemVariants} custom={index} transition={{ delay: 0.2 + index * 0.1 }}>
             <Card className="bg-[#282828] border-none shadow-md hover:bg-[#2A2A2A] transition-colors">
               <div className="p-6">

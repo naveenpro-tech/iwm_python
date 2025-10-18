@@ -54,13 +54,33 @@ class Movie(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     title: Mapped[str] = mapped_column(String(200))
+    tagline: Mapped[str | None] = mapped_column(String(500), nullable=True)
     year: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    release_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     runtime: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Ratings and scores
     siddu_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    critics_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    imdb_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rotten_tomatoes_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Content info
+    rating: Mapped[str | None] = mapped_column(String(10), nullable=True)  # PG-13, R, etc.
     language: Mapped[str | None] = mapped_column(String(50), nullable=True)
     country: Mapped[str | None] = mapped_column(String(50), nullable=True)
     overview: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Images
     poster_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    backdrop_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Financial
+    budget: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    revenue: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Status
+    status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="released")  # released, upcoming, in-production
 
     genres: Mapped[List[Genre]] = relationship(
         back_populates="movies",
@@ -888,6 +908,40 @@ class NotificationPreference(Base):
 
     user: Mapped["User"] = relationship(lazy="selectin")
 
+
+
+
+# Streaming Platform models
+class StreamingPlatform(Base):
+    __tablename__ = "streaming_platforms"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    website_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    streaming_options: Mapped[List["MovieStreamingOption"]] = relationship(back_populates="platform", lazy="selectin")
+
+
+class MovieStreamingOption(Base):
+    __tablename__ = "movie_streaming_options"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"))
+    platform_id: Mapped[int] = mapped_column(ForeignKey("streaming_platforms.id"))
+
+    region: Mapped[str] = mapped_column(String(10), index=True)  # US, UK, IN, AU, etc.
+    type: Mapped[str] = mapped_column(String(20))  # subscription, rent, buy, free
+    price: Mapped[str | None] = mapped_column(String(20), nullable=True)  # "$3.99", "₹99", etc.
+    quality: Mapped[str | None] = mapped_column(String(10), nullable=True)  # HD, 4K, SD
+    url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    movie: Mapped["Movie"] = relationship(lazy="selectin")
+    platform: Mapped["StreamingPlatform"] = relationship(back_populates="streaming_options", lazy="selectin")
 
 
 # --- Settings domain models ---

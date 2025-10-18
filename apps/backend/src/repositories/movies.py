@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 from sqlalchemy import select, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Movie, Genre
+from ..models import Movie, Genre, Review, Scene, MovieStreamingOption, StreamingPlatform
 
 
 class MovieRepository:
@@ -79,16 +79,122 @@ class MovieRepository:
         m = res.scalar_one_or_none()
         if not m:
             return None
+
+        # Get directors, writers, producers from people relationship
+        directors = []
+        writers = []
+        producers = []
+        cast = []
+
+        from sqlalchemy import select as _select
+        from ..models import movie_people, Person
+
+        # Query movie_people association table
+        people_query = _select(Person, movie_people.c.role, movie_people.c.character_name).join(
+            movie_people, Person.id == movie_people.c.person_id
+        ).where(movie_people.c.movie_id == m.id)
+
+        people_result = await self.session.execute(people_query)
+        for person, role, character_name in people_result:
+            person_dict = {
+                "id": person.external_id,
+                "name": person.name,
+                "role": role,
+                "profileUrl": person.image_url,
+            }
+
+            if role == "director":
+                directors.append(person_dict)
+            elif role == "writer":
+                writers.append(person_dict)
+            elif role == "producer":
+                producers.append(person_dict)
+            elif role == "actor":
+                person_dict["character"] = character_name
+                cast.append(person_dict)
+
+        # Get reviews
+        reviews_query = select(Review).where(Review.movie_id == m.id).limit(10)
+        reviews_result = await self.session.execute(reviews_query)
+        reviews_list = []
+        for review in reviews_result.scalars():
+            reviews_list.append({
+                "id": review.external_id,
+                "userId": review.author.external_id if review.author else None,
+                "username": review.author.name if review.author else "Anonymous",
+                "avatarUrl": review.author.avatar_url if review.author else None,
+                "rating": review.rating,
+                "title": review.title,
+                "content": review.content,
+                "verified": review.is_verified,
+                "containsSpoilers": review.has_spoilers,
+                "helpfulCount": review.helpful_votes,
+                "createdAt": review.date.isoformat() if review.date else None,
+            })
+
+        # Get scenes
+        scenes_query = select(Scene).where(Scene.movie_id == m.id).limit(20)
+        scenes_result = await self.session.execute(scenes_query)
+        scenes_list = []
+        for scene in scenes_result.scalars():
+            scenes_list.append({
+                "id": scene.external_id,
+                "title": scene.title,
+                "description": scene.description,
+                "thumbnailUrl": scene.thumbnail_url,
+                "timestamp": scene.duration_str,
+                "type": scene.scene_type,
+            })
+
+        # Get streaming options grouped by region
+        streaming_query = select(MovieStreamingOption, StreamingPlatform).join(
+            StreamingPlatform, MovieStreamingOption.platform_id == StreamingPlatform.id
+        ).where(MovieStreamingOption.movie_id == m.id)
+        streaming_result = await self.session.execute(streaming_query)
+
+        streaming_by_region = {}
+        for stream_opt, platform in streaming_result:
+            region = stream_opt.region
+            if region not in streaming_by_region:
+                streaming_by_region[region] = []
+
+            streaming_by_region[region].append({
+                "provider": platform.name,
+                "logoUrl": platform.logo_url,
+                "type": stream_opt.type,
+                "price": stream_opt.price,
+                "quality": stream_opt.quality,
+                "url": stream_opt.url,
+                "verified": stream_opt.verified,
+            })
+
         return {
             "id": m.external_id,
             "title": m.title,
+            "tagline": m.tagline,
             "year": m.year,
+            "releaseDate": m.release_date.isoformat() if m.release_date else None,
+            "runtime": m.runtime,
+            "rating": m.rating,
             "posterUrl": m.poster_url,
+            "backdropUrl": m.backdrop_url,
             "genres": [g.name for g in m.genres],
             "sidduScore": m.siddu_score,
+            "criticsScore": m.critics_score,
+            "imdbRating": m.imdb_rating,
+            "rottenTomatoesScore": m.rotten_tomatoes_score,
             "language": m.language,
             "country": m.country,
-            "runtime": m.runtime,
             "synopsis": m.overview,
+            "budget": m.budget,
+            "revenue": m.revenue,
+            "status": m.status,
+            "directors": directors,
+            "writers": writers,
+            "producers": producers,
+            "cast": cast,
+            "reviews": reviews_list,
+            "scenes": scenes_list,
+            "streamingOptions": streaming_by_region,
         }
 
