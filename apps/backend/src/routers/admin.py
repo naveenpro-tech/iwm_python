@@ -293,13 +293,17 @@ async def import_movies_json(
                 except Exception:
                     movie.release_date = None
 
-            # Genres
+            # Genres - operate on association table directly to avoid async lazy-load issues
             if m.genres is not None:
-                # clear then add
-                movie.genres.clear()
+                await session.execute(
+                    movie_genres.delete().where(movie_genres.c.movie_id == movie.id)
+                )
+                await session.flush()
                 for gname in m.genres:
                     g = await get_or_create_genre(gname)
-                    movie.genres.append(g)
+                    await session.execute(
+                        movie_genres.insert().values(movie_id=movie.id, genre_id=g.id)
+                    )
 
             # People (clear and re-link)
             if any([m.directors, m.writers, m.producers, m.cast]):

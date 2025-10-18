@@ -15,6 +15,7 @@ from ..models import (
     StreamingPlatform,
     MovieStreamingOption,
     movie_people,
+    movie_genres,
 )
 from ..integrations.gemini_client import fetch_movie_enrichment_with_gemini
 
@@ -148,7 +149,36 @@ async def enrich_movie_from_query(session: AsyncSession, query: str, override_ex
     if not data:
         data = await fetch_tmdb_enrichment(query)
     if not data:
-        raise RuntimeError("No enrichment data available (Gemini/TMDB unavailable)")
+        # Offline/No-provider fallback: create a minimal stub so processing continues with empty/null fields
+        slug = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in query.lower()).strip("-")
+        fallback_external_id = override_external_id or f"stub-{slug}"
+        data = {
+            "external_id": fallback_external_id,
+            "title": query,
+            "tagline": None,
+            "year": None,
+            "release_date": None,
+            "runtime": None,
+            "rating": None,
+            "siddu_score": None,
+            "critics_score": None,
+            "imdb_rating": None,
+            "rotten_tomatoes_score": None,
+            "language": None,
+            "country": None,
+            "overview": None,
+            "poster_url": None,
+            "backdrop_url": None,
+            "budget": None,
+            "revenue": None,
+            "status": None,
+            "genres": [],
+            "directors": [],
+            "writers": [],
+            "producers": [],
+            "cast": [],
+            "streaming": [],
+        }
     # Upsert Movie
     if override_external_id:
         res = await session.execute(select(Movie).where(Movie.external_id == override_external_id))
@@ -185,12 +215,15 @@ async def enrich_movie_from_query(session: AsyncSession, query: str, override_ex
         except Exception:
             pass
 
-    # Genres (replace)
+    # Genres (replace) - avoid lazy load by operating on association table directly
     if data.get("genres") is not None:
-        movie.genres.clear()
+        await session.execute(movie_genres.delete().where(movie_genres.c.movie_id == movie.id))
+        await session.flush()
         for gname in data["genres"]:
             g = await _get_or_create_genre(session, gname)
-            movie.genres.append(g)
+            await session.execute(
+                movie_genres.insert().values(movie_id=movie.id, genre_id=g.id)
+            )
 
     # People (replace)
     if any([data.get("directors"), data.get("writers"), data.get("producers"), data.get("cast")]):

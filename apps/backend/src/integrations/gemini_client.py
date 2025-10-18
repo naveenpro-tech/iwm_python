@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Minimal client for Google Generative Language API (Gemini)
