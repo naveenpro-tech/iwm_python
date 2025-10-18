@@ -20,16 +20,6 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     password?: string
   }>({})
 
-  // Ensure fields start empty on initial render (avoid any dev defaults/autofill surprises)
-  // Note: This doesn't block user-driven autofill; it just guarantees no hardcoded default.
-  React.useEffect(() => {
-    const ids = ["email", "password"]
-    ids.forEach((id) => {
-      const el = document.getElementById(id) as HTMLInputElement | null
-      if (el) el.value = ""
-    })
-  }, [])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -48,7 +38,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email" className="text-[#E0E0E0] font-dmsans">
           Email

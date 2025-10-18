@@ -1,8 +1,7 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { Suspense } from "react"
 import dynamic from "next/dynamic"
-import { useRouter } from "next/navigation"
 
 // Skeletons
 import SectionSkeleton from "@/components/skeletons/section-skeleton"
@@ -81,24 +80,6 @@ const TrendingPulseSection = dynamic(
 )
 
 export default function HomePage() {
-  const router = useRouter()
-  // If user is authenticated, redirect them to dashboard when they hit '/'
-  useEffect(() => {
-    try {
-      const token = typeof window !== 'undefined' ? window.localStorage.getItem('access_token') : null
-      if (!token) return
-      // A lightweight ping to verify token. If ok, redirect.
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((u) => {
-          if (u) router.replace('/dashboard')
-        })
-        .catch(() => {})
-    } catch {}
-  }, [router])
-
   return (
     <div className="bg-black text-white flex flex-col min-h-screen">
       <Suspense

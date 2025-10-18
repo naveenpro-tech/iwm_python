@@ -21,15 +21,6 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     confirmPassword?: string
   }>({})
 
-  // Guarantee empty defaults on mount to avoid any dev/test autofill
-  React.useEffect(() => {
-    const ids = ["signup-email", "signup-password", "confirm-password"]
-    ids.forEach((id) => {
-      const el = document.getElementById(id) as HTMLInputElement | null
-      if (el) el.value = ""
-    })
-  }, [])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -54,7 +45,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signup-email" className="text-[#E0E0E0] font-dmsans">
           Email
