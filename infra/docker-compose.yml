@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: iwm
+    ports:
+      - "5432:5432"
+    volumes:
+      - iwm_db_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ..
+      dockerfile_inline: |
+        FROM python:3.12-slim
+        WORKDIR /app
+        COPY apps/backend/requirements.txt ./requirements.txt
+        RUN python -m pip install --no-cache-dir -r requirements.txt
+        COPY apps/backend ./apps/backend
+        ENV PYTHONUNBUFFERED=1
+        EXPOSE 8000
+        CMD ["hypercorn", "apps.backend.src.main:app", "--bind", "0.0.0.0:8000", "--worker-class", "asyncio", "--h2"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/iwm
+      ENV: development
+      EXPORT_OPENAPI_ON_STARTUP: "true"
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+volumes:
+  iwm_db_data:
+
