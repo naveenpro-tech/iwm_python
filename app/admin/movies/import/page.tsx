@@ -3,22 +3,61 @@
 import React, { useState } from "react"
 
 export default function AdminMoviesImportPage() {
-  const [jsonText, setJsonText] = useState("[
+  const [jsonText, setJsonText] = useState(`[
   {
-    \"external_id\": \"tmdb-123456\",
-    \"title\": \"Example Movie\",
-    \"year\": \"2025\",
-    \"genres\": [\"action\", \"sci-fi\"],
-    \"directors\": [{ \"name\": \"Jane Doe\" }],
-    \"cast\": [{ \"name\": \"John Actor\", \"character\": \"Hero\" }],
-    \"streaming\": [
-      { \"platform\": \"netflix\", \"region\": \"US\", \"type\": \"subscription\" }
+    "external_id": "tmdb-123456",
+    "title": "Example Movie",
+    "year": "2025",
+    "genres": ["action", "sci-fi"],
+    "directors": [{ "name": "Jane Doe" }],
+    "cast": [{ "name": "John Actor", "character": "Hero" }],
+    "streaming": [
+      { "platform": "netflix", "region": "US", "type": "subscription" }
     ]
   }
-]")
+]`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [result, setResult] = useState<null | { imported: number; updated: number; failed: number; errors: string[] }>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const insertFullTemplate = () => {
+    const tmpl = `[
+  {
+    "external_id": "manual-gem-sample",
+    "title": "Sample Movie Title",
+    "tagline": "Optional tagline",
+    "year": "2025",
+    "release_date": "2025-06-01",
+    "runtime": 123,
+    "rating": "PG-13",
+    "siddu_score": 8.2,
+    "critics_score": 82.5,
+    "imdb_rating": 7.8,
+    "rotten_tomatoes_score": 90.0,
+    "language": "EN",
+    "country": "United States",
+    "overview": "One paragraph plot overview.",
+    "poster_url": "https://example.com/poster.jpg",
+    "backdrop_url": "https://example.com/backdrop.jpg",
+    "budget": 100000000,
+    "revenue": 350000000,
+    "status": "Released",
+    "genres": ["Action", "Sci-Fi"],
+    "directors": [{ "name": "Jane Director", "image": null }],
+    "writers": [{ "name": "Writ Erson", "image": null }],
+    "producers": [{ "name": "Pro Ducer", "image": null }],
+    "cast": [
+      { "name": "John Star", "character": "Hero", "image": null },
+      { "name": "Mary CoStar", "character": "Partner", "image": null }
+    ],
+    "streaming": [
+      { "platform": "Netflix", "region": "US", "type": "subscription", "price": null, "quality": "HD", "url": "https://netflix.com/title/xyz" },
+      { "platform": "Apple TV", "region": "US", "type": "buy", "price": 14.99, "quality": "UHD", "url": "https://tv.apple.com/item/xyz" }
+    ]
+  }
+]`;
+    setJsonText(tmpl);
+  }
 
   const handleFile = async (file: File) => {
     const text = await file.text()
@@ -52,12 +91,19 @@ export default function AdminMoviesImportPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-semibold mb-4">Admin: Import Movies (JSON)</h1>
       <p className="text-sm text-gray-400 mb-4">Paste JSON array or upload a .json file matching the example template.</p>
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <input
           type="file"
           accept="application/json,.json"
           onChange={(e) => e.target.files && handleFile(e.target.files[0])}
         />
+        <button
+          onClick={insertFullTemplate}
+          className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white"
+          type="button"
+        >
+          Insert Full Template
+        </button>
         <button
           onClick={submit}
           disabled={isSubmitting}
