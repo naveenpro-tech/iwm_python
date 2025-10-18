@@ -164,6 +164,7 @@ class MovieImportIn(BaseModel):
 # ---------- Enrichment (Gemini/TMDB) ----------
 class EnrichQueryIn(BaseModel):
     query: str
+    provider: Optional[str] = None  # "gemini" to enforce Gemini-only; otherwise default fallback chain
 
 class EnrichBulkIn(BaseModel):
     queries: List[str]
@@ -171,12 +172,18 @@ class EnrichBulkIn(BaseModel):
 class EnrichResultOut(BaseModel):
     external_id: str
     updated: bool
+    provider_used: str
 
 @router.post("/movies/enrich", response_model=EnrichResultOut)
 async def enrich_via_query(body: EnrichQueryIn, session: AsyncSession = Depends(get_session)):
-    result = await enrich_movie_from_query(session, body.query)
-    await session.commit()
-    return EnrichResultOut(**result)
+    from ..services.enrichment import EnrichmentProviderError
+    try:
+        result = await enrich_movie_from_query(session, body.query, provider_preference=(body.provider or None))
+        await session.commit()
+        return EnrichResultOut(**result)
+    except EnrichmentProviderError as e:
+        await session.rollback()
+        raise HTTPException(status_code=502, detail={"provider": e.provider, "error": e.message})
 
 @router.post("/movies/enrich/bulk", response_model=List[EnrichResultOut])
 async def enrich_bulk(body: EnrichBulkIn, session: AsyncSession = Depends(get_session)):
@@ -203,9 +210,16 @@ async def enrich_existing(body: EnrichExistingIn, session: AsyncSession = Depend
     if not movie:
         raise HTTPException(status_code=404, detail="movie_not_found")
     query = body.query or movie.title
-    result = await enrich_movie_from_query(session, query, override_external_id=body.external_id)
-    await session.commit()
-    return EnrichResultOut(**result)
+    from ..services.enrichment import EnrichmentProviderError
+    try:
+        result = await enrich_movie_from_query(
+            session, query, override_external_id=body.external_id, provider_preference=None
+        )
+        await session.commit()
+        return EnrichResultOut(**result)
+    except EnrichmentProviderError as e:
+        await session.rollback()
+        raise HTTPException(status_code=502, detail={"provider": e.provider, "error": e.message})
 
 
 class ImportReportOut(BaseModel):

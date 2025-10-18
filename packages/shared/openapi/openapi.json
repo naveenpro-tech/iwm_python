@@ -5119,6 +5119,17 @@
           "query": {
             "type": "string",
             "title": "Query"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
           }
         },
         "type": "object",
@@ -5136,12 +5147,17 @@
           "updated": {
             "type": "boolean",
             "title": "Updated"
+          },
+          "provider_used": {
+            "type": "string",
+            "title": "Provider Used"
           }
         },
         "type": "object",
         "required": [
           "external_id",
-          "updated"
+          "updated",
+          "provider_used"
         ],
         "title": "EnrichResultOut"
       },

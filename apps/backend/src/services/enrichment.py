@@ -144,10 +144,40 @@ async def fetch_tmdb_enrichment(query: str) -> Optional[Dict[str, Any]]:
         return enriched
 
 # Public API ------------------------------------------------------
-async def enrich_movie_from_query(session: AsyncSession, query: str, override_external_id: Optional[str] = None) -> Dict[str, Any]:
-    data = await fetch_movie_enrichment_with_gemini(query)
-    if not data:
-        data = await fetch_tmdb_enrichment(query)
+class EnrichmentProviderError(Exception):
+    """Raised when a specific provider is enforced but fails."""
+    def __init__(self, provider: str, message: str = "provider_failed"):
+        super().__init__(message)
+        self.provider = provider
+        self.message = message
+
+
+async def enrich_movie_from_query(
+    session: AsyncSession,
+    query: str,
+    override_external_id: Optional[str] = None,
+    provider_preference: Optional[str] = None,
+) -> Dict[str, Any]:
+    provider_used = "stub"
+
+    data: Optional[Dict[str, Any]] = None
+
+    if provider_preference == "gemini":
+        # Enforce Gemini-only mode
+        data = await fetch_movie_enrichment_with_gemini(query)
+        if not data:
+            raise EnrichmentProviderError("gemini", "Gemini enrichment failed or returned no data")
+        provider_used = "gemini"
+    else:
+        # Default behavior: Gemini -> TMDB -> stub
+        data = await fetch_movie_enrichment_with_gemini(query)
+        if data:
+            provider_used = "gemini"
+        else:
+            data = await fetch_tmdb_enrichment(query)
+            if data:
+                provider_used = "tmdb"
+
     if not data:
         # Offline/No-provider fallback: create a minimal stub so processing continues with empty/null fields
         slug = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in query.lower()).strip("-")
@@ -179,6 +209,8 @@ async def enrich_movie_from_query(session: AsyncSession, query: str, override_ex
             "cast": [],
             "streaming": [],
         }
+        provider_used = "stub"
+
     # Upsert Movie
     if override_external_id:
         res = await session.execute(select(Movie).where(Movie.external_id == override_external_id))
@@ -269,5 +301,5 @@ async def enrich_movie_from_query(session: AsyncSession, query: str, override_ex
             session.add(opt)
 
     await session.flush()
-    return {"external_id": movie.external_id, "updated": is_update}
+    return {"external_id": movie.external_id, "updated": is_update, "provider_used": provider_used}
 
