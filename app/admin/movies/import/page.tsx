@@ -53,6 +53,16 @@ export default function AdminMoviesImportPage() {
     "streaming": [
       { "platform": "Netflix", "region": "US", "type": "subscription", "price": null, "quality": "HD", "url": "https://netflix.com/title/xyz" },
       { "platform": "Apple TV", "region": "US", "type": "buy", "price": 14.99, "quality": "UHD", "url": "https://tv.apple.com/item/xyz" }
+    ],
+    "awards": [
+      { "name": "Academy Awards", "year": 2025, "category": "Best Picture", "status": "Winner" }
+    ],
+    "trivia": [
+      { "question": "Was this movie based on a true story?", "category": "Production", "answer": "Yes, inspired by real events", "explanation": "The filmmakers drew inspiration from historical records." }
+    ],
+    "timeline": [
+      { "date": "2024-01-15", "title": "Production Begins", "description": "Principal photography starts", "type": "Production Start" },
+      { "date": "2025-06-01", "title": "Theatrical Release", "description": "Movie released in theaters worldwide", "type": "Theatrical" }
     ]
   }
 ]`;

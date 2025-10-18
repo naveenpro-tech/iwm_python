@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any, List, Optional
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
+import uuid
 
 from ..models import Review, User, Movie
 
@@ -27,7 +29,7 @@ class ReviewRepository:
             q = q.join(Review.movie).where(Movie.external_id == movie_id)
         if user_id:
             q = q.join(Review.author).where(User.external_id == user_id)
-        
+
         if sort_by == "date_desc":
             q = q.order_by(desc(Review.date))
         elif sort_by == "date_asc":
@@ -108,6 +110,71 @@ class ReviewRepository:
                 "genres": [g.name for g in r.movie.genres],
                 "country": r.movie.country,
                 "language": r.movie.language,
+            },
+        }
+
+    async def create(
+        self,
+        movie_id: str,
+        user_id: str,
+        rating: float,
+        content: str,
+        title: Optional[str] = None,
+        spoilers: bool = False,
+    ) -> dict[str, Any]:
+        """Create a new review"""
+        if not self.session:
+            return {}
+
+        # Get user and movie
+        user_res = await self.session.execute(select(User).where(User.external_id == user_id))
+        user = user_res.scalar_one_or_none()
+        if not user:
+            raise ValueError(f"User {user_id} not found")
+
+        movie_res = await self.session.execute(select(Movie).where(Movie.external_id == movie_id))
+        movie = movie_res.scalar_one_or_none()
+        if not movie:
+            raise ValueError(f"Movie {movie_id} not found")
+
+        # Validate rating
+        if not (0 <= rating <= 10):
+            raise ValueError("Rating must be between 0 and 10")
+
+        # Create review
+        review = Review(
+            external_id=str(uuid.uuid4()),
+            user_id=user.id,
+            movie_id=movie.id,
+            title=title or "Untitled Review",
+            content=content,
+            rating=rating,
+            has_spoilers=spoilers,
+            date=datetime.utcnow(),
+            is_verified=False,
+            helpful_votes=0,
+            unhelpful_votes=0,
+            comment_count=0,
+            engagement_score=0,
+        )
+        self.session.add(review)
+        await self.session.flush()
+
+        return {
+            "id": review.external_id,
+            "title": review.title,
+            "content": review.content,
+            "rating": review.rating,
+            "date": review.date.isoformat(),
+            "hasSpoilers": review.has_spoilers,
+            "author": {
+                "id": user.external_id,
+                "name": user.name,
+                "avatarUrl": user.avatar_url,
+            },
+            "movie": {
+                "id": movie.external_id,
+                "title": movie.title,
             },
         }
 

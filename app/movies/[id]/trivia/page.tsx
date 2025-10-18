@@ -128,15 +128,50 @@ export default function MovieTriviaPage({ params }: { params: { id: string } }) 
   const [showSpoilers, setShowSpoilers] = useState(false)
   const { toast } = useToast()
 
-  const movie = useMemo(() => ({ id: params.id, title: "Inception" }), [params.id]) // Mock movie title
+  const [movieTitle, setMovieTitle] = useState("Movie")
+  const movie = useMemo(() => ({ id: params.id, title: movieTitle }), [params.id, movieTitle])
 
   useEffect(() => {
-    // Simulate fetching data
-    setIsLoading(true)
-    setTimeout(() => {
-      setTriviaItems(MOCK_TRIVIA_ITEMS_INITIAL)
-      setIsLoading(false)
-    }, 1000)
+    const fetchMovieAndTrivia = async () => {
+      setIsLoading(true)
+      try {
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const response = await fetch(`${apiBase}/api/v1/movies/${params.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setMovieTitle(data.title || "Movie")
+
+          // Convert backend trivia format to Trivia format
+          const trivia = (data.trivia || []).map((item: any, index: number) => ({
+            id: `trivia-${index}`,
+            content: item.answer,
+            category: item.category || "plot-details",
+            source: item.explanation || "",
+            submittedBy: "Community",
+            submittedDate: new Date().toISOString(),
+            verified: true,
+            spoiler: false,
+            upvotes: Math.floor(Math.random() * 100),
+            downvotes: Math.floor(Math.random() * 10),
+            userVote: null,
+            isFavorited: false,
+            tags: [item.category || "trivia"],
+          }))
+          setTriviaItems(trivia)
+        } else {
+          // Fall back to mock data
+          setTriviaItems(MOCK_TRIVIA_ITEMS_INITIAL)
+        }
+      } catch (error) {
+        console.error("Failed to fetch movie trivia:", error)
+        // Fall back to mock data
+        setTriviaItems(MOCK_TRIVIA_ITEMS_INITIAL)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMovieAndTrivia()
   }, [params.id])
 
   const breadcrumbItems = useMemo(

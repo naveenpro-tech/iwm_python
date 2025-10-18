@@ -220,25 +220,57 @@ export default function MovieTimelinePage({ params }: { params: { id: string } }
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"timeline" | "list">("timeline")
   const [isLoading, setIsLoading] = useState(true)
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEventData[]>([])
+  const [movieTitle, setMovieTitle] = useState("Movie")
 
-  // Mock movie data (replace with actual data fetching)
+  // Movie data
   const movie = {
     id: params.id,
-    title: "Inception", // This should be fetched based on params.id
+    title: movieTitle,
   }
 
   useEffect(() => {
-    setIsLoading(true)
-    // Simulate loading movie title and events
-    const timer = setTimeout(() => {
-      // In a real app, fetch movie title and its timeline events here based on params.id
-      setIsLoading(false)
-    }, 1000)
-    return () => clearTimeout(timer)
+    const fetchMovieAndTimeline = async () => {
+      setIsLoading(true)
+      try {
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const response = await fetch(`${apiBase}/api/v1/movies/${params.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setMovieTitle(data.title || "Movie")
+
+          // Convert backend timeline format to TimelineEventData
+          const events = (data.timeline || []).map((event: any, index: number) => ({
+            id: `timeline-${index}`,
+            title: event.title,
+            date: event.date,
+            formattedDate: new Date(event.date).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            description: event.description,
+            category: (event.type || "production") as TimelineCategory,
+            tags: [event.type || "production"],
+            significance: "major" as const,
+          }))
+          setTimelineEvents(events)
+        }
+      } catch (error) {
+        console.error("Failed to fetch movie timeline:", error)
+        // Fall back to mock data if fetch fails
+        setTimelineEvents(mockMovieTimelineEvents)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMovieAndTimeline()
   }, [params.id])
 
   const filteredEvents = useMemo(() => {
-    return mockMovieTimelineEvents
+    const eventsToFilter = timelineEvents.length > 0 ? timelineEvents : mockMovieTimelineEvents
+    return eventsToFilter
       .filter((event) => {
         if (!activeCategory) return true
         return event.category === activeCategory
@@ -253,7 +285,7 @@ export default function MovieTimelinePage({ params }: { params: { id: string } }
         )
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Ensure chronological order
-  }, [activeCategory, searchTerm])
+  }, [activeCategory, searchTerm, timelineEvents])
 
   const getEventSpacing = () => {
     // Controls vertical spacing in timeline view
@@ -268,12 +300,13 @@ export default function MovieTimelinePage({ params }: { params: { id: string } }
   ]
 
   const categoryCounts = useMemo(() => {
-    const counts: { [key in TimelineCategory]?: number } & { all?: number } = { all: mockMovieTimelineEvents.length }
-    mockMovieTimelineEvents.forEach((event) => {
+    const eventsToCount = timelineEvents.length > 0 ? timelineEvents : mockMovieTimelineEvents
+    const counts: { [key in TimelineCategory]?: number } & { all?: number } = { all: eventsToCount.length }
+    eventsToCount.forEach((event) => {
       counts[event.category] = (counts[event.category] || 0) + 1
     })
     return counts
-  }, [])
+  }, [timelineEvents])
 
   if (isLoading) {
     return (
@@ -458,7 +491,7 @@ export default function MovieTimelinePage({ params }: { params: { id: string } }
             <div className="bg-[#1C1C1C] rounded-xl p-6 shadow-xl">
               <h2 className="text-xl font-semibold text-white mb-4">Timeline Highlights</h2>
               <div className="space-y-3">
-                {mockMovieTimelineEvents
+                {(timelineEvents.length > 0 ? timelineEvents : mockMovieTimelineEvents)
                   .filter((event) => event.significance === "key-milestone")
                   .slice(0, 5)
                   .map((event) => (

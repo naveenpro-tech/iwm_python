@@ -7,6 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
 
+from sqlalchemy.dialects.postgresql import JSONB
+
 
 movie_genres = Table(
     "movie_genres",
@@ -81,6 +83,10 @@ class Movie(Base):
 
     # Status
     status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="released")  # released, upcoming, in-production
+
+    # Rich content (admin-only authoring)
+    trivia: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    timeline: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     genres: Mapped[List[Genre]] = relationship(
         back_populates="movies",

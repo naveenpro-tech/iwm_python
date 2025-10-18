@@ -69,13 +69,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# In dev, if '*' is present in CORS_ORIGINS, disable credentials to allow wildcard
+_has_wildcard = any(o == "*" for o in settings.cors_origins)
+_allow_credentials = not _has_wildcard
+_allowed_origins = ["*"] if _has_wildcard else settings.cors_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=_allowed_origins,
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+log.info("cors_config", origins=_allowed_origins, allow_credentials=_allow_credentials)
 
 api = APIRouter(prefix="/api/v1")
 api.include_router(health_router.router)

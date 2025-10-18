@@ -185,7 +185,7 @@ export function MovieTimelineForm({ initialEvents, onEventsChange }: MovieTimeli
       <CardContent>
         <div className="space-y-3">
           <AnimatePresence>
-            {(isAdding || editingEvent) && !isAdding && editingEvent && renderEventForm()}
+            {editingEvent && !isAdding && renderEventForm()}
           </AnimatePresence>
 
           {events.map((event) => (

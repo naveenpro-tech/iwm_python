@@ -59,10 +59,23 @@ export function MovieAwardsForm({ initialAwards, onAwardsChange }: MovieAwardsFo
       return
     }
 
+    const year = Number(editingAward.year)
+    const currentYear = new Date().getFullYear()
+
+    // Validate year is numeric and within reasonable range (1900-current year + 5)
+    if (isNaN(year) || year < 1900 || year > currentYear + 5) {
+      toast({
+        title: "Invalid Year",
+        description: `Year must be between 1900 and ${currentYear + 5}.`,
+        variant: "destructive"
+      })
+      return
+    }
+
     const finalAward: AwardInfo = {
       id: editingAward.id || Date.now().toString(),
       name: editingAward.name!,
-      year: Number(editingAward.year!),
+      year: year,
       category: editingAward.category!,
       status: editingAward.status || "Nominee",
     }
@@ -155,10 +168,13 @@ export function MovieAwardsForm({ initialAwards, onAwardsChange }: MovieAwardsFo
           <Input
             id="award-year"
             type="number"
+            min="1900"
+            max={new Date().getFullYear() + 5}
             value={editingAward?.year || ""}
-            onChange={(e) => handleInputChange("year", Number.parseInt(e.target.value))}
+            onChange={(e) => handleInputChange("year", Number.parseInt(e.target.value) || new Date().getFullYear())}
             placeholder={new Date().getFullYear().toString()}
           />
+          <p className="text-xs text-muted-foreground">1900 - {new Date().getFullYear() + 5}</p>
         </div>
         <div className="space-y-1">
           <Label htmlFor="award-status">Status</Label>

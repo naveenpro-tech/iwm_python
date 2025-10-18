@@ -38,6 +38,207 @@ export default function MovieEditPage() {
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
+  // Gemini enrichment state
+  const [enrichQuery, setEnrichQuery] = useState("")
+  const [isEnriching, setIsEnriching] = useState(false)
+
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+
+  const slugify = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+
+  const mapBackendToAdminMovie = (data: any): Movie => {
+    const streamingLinks = [] as any[]
+    if (data.streamingOptions) {
+      for (const region of Object.keys(data.streamingOptions)) {
+        for (const item of data.streamingOptions[region] || []) {
+          streamingLinks.push({
+            id: `${region}-${item.provider}-${Math.random().toString(36).slice(2, 8)}`,
+            provider: item.provider,
+            region,
+            url: item.url,
+            type: (item.type || "subscription") as any,
+            price: item.price || undefined,
+            quality: (item.quality || "HD") as any,
+            verified: !!item.verified,
+          })
+        }
+      }
+    }
+
+    const cast = (data.cast || []).map((c: any, idx: number) => ({
+      id: c.id || `${idx}`,
+      name: c.name,
+      character: c.character || "",
+      image: c.profileUrl || undefined,
+      order: idx,
+    }))
+
+    const crewRoleMap = [
+      ...(data.directors || []).map((p: any) => ({ id: p.id, name: p.name, role: "Director", department: "Directing", image: p.profileUrl })),
+      ...(data.writers || []).map((p: any) => ({ id: p.id, name: p.name, role: "Writer", department: "Writing", image: p.profileUrl })),
+      ...(data.producers || []).map((p: any) => ({ id: p.id, name: p.name, role: "Producer", department: "Production", image: p.profileUrl })),
+    ]
+
+    const languages = data.language ? [data.language] : []
+
+    const m: Movie = {
+      id: data.id || "",
+      title: data.title || "",
+      originalTitle: data.title || "",
+      poster: data.posterUrl || "",
+      backdrop: data.backdropUrl || "",
+      sidduScore: data.sidduScore || 0,
+      releaseDate: data.releaseDate || undefined,
+      status: (data.status || "draft") as any,
+      genres: data.genres || [],
+      synopsis: data.synopsis || "",
+      runtime: data.runtime || 0,
+      languages: languages,
+      certification: (data.rating || "Unrated") as any,
+      cast,
+      crew: crewRoleMap,
+      galleryImages: [],
+      trailerUrl: "",
+      trailerEmbed: "",
+      streamingLinks,
+      releaseDates: [],
+      awards: [],
+      trivia: (data.trivia || []).map((t: any, i: number) => ({ id: `${i}`, question: t.question, category: t.category, answer: t.answer, explanation: t.explanation })),
+      timelineEvents: (data.timeline || []).map((tl: any, i: number) => ({ id: `${i}`, date: tl.date, title: tl.title, description: tl.description, category: tl.type })),
+      isPublished: true,
+      isArchived: false,
+      budget: data.budget || 0,
+      boxOffice: data.revenue || 0,
+      productionCompanies: [],
+      countriesOfOrigin: data.country ? [data.country] : [],
+      tagline: data.tagline || "",
+      keywords: [],
+      aspectRatio: "",
+      soundMix: [],
+      camera: "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      importedFrom: "Gemini",
+    }
+    return m
+  }
+
+  const handleEnrichFromGemini = async () => {
+    if (!movieData) return
+    const q = (enrichQuery || movieData.title || "").trim()
+    if (!q) {
+      toast({ variant: "destructive", title: "Missing query", description: "Enter a title to fetch from Gemini." })
+      return
+    }
+    try {
+      setIsEnriching(true)
+      const res = await fetch(`${apiBase}/api/v1/admin/movies/enrich`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q, provider: "gemini" }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        const detail = err?.detail || err
+        toast({
+          variant: "destructive",
+          title: `Gemini failed (${res.status})`,
+          description: typeof detail === "string" ? detail : JSON.stringify(detail),
+        })
+        return
+      }
+      const data = await res.json()
+      const externalId = data.external_id
+      const providerUsed = data.provider_used
+      const getRes = await fetch(`${apiBase}/api/v1/movies/${externalId}`)
+      if (!getRes.ok) throw new Error(`Failed to fetch movie ${externalId}`)
+      const backendMovie = await getRes.json()
+      const mapped = mapBackendToAdminMovie(backendMovie)
+      setMovieData(mapped)
+      setHasChanges(true)
+      toast({ title: "Enriched from Gemini", description: `Provider: ${providerUsed}. Review and publish.` })
+      setActiveTab("basic")
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Enrichment error", description: e?.message || "Unknown error" })
+    } finally {
+      setIsEnriching(false)
+    }
+  }
+
+  const handlePublishToBackend = async () => {
+    if (!movieData) return
+    try {
+      setIsSaving(true)
+      const extId = movieData.id && !movieData.id.startsWith("mock-") && movieData.id !== "new"
+        ? movieData.id
+        : `manual-${slugify(movieData.title || "movie")}-${Date.now()}`
+
+      // Map admin state -> backend MovieImportIn
+      const directors = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "director").map(c => ({ name: c.name, image: c.image }))
+      const writers = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "writer").map(c => ({ name: c.name, image: c.image }))
+      const producers = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "producer").map(c => ({ name: c.name, image: c.image }))
+      const cast = (movieData.cast || []).map(c => ({ name: c.name, image: c.image, character: c.character }))
+
+      const payload = [{
+        external_id: extId,
+        title: movieData.title,
+        tagline: movieData.tagline || undefined,
+        year: movieData.releaseDate ? movieData.releaseDate.slice(0, 4) : undefined,
+        release_date: movieData.releaseDate || undefined,
+        runtime: movieData.runtime || undefined,
+        rating: (movieData.certification as any) || undefined,
+        siddu_score: movieData.sidduScore || undefined,
+        critics_score: undefined,
+        imdb_rating: undefined,
+        rotten_tomatoes_score: undefined,
+        language: (movieData.languages && movieData.languages[0]) || undefined,
+        country: (movieData.countriesOfOrigin && movieData.countriesOfOrigin[0]) || undefined,
+        overview: movieData.synopsis || undefined,
+        poster_url: movieData.poster || undefined,
+        backdrop_url: movieData.backdrop || undefined,
+        budget: movieData.budget || undefined,
+        revenue: movieData.boxOffice || undefined,
+        status: (movieData.status as any) || undefined,
+        genres: movieData.genres || [],
+        directors,
+        writers,
+        producers,
+        cast,
+        streaming: (movieData.streamingLinks || []).map((s, i) => ({
+          platform: s.provider,
+          region: s.region,
+          type: s.type,
+          price: s.price,
+          quality: s.quality,
+          url: s.url,
+        })),
+      }]
+
+      const res = await fetch(`${apiBase}/api/v1/admin/movies/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(typeof json === "string" ? json : JSON.stringify(json))
+      }
+      toast({ title: "Published", description: `Imported: ${json.imported}, Updated: ${json.updated}` })
+      // Redirect to public movie page (frontend)
+      const idToVisit = extId
+      router.push(`/movies/${idToVisit}`)
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Publish failed", description: e?.message || "Unknown error" })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true)
@@ -256,18 +457,38 @@ export default function MovieEditPage() {
             </p>
           </div>
         </div>
-        <Button className="gap-2 w-full sm:w-auto" disabled={!hasChanges || isSaving} onClick={handleSaveChanges}>
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {isSaving
-            ? params.id === "new"
-              ? "Creating..."
-              : "Saving..."
-            : params.id === "new"
-              ? "Create Movie"
-              : "Save Changes"}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button variant="secondary" className="gap-2" onClick={handlePublishToBackend} disabled={isSaving}>
+            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            Publish to Backend
+          </Button>
+          <Button className="gap-2" disabled={!hasChanges || isSaving} onClick={handleSaveChanges}>
+            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {params.id === "new" ? "Create Draft (Local)" : "Save Draft (Local)"}
+          </Button>
+        </div>
       </motion.div>
 
+      {/* Gemini Enrichment Bar */}
+      <div className="w-full -mt-2 grid grid-cols-1 sm:grid-cols-6 gap-2">
+        <input
+          type="text"
+          className="col-span-4 rounded-md border bg-background px-3 py-2 text-sm"
+          placeholder="Query to fetch from Gemini (default: current Title)"
+          value={enrichQuery || movieData?.title || ""}
+          onChange={(e) => setEnrichQuery(e.target.value)}
+        />
+        <Button
+          variant="outline"
+          className="col-span-2 gap-2"
+          onClick={handleEnrichFromGemini}
+          disabled={isEnriching}
+        >
+          {isEnriching ? <Loader2 size={16} className="animate-spin" /> : null}
+          Fetch from Gemini
+        </Button>
+      </div>
+  
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 w-full max-w-full overflow-x-auto">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>

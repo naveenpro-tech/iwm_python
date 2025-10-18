@@ -28,6 +28,8 @@ import { ManageStreamingLinksModal } from "@/components/admin/movies/modals/mana
 import { UpdateReleaseDateModal } from "@/components/admin/movies/modals/update-release-date-modal"
 import { ConfirmationModal } from "@/components/shared/confirmation-modal"
 import { ApiImportModal } from "@/components/admin/movies/modals/api-import-modal"
+import { JsonImportModal } from "@/components/admin/movies/modals/json-import-modal"
+import { JsonExportModal } from "@/components/admin/movies/modals/json-export-modal"
 import { Button } from "@/components/ui/button"
 
 type SortConfig = {
@@ -70,14 +72,73 @@ export default function MovieManagementPage() {
   } | null>(null)
 
   useEffect(() => {
-    // Simulate fetching initial data
-    setIsLoading(true)
-    // In a real app, this would be an API call
-    // For now, we use the mockMoviesData directly after a short delay
-    setTimeout(() => {
-      setMovies(mockMoviesData)
-      setIsLoading(false)
-    }, 500)
+    // Fetch movies from backend API
+    const fetchMovies = async () => {
+      setIsLoading(true)
+      try {
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const res = await fetch(`${apiBase}/api/v1/movies`)
+        if (!res.ok) throw new Error("Failed to fetch movies")
+        const data = await res.json()
+
+        // Map backend movies to frontend Movie type
+        const mappedMovies = data.map((m: any) => ({
+          id: m.id,
+          title: m.title,
+          originalTitle: m.title,
+          poster: m.posterUrl || "/abstract-movie-poster.png",
+          backdrop: m.backdropUrl || "/movie-backdrop.png",
+          sidduScore: m.sidduScore || 0,
+          releaseDate: m.releaseDate ? m.releaseDate.split("T")[0] : new Date().toISOString().split("T")[0],
+          status: (m.status || "draft").toLowerCase() as MovieStatus,
+          genres: m.genres || [],
+          synopsis: m.synopsis || m.overview || "",
+          runtime: m.runtime || 120,
+          languages: [m.language || "English"],
+          certification: m.rating || "Unrated",
+          cast: m.cast || [],
+          crew: m.directors || [],
+          galleryImages: [],
+          trailerUrl: "",
+          trailerEmbed: "",
+          streamingLinks: m.streamingOptions ? Object.entries(m.streamingOptions).flatMap(([region, options]: any) =>
+            (Array.isArray(options) ? options : [options]).map((opt: any) => ({
+              platform: opt.provider,
+              region,
+              type: opt.type,
+              url: opt.url,
+            }))
+          ) : [],
+          releaseDates: [{ region: "US", date: m.releaseDate ? m.releaseDate.split("T")[0] : "", type: "Theatrical" }],
+          awards: [],
+          isPublished: m.status === "released",
+          isArchived: false,
+          importedFrom: "backend",
+          budget: m.budget,
+          boxOffice: m.revenue,
+          productionCompanies: [],
+          countriesOfOrigin: [m.country || ""],
+          tagline: m.tagline || "",
+          keywords: [],
+          aspectRatio: "",
+          soundMix: [],
+          camera: "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }))
+
+        setMovies(mappedMovies)
+      } catch (error) {
+        console.error("Error fetching movies:", error)
+        toast({ variant: "destructive", title: "Error", description: "Failed to fetch movies from backend" })
+        // Fallback to mock data
+        setMovies(mockMoviesData)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMovies()
   }, [])
 
   const handleSelectMovie = useCallback((movieId: string, checked: boolean) => {
@@ -184,16 +245,91 @@ export default function MovieManagementPage() {
   }
 
   const openJsonImportModal = () => {
-    // Logic to open JSON import modal, potentially set current data or options
     setIsJsonImportModalOpen(true)
-    toast({ title: "JSON Import", description: "JSON Import Modal Opened (Placeholder)" })
   }
 
   const openJsonExportModal = () => {
-    // Logic to open JSON export modal, potentially pass current filters/selection
     setIsJsonExportModalOpen(true)
-    toast({ title: "JSON Export", description: "JSON Export Modal Opened (Placeholder)" })
   }
+
+  const handleJsonImportComplete = async (importedMovies: any[]) => {
+    setIsLoading(true)
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const res = await fetch(`${apiBase}/api/v1/admin/movies/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(importedMovies),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(typeof err.detail === "string" ? err.detail : JSON.stringify(err))
+      }
+
+      const result = await res.json()
+      toast({ title: "Import Successful", description: `Imported: ${result.imported}, Updated: ${result.updated}` })
+
+      // Refresh movies list
+      const moviesRes = await fetch(`${apiBase}/api/v1/movies`)
+      if (moviesRes.ok) {
+        const data = await moviesRes.json()
+        const mappedMovies = data.map((m: any) => ({
+          id: m.id,
+          title: m.title,
+          originalTitle: m.title,
+          poster: m.posterUrl || "/abstract-movie-poster.png",
+          backdrop: m.backdropUrl || "/movie-backdrop.png",
+          sidduScore: m.sidduScore || 0,
+          releaseDate: m.releaseDate ? m.releaseDate.split("T")[0] : new Date().toISOString().split("T")[0],
+          status: (m.status || "draft").toLowerCase() as MovieStatus,
+          genres: m.genres || [],
+          synopsis: m.synopsis || m.overview || "",
+          runtime: m.runtime || 120,
+          languages: [m.language || "English"],
+          certification: m.rating || "Unrated",
+          cast: m.cast || [],
+          crew: m.directors || [],
+          galleryImages: [],
+          trailerUrl: "",
+          trailerEmbed: "",
+          streamingLinks: m.streamingOptions ? Object.entries(m.streamingOptions).flatMap(([region, options]: any) =>
+            (Array.isArray(options) ? options : [options]).map((opt: any) => ({
+              platform: opt.provider,
+              region,
+              type: opt.type,
+              url: opt.url,
+            }))
+          ) : [],
+          releaseDates: [{ region: "US", date: m.releaseDate ? m.releaseDate.split("T")[0] : "", type: "Theatrical" }],
+          awards: [],
+          isPublished: m.status === "released",
+          isArchived: false,
+          importedFrom: "backend",
+          budget: m.budget,
+          boxOffice: m.revenue,
+          productionCompanies: [],
+          countriesOfOrigin: [m.country || ""],
+          tagline: m.tagline || "",
+          keywords: [],
+          aspectRatio: "",
+          soundMix: [],
+          camera: "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }))
+        setMovies(mappedMovies)
+      }
+
+      setIsJsonImportModalOpen(false)
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Import Failed", description: error.message || "Unknown error" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+
 
   const openConfirmationModal = (
     title: string,
@@ -533,27 +669,17 @@ export default function MovieManagementPage() {
         onClose={() => setIsApiImportModalOpen(false)}
         onImportComplete={handleApiImportComplete}
       />
-      {/* Placeholder for JSON Import Modal */}
-      {isJsonImportModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-background p-6 rounded-lg shadow-xl w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">Import Movies from JSON</h2>
-            <p className="mb-4">JSON import functionality will be implemented here.</p>
-            <Button onClick={() => setIsJsonImportModalOpen(false)}>Close</Button>
-          </div>
-        </div>
-      )}
+      <JsonImportModal
+        isOpen={isJsonImportModalOpen}
+        onClose={() => setIsJsonImportModalOpen(false)}
+        onImportComplete={handleJsonImportComplete}
+      />
 
-      {/* Placeholder for JSON Export Modal */}
-      {isJsonExportModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-background p-6 rounded-lg shadow-xl w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">Export Movies to JSON</h2>
-            <p className="mb-4">JSON export functionality will be implemented here.</p>
-            <Button onClick={() => setIsJsonExportModalOpen(false)}>Close</Button>
-          </div>
-        </div>
-      )}
+      <JsonExportModal
+        isOpen={isJsonExportModalOpen}
+        onClose={() => setIsJsonExportModalOpen(false)}
+        movieCount={movies.length}
+      />
     </div>
   )
 }

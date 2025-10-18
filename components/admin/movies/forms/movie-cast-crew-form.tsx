@@ -1,18 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, GripVertical, X, Search } from "lucide-react"
+import { Plus, GripVertical, X, Search, Loader2 } from "lucide-react"
 import { motion, Reorder } from "framer-motion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import type { CastMember, CrewMember } from "../types"
 import { MOCK_TALENT_POOL } from "../types"
+import { useDebounce } from "@/hooks/use-debounce"
 
 interface MovieCastCrewFormProps {
   initialCast: CastMember[]
@@ -59,24 +60,75 @@ export function MovieCastCrewForm({
 
   const [talentSearchResultsCast, setTalentSearchResultsCast] = useState<Talent[]>([])
   const [talentSearchResultsCrew, setTalentSearchResultsCrew] = useState<Talent[]>([])
+  const [castSearchLoading, setCastSearchLoading] = useState(false)
+  const [crewSearchLoading, setCrewSearchLoading] = useState(false)
+  const [castSearchQuery, setCastSearchQuery] = useState("")
+  const [crewSearchQuery, setCrewSearchQuery] = useState("")
 
-  const handleCastSearch = (query: string) => {
-    if (query) {
-      const results = MOCK_TALENT_POOL.filter((talent) => talent.name.toLowerCase().includes(query.toLowerCase()))
-      setTalentSearchResultsCast(results)
-    } else {
+  const debouncedCastQuery = useDebounce(castSearchQuery, 300)
+  const debouncedCrewQuery = useDebounce(crewSearchQuery, 300)
+
+  const handleCastSearch = useCallback(async (query: string) => {
+    if (query.length < 2) {
       setTalentSearchResultsCast([])
+      return
     }
-  }
 
-  const handleCrewSearch = (query: string) => {
-    if (query) {
-      const results = MOCK_TALENT_POOL.filter((talent) => talent.name.toLowerCase().includes(query.toLowerCase()))
-      setTalentSearchResultsCrew(results)
-    } else {
-      setTalentSearchResultsCrew([])
+    setCastSearchLoading(true)
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const response = await fetch(`${apiBase}/api/v1/search?q=${encodeURIComponent(query)}&types=people&limit=10`)
+      if (response.ok) {
+        const data = await response.json()
+        const people = data.people || []
+        setTalentSearchResultsCast(people.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          image: p.image,
+        })))
+      }
+    } catch (error) {
+      console.error("Search error:", error)
+      setTalentSearchResultsCast([])
+    } finally {
+      setCastSearchLoading(false)
     }
-  }
+  }, [])
+
+  const handleCrewSearch = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setTalentSearchResultsCrew([])
+      return
+    }
+
+    setCrewSearchLoading(true)
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const response = await fetch(`${apiBase}/api/v1/search?q=${encodeURIComponent(query)}&types=people&limit=10`)
+      if (response.ok) {
+        const data = await response.json()
+        const people = data.people || []
+        setTalentSearchResultsCrew(people.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          image: p.image,
+        })))
+      }
+    } catch (error) {
+      console.error("Search error:", error)
+      setTalentSearchResultsCrew([])
+    } finally {
+      setCrewSearchLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    handleCastSearch(debouncedCastQuery)
+  }, [debouncedCastQuery, handleCastSearch])
+
+  useEffect(() => {
+    handleCrewSearch(debouncedCrewQuery)
+  }, [debouncedCrewQuery, handleCrewSearch])
 
   const selectCastTalent = (talent: Talent) => {
     setNewCastMemberName(talent.name)
@@ -105,16 +157,36 @@ export function MovieCastCrewForm({
   }
 
   const addCastMember = () => {
-    const newMember: CastMember = {
-      id: Math.random().toString(36).substring(7),
-      name: newCastMemberName,
-      character: newCastMemberCharacter,
-      image: newCastMemberImage || "/placeholder.svg",
-      order: cast.length + 1,
+    // Check for duplicates by name (case-insensitive)
+    const isDuplicate = cast.some((member) => member.name.toLowerCase() === newCastMemberName.toLowerCase())
+
+    if (isDuplicate) {
+      // Update existing member instead of creating duplicate
+      const updatedCast = cast.map((member) =>
+        member.name.toLowerCase() === newCastMemberName.toLowerCase()
+          ? {
+              ...member,
+              character: newCastMemberCharacter || member.character,
+              image: newCastMemberImage || member.image,
+            }
+          : member,
+      )
+      setCast(updatedCast)
+      onCastChange(updatedCast)
+    } else {
+      // Add new member
+      const newMember: CastMember = {
+        id: Math.random().toString(36).substring(7),
+        name: newCastMemberName,
+        character: newCastMemberCharacter,
+        image: newCastMemberImage || "/placeholder.svg",
+        order: cast.length + 1,
+      }
+      const updatedCast = [...cast, newMember]
+      setCast(updatedCast)
+      onCastChange(updatedCast)
     }
-    const updatedCast = [...cast, newMember]
-    setCast(updatedCast)
-    onCastChange(updatedCast)
+
     setNewCastMemberName("")
     setNewCastMemberCharacter("")
     setNewCastMemberImage(undefined)
@@ -123,16 +195,37 @@ export function MovieCastCrewForm({
   }
 
   const addCrewMember = () => {
-    const newMember: CrewMember = {
-      id: Math.random().toString(36).substring(7),
-      name: newCrewMemberName,
-      role: newCrewMemberRole,
-      department: newCrewMemberDepartment,
-      image: newCrewMemberImage || "/placeholder.svg",
+    // Check for duplicates by name (case-insensitive)
+    const isDuplicate = crew.some((member) => member.name.toLowerCase() === newCrewMemberName.toLowerCase())
+
+    if (isDuplicate) {
+      // Update existing member instead of creating duplicate
+      const updatedCrew = crew.map((member) =>
+        member.name.toLowerCase() === newCrewMemberName.toLowerCase()
+          ? {
+              ...member,
+              role: newCrewMemberRole || member.role,
+              department: newCrewMemberDepartment || member.department,
+              image: newCrewMemberImage || member.image,
+            }
+          : member,
+      )
+      setCrew(updatedCrew)
+      onCrewChange(updatedCrew)
+    } else {
+      // Add new member
+      const newMember: CrewMember = {
+        id: Math.random().toString(36).substring(7),
+        name: newCrewMemberName,
+        role: newCrewMemberRole,
+        department: newCrewMemberDepartment,
+        image: newCrewMemberImage || "/placeholder.svg",
+      }
+      const updatedCrew = [...crew, newMember]
+      setCrew(updatedCrew)
+      onCrewChange(updatedCrew)
     }
-    const updatedCrew = [...crew, newMember]
-    setCrew(updatedCrew)
-    onCrewChange(updatedCrew)
+
     setNewCrewMemberName("")
     setNewCrewMemberRole("")
     setNewCrewMemberDepartment("")
@@ -158,37 +251,51 @@ export function MovieCastCrewForm({
               animate={{ opacity: 1, height: "auto" }}
               className="mb-4 p-4 border rounded-lg space-y-4"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Actor Name</Label>
                   <Popover>
-                    <PopoverTrigger className="relative">
+                    <PopoverTrigger className="relative w-full">
                       <Search
                         className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                         size={16}
                       />
+                      {castSearchLoading && (
+                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground animate-spin" size={16} />
+                      )}
                       <Input
                         placeholder="Search for actor..."
                         className="pl-9"
                         value={newCastMemberName}
                         onChange={(e) => {
                           setNewCastMemberName(e.target.value)
-                          handleCastSearch(e.target.value)
+                          setCastSearchQuery(e.target.value)
                         }}
                       />
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-0">
                       <Command>
-                        <CommandInput placeholder="Search talent..." />
                         <CommandList>
-                          <CommandEmpty>No talent found.</CommandEmpty>
-                          <CommandGroup>
-                            {talentSearchResultsCast.map((talent) => (
-                              <CommandItem key={talent.id} onSelect={() => selectCastTalent(talent)}>
-                                {talent.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                          {castSearchLoading ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              <Loader2 className="inline animate-spin mr-2" size={16} />
+                              Searching...
+                            </div>
+                          ) : talentSearchResultsCast.length === 0 ? (
+                            <CommandEmpty>No talent found. Press Enter to create new.</CommandEmpty>
+                          ) : (
+                            <CommandGroup>
+                              {talentSearchResultsCast.map((talent) => (
+                                <CommandItem key={talent.id} onSelect={() => selectCastTalent(talent)}>
+                                  <Avatar className="h-6 w-6 mr-2">
+                                    <AvatarImage src={talent.image} alt={talent.name} />
+                                    <AvatarFallback>{talent.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  {talent.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
                         </CommandList>
                       </Command>
                     </PopoverContent>
@@ -200,6 +307,14 @@ export function MovieCastCrewForm({
                     placeholder="Character name"
                     value={newCastMemberCharacter}
                     onChange={(e) => setNewCastMemberCharacter(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Image URL</Label>
+                  <Input
+                    placeholder="https://example.com/image.jpg"
+                    value={newCastMemberImage || ""}
+                    onChange={(e) => setNewCastMemberImage(e.target.value || undefined)}
                   />
                 </div>
               </div>
@@ -278,42 +393,66 @@ export function MovieCastCrewForm({
               animate={{ opacity: 1, height: "auto" }}
               className="mb-4 p-4 border rounded-lg space-y-4"
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Name</Label>
                   <Popover>
-                    <PopoverTrigger className="relative">
+                    <PopoverTrigger className="relative w-full">
                       <Search
                         className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                         size={16}
                       />
+                      {crewSearchLoading && (
+                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground animate-spin" size={16} />
+                      )}
                       <Input
                         placeholder="Search for person..."
                         className="pl-9"
                         value={newCrewMemberName}
                         onChange={(e) => {
                           setNewCrewMemberName(e.target.value)
-                          handleCrewSearch(e.target.value)
+                          setCrewSearchQuery(e.target.value)
                         }}
                       />
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-0">
                       <Command>
-                        <CommandInput placeholder="Search talent..." />
                         <CommandList>
-                          <CommandEmpty>No talent found.</CommandEmpty>
-                          <CommandGroup>
-                            {talentSearchResultsCrew.map((talent) => (
-                              <CommandItem key={talent.id} onSelect={() => selectCrewTalent(talent)}>
-                                {talent.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                          {crewSearchLoading ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              <Loader2 className="inline animate-spin mr-2" size={16} />
+                              Searching...
+                            </div>
+                          ) : talentSearchResultsCrew.length === 0 ? (
+                            <CommandEmpty>No talent found. Press Enter to create new.</CommandEmpty>
+                          ) : (
+                            <CommandGroup>
+                              {talentSearchResultsCrew.map((talent) => (
+                                <CommandItem key={talent.id} onSelect={() => selectCrewTalent(talent)}>
+                                  <Avatar className="h-6 w-6 mr-2">
+                                    <AvatarImage src={talent.image} alt={talent.name} />
+                                    <AvatarFallback>{talent.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  {talent.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
                         </CommandList>
                       </Command>
                     </PopoverContent>
                   </Popover>
                 </div>
+                <div className="space-y-2">
+                  <Label>Image URL</Label>
+                  <Input
+                    placeholder="https://example.com/image.jpg"
+                    value={newCrewMemberImage || ""}
+                    onChange={(e) => setNewCrewMemberImage(e.target.value || undefined)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Role</Label>
                   <Input

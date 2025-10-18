@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Trash2, Plus, Edit3, HelpCircle } from "lucide-react"
+import { Trash2, Plus, Edit3, HelpCircle, Eye, EyeOff } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { TriviaItem, TriviaCategory } from "../types"
 import { MOCK_TRIVIA_CATEGORIES } from "../types"
@@ -30,7 +30,18 @@ export function MovieTriviaForm({ initialTrivia, onTriviaChange }: MovieTriviaFo
   )
   const [editingItem, setEditingItem] = useState<(Partial<TriviaItem> & { id?: string }) | null>(null)
   const [isAdding, setIsAdding] = useState(false)
+  const [revealedAnswers, setRevealedAnswers] = useState<Set<string>>(new Set())
   const { toast } = useToast()
+
+  const toggleRevealAnswer = (id: string) => {
+    const newRevealed = new Set(revealedAnswers)
+    if (newRevealed.has(id)) {
+      newRevealed.delete(id)
+    } else {
+      newRevealed.add(id)
+    }
+    setRevealedAnswers(newRevealed)
+  }
 
   const handleInputChange = (field: keyof TriviaItem, value: any) => {
     if (editingItem) {
@@ -161,7 +172,7 @@ export function MovieTriviaForm({ initialTrivia, onTriviaChange }: MovieTriviaFo
       <CardContent>
         <div className="space-y-3">
           <AnimatePresence>
-            {(isAdding || editingItem) && !isAdding && editingItem && renderTriviaForm()}
+            {editingItem && !isAdding && renderTriviaForm()}
           </AnimatePresence>
 
           {triviaItems.map((item) => (
@@ -179,20 +190,43 @@ export function MovieTriviaForm({ initialTrivia, onTriviaChange }: MovieTriviaFo
                 <>
                   <div className="flex-grow flex items-start gap-3">
                     <HelpCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-1" />
-                    <div>
+                    <div className="flex-grow">
                       <span className="font-semibold text-sm">{item.question}</span>
                       <p className="text-xs text-muted-foreground">Category: {item.category}</p>
-                      <p className="text-sm mt-1">
-                        <strong>Answer:</strong> {item.answer}
-                      </p>
-                      {item.explanation && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          <em>Explanation:</em> {item.explanation}
-                        </p>
-                      )}
+
+                      {/* Reveal/Hide Answer Section */}
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-2"
+                      >
+                        {revealedAnswers.has(item.id) ? (
+                          <div className="bg-blue-50 dark:bg-blue-950 p-2 rounded text-sm">
+                            <p className="font-medium text-blue-900 dark:text-blue-100">
+                              <strong>Answer:</strong> {item.answer}
+                            </p>
+                            {item.explanation && (
+                              <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
+                                <em>Explanation:</em> {item.explanation}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">Click to reveal answer</p>
+                        )}
+                      </motion.div>
                     </div>
                   </div>
                   <div className="flex-shrink-0 flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => toggleRevealAnswer(item.id)}
+                      title={revealedAnswers.has(item.id) ? "Hide answer" : "Show answer"}
+                    >
+                      {revealedAnswers.has(item.id) ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => startEdit(item)}>
                       <Edit3 size={16} />
                     </Button>

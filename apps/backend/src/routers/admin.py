@@ -134,6 +134,24 @@ class StreamingIn(BaseModel):
     quality: Optional[str] = None
     url: Optional[str] = None
 
+class AwardSimpleIn(BaseModel):
+    name: str
+    year: int
+    category: str
+    status: str  # Winner | Nominee
+
+class TriviaIn(BaseModel):
+    question: str
+    category: str
+    answer: str
+    explanation: Optional[str] = None
+
+class TimelineIn(BaseModel):
+    date: str  # YYYY-MM-DD
+    title: str
+    description: str
+    type: str
+
 class MovieImportIn(BaseModel):
     external_id: str
     title: str
@@ -160,6 +178,9 @@ class MovieImportIn(BaseModel):
     producers: Optional[List[PersonIn]] = None
     cast: Optional[List[PersonIn]] = None
     streaming: Optional[List[StreamingIn]] = None
+    awards: Optional[List[AwardSimpleIn]] = None
+    trivia: Optional[List[TriviaIn]] = None
+    timeline: Optional[List[TimelineIn]] = None
 
 # ---------- Enrichment (Gemini/TMDB) ----------
 class EnrichQueryIn(BaseModel):
@@ -272,6 +293,48 @@ async def import_movies_json(
         await session.flush()
         return plat
 
+    # Awards helpers
+    from ..models import AwardCeremony, AwardCeremonyYear, AwardCategory, AwardNomination
+
+    def _slug(s: str) -> str:
+        import re
+        return re.sub(r"[^a-z0-9-]", "", re.sub(r"\s+", "-", s.strip().lower()))
+
+    async def get_or_create_ceremony(name: str) -> AwardCeremony:
+        q = select(AwardCeremony).where(AwardCeremony.name.ilike(name))
+        res = await session.execute(q)
+        c = res.scalar_one_or_none()
+        if c:
+            return c
+        c = AwardCeremony(external_id=_slug(name), name=name, short_name=name)
+        session.add(c)
+        await session.flush()
+        return c
+
+    async def get_or_create_ceremony_year(ceremony: AwardCeremony, year: int) -> AwardCeremonyYear:
+        ext = f"{ceremony.external_id}-{year}"
+        q = select(AwardCeremonyYear).where(AwardCeremonyYear.external_id == ext)
+        res = await session.execute(q)
+        y = res.scalar_one_or_none()
+        if y:
+            return y
+        y = AwardCeremonyYear(external_id=ext, year=year, ceremony_id=ceremony.id)
+        session.add(y)
+        await session.flush()
+        return y
+
+    async def get_or_create_category(cyear: AwardCeremonyYear, name: str) -> AwardCategory:
+        ext = f"{cyear.external_id}-{_slug(name)}"
+        q = select(AwardCategory).where(AwardCategory.external_id == ext)
+        res = await session.execute(q)
+        cat = res.scalar_one_or_none()
+        if cat:
+            return cat
+        cat = AwardCategory(external_id=ext, name=name, ceremony_year_id=cyear.id)
+        session.add(cat)
+        await session.flush()
+        return cat
+
     for idx, m in enumerate(movies):
         try:
             # Upsert Movie by external_id
@@ -307,17 +370,23 @@ async def import_movies_json(
                 except Exception:
                     movie.release_date = None
 
+            # Ensure movie.id is available before linking associations
+            await session.flush()
+
             # Genres - operate on association table directly to avoid async lazy-load issues
             if m.genres is not None:
-                await session.execute(
-                    movie_genres.delete().where(movie_genres.c.movie_id == movie.id)
-                )
-                await session.flush()
-                for gname in m.genres:
-                    g = await get_or_create_genre(gname)
+                try:
                     await session.execute(
-                        movie_genres.insert().values(movie_id=movie.id, genre_id=g.id)
+                        movie_genres.delete().where(movie_genres.c.movie_id == movie.id)
                     )
+                    await session.flush()
+                    for gname in m.genres:
+                        g = await get_or_create_genre(gname)
+                        await session.execute(
+                            movie_genres.insert().values(movie_id=movie.id, genre_id=g.id)
+                        )
+                except Exception as ge:
+                    errors.append(f"genres for {movie.external_id}: {ge}")
 
             # People (clear and re-link)
             if any([m.directors, m.writers, m.producers, m.cast]):
@@ -373,6 +442,54 @@ async def import_movies_json(
                         verified=True,
                     )
                     session.add(opt)
+
+            # Awards import (optional)
+            if m.awards:
+                for a in m.awards:
+                    try:
+                        ceremony = await get_or_create_ceremony(a.name)
+                        cyear = await get_or_create_ceremony_year(ceremony, int(a.year))
+                        cat = await get_or_create_category(cyear, a.category)
+                        nom_ext = f"{cyear.external_id}-{_slug(a.category)}-{movie.external_id}"
+                        # ensure id uniqueness by appending counter if needed omitted for brevity
+                        nomination = AwardNomination(
+                            external_id=nom_ext,
+                            nominee_type="movie",
+                            nominee_name=movie.title,
+                            image_url=None,
+                            entity_url=None,
+                            details=None,
+                            is_winner=(str(a.status).lower().startswith("win")),
+                            category_id=cat.id,
+                            movie_id=movie.id,
+                            person_id=None,
+                        )
+                        session.add(nomination)
+                    except Exception as _awde:
+                        errors.append(f"award for {movie.external_id}: {_awde}")
+
+            # Trivia & Timeline JSONB (optional)
+            if m.trivia is not None:
+                # store as list of dicts
+                movie.trivia = [
+                    {
+                        "question": t.question,
+                        "category": t.category,
+                        "answer": t.answer,
+                        "explanation": getattr(t, "explanation", None),
+                    }
+                    for t in m.trivia
+                ]
+            if m.timeline is not None:
+                movie.timeline = [
+                    {
+                        "date": tl.date,
+                        "title": tl.title,
+                        "description": tl.description,
+                        "type": tl.type,
+                    }
+                    for tl in m.timeline
+                ]
 
             if is_update:
                 updated += 1

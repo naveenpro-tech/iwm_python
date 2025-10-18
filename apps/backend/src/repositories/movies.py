@@ -189,6 +189,8 @@ class MovieRepository:
             "budget": m.budget,
             "revenue": m.revenue,
             "status": m.status,
+            "trivia": m.trivia,
+            "timeline": m.timeline,
             "directors": directors,
             "writers": writers,
             "producers": producers,

@@ -625,6 +625,46 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Create Review",
+        "description": "Create a new review for a movie",
+        "operationId": "create_review_api_v1_reviews_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Create Review Api V1 Reviews Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/reviews/{review_id}": {
@@ -881,6 +921,46 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "watchlist"
+        ],
+        "summary": "Add To Watchlist",
+        "description": "Add a movie to user's watchlist",
+        "operationId": "add_to_watchlist_api_v1_watchlist_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistItemIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Add To Watchlist Api V1 Watchlist Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/watchlist/{watchlist_id}": {
@@ -908,6 +988,98 @@
               "application/json": {
                 "schema": {
                   "title": "Response Get Watchlist Item Api V1 Watchlist  Watchlist Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "watchlist"
+        ],
+        "summary": "Update Watchlist Item",
+        "description": "Update watchlist item status, progress, or rating",
+        "operationId": "update_watchlist_item_api_v1_watchlist__watchlist_id__patch",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistItemUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Update Watchlist Item Api V1 Watchlist  Watchlist Id  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "watchlist"
+        ],
+        "summary": "Remove From Watchlist",
+        "description": "Remove a movie from user's watchlist",
+        "operationId": "remove_from_watchlist_api_v1_watchlist__watchlist_id__delete",
+        "parameters": [
+          {
+            "name": "watchlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Watchlist Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Remove From Watchlist Api V1 Watchlist  Watchlist Id  Delete"
                 }
               }
             }
@@ -5074,6 +5246,34 @@
         ],
         "title": "AnalyticsOverviewOut"
       },
+      "AwardSimpleIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "year",
+          "category",
+          "status"
+        ],
+        "title": "AwardSimpleIn"
+      },
       "EnrichBulkIn": {
         "properties": {
           "queries": {
@@ -5707,6 +5907,48 @@
               }
             ],
             "title": "Streaming"
+          },
+          "awards": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AwardSimpleIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awards"
+          },
+          "trivia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TriviaIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trivia"
+          },
+          "timeline": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TimelineIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeline"
           }
         },
         "type": "object",
@@ -5835,6 +6077,50 @@
           "refresh_token"
         ],
         "title": "RefreshBody"
+      },
+      "ReviewIn": {
+        "properties": {
+          "movieId": {
+            "type": "string",
+            "title": "Movieid"
+          },
+          "userId": {
+            "type": "string",
+            "title": "Userid"
+          },
+          "rating": {
+            "type": "number",
+            "title": "Rating"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "spoilers": {
+            "type": "boolean",
+            "title": "Spoilers",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "movieId",
+          "userId",
+          "rating",
+          "content"
+        ],
+        "title": "ReviewIn"
       },
       "SettingsUpdateIn": {
         "properties": {
@@ -6012,6 +6298,34 @@
         ],
         "title": "SubmitAttemptBody"
       },
+      "TimelineIn": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "title",
+          "description",
+          "type"
+        ],
+        "title": "TimelineIn"
+      },
       "TokenResponse": {
         "properties": {
           "access_token": {
@@ -6034,6 +6348,40 @@
           "refresh_token"
         ],
         "title": "TokenResponse"
+      },
+      "TriviaIn": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "category",
+          "answer"
+        ],
+        "title": "TriviaIn"
       },
       "ValidationError": {
         "properties": {
@@ -6067,6 +6415,90 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WatchlistItemIn": {
+        "properties": {
+          "movieId": {
+            "type": "string",
+            "title": "Movieid"
+          },
+          "userId": {
+            "type": "string",
+            "title": "Userid"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "want-to-watch"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movieId",
+          "userId"
+        ],
+        "title": "WatchlistItemIn"
+      },
+      "WatchlistItemUpdate": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "title": "WatchlistItemUpdate"
       }
     },
     "securitySchemes": {
