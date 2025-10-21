@@ -1,0 +1,93 @@
+The Postgres 18 official release 
+is just around the corner,  
+and we really need to talk about it. Granted, 
+database updates might feel niche or boring,  
+but this time around the changes 
+are too big to ignore. After all,  
+Postgres is one of the few pieces of software that 
+quietly powers almost everything, from your side  
+project running on a $5 VPS to massive systems 
+handling billions of records in production.
+Probably the most important addition of this 
+release is the new support for asynchronous  
+input and output, which fundamentally changes how 
+Postgres deals with disk operations. For years,  
+Postgres handled I/O the old-fashioned 
+way, blocking on every read and write,  
+and waiting patiently for the disk 
+to respond before moving on. Granted,  
+this is reliable, but it is also painfully 
+slow under load in read-heavy applications.
+Version 18 changes this architecture. The 
+database can now queue up multiple operations  
+at once and process them as the results come 
+in. That means faster queries, lower latency,  
+and performance improvements up to two or 
+three times better in real-world tests.
+But the performance improvements don’t stop 
+here. PostgreSQL 18 brings a bunch of smart,  
+under-the-hood optimizations that make 
+your queries run faster without having  
+to rewrite anything. First, we get 
+smarter handling of OR and IN clauses,  
+with Postgres now automatically 
+rewriting them into ANY expressions,  
+which the planner can optimize more 
+efficiently. Second, hash joins got  
+a serious upgrade. In previous versions, 
+they were already useful for large datasets,  
+but now they’re faster and more memory-efficient, 
+especially when joining large tables.
+On the developer experience 
+front, Postgres 18 actually  
+delivers features that make schema design 
+and application development less painful.
+One of the most noticeable changes is 
+that virtual generated columns are now  
+the default. Instead of storing 
+computed values in the table,  
+Postgres calculates them on the fly when 
+you read the data. That means less storage,  
+faster insert and update operations, and fewer 
+headaches when dealing with derived values.
+Another interesting addition is the built-in 
+support for UUID version 7. Unlike the randomness  
+of UUID version 4, UUIDv7 includes a timestamp 
+component, which makes them naturally ordered  
+and much friendlier to B-tree indexes. And of 
+course you can extract the timestamp directly  
+from the UUID itself, which is a nice 
+bonus for debugging or sorting records.
+The RETURNING clause got smarter 
+as well. You can now access both  
+the old and new values of a row in a single 
+statement. This makes things like auditing,  
+logging, or even undo operations far simpler.
+However, one of Postgres's many strengths 
+is its reliability and support for enforcing  
+validations at the database level, and version 18 
+continues to push that forward. One particularly  
+useful new feature is the support for temporal 
+constraints using the WITHOUT OVERLAPS clause.  
+This lets you define time ranges in your schema 
+and ensure they don’t overlap. So if you’re  
+building something like room bookings, 
+scheduling systems, or rental platforms,  
+you no longer need to rely on complex app logic 
+or awkward triggers to prevent double-bookings.  
+The database will enforce it for 
+you, and it will do it efficiently.
+Finally, another underrated but very impactful 
+change is how Postgres 18 handles upgrades.  
+Historically, after a major version upgrade, you'd 
+have to re-run ANALYZE across your entire database  
+to rebuild planner statistics. That step could 
+take hours on large datasets and would leave  
+performance unpredictable until it finished. 
+Now, statistics are preserved during upgrades,  
+so version upgrades are much smoother and less 
+risky, especially in production environments.
+Let me know in the comments if you are interested 
+in a deep dive into Postgres. Please don’t forget  
+to like the video, subscribe to the channel, 
+and, until next time, thank you for watching.

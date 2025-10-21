@@ -1,0 +1,389 @@
+In this video, we'll look at
+15 essential best practices for FastAPI.
+These are tips every FastAPI developer
+should know, covering everything from `async`
+rules and database connections to logging,
+background tasks, and even deployments.
+By following these, you'll be able
+to avoid common mistakes and build
+applications that are both high-performing and
+truly production-ready.
+Number One: Never use async def
+for blocking operations.
+In Python, blocking operations are tasks
+that make your program wait until
+they're finished before moving on. For
+example, time.sleep(10) will pause your program
+for 10 seconds.
+Other common examples include reading from
+or writing to files
+making HTTP requests with libraries like
+requests
+or performing database queries using synchronous
+clients such as MongoClient from pymongo.
+Now, here's the crucial part: FastAPI
+runs endpoint functions defined with async
+def in the main thread.
+If you put these blocking operations
+inside an async def function, your
+application will become unresponsive. It won't
+be able to process other requests
+until that blocking operation finishes.
+The solution is simple: define these
+functions using a regular def keyword
+instead of async def.
+FastAPI is designed to recognize that
+you're performing blocking operations within these
+def endpoints and will intelligently run
+them in separate threads. This way,
+your FastAPI application remains responsive.
+Number two, use async friendly code.
+To get the most performance out
+of your FastAPI application, use non-blocking
+libraries as much as possible so
+you can declare your endpoints as
+async endpoints.
+Use asyncio.sleep instead of time.sleep
+httpx.AsyncClient instead of the requests module
+and motor instead of pymongo. I
+hope you get the idea.
+Number three, don't do heavy computation
+in FastAPI endpoints, or you'll block
+your server.
+FastAPI is built for I/O-bound workloads.
+So, avoid processing images
+or videos
+or running heavy machine learning models
+directly in your endpoints.
+The reason is that your application
+will be unresponsive for as long
+as the computation runs.
+What should you do instead?
+If your ML model is lightweight
+and inference is fast—say, under 100ms
+with low traffic
+or if you're just prototyping, you
+can get away with using FastAPI
+directly.
+But for heavier ML models
+use dedicated inference engines like Triton,
+TensorFlow Serving, or TorchServe
+and then use FastAPI to validate
+inputs and route the request.
+For truly long-running computations, use a
+queue-plus-worker system.
+When the client sends a request
+to FastAPI
+FastAPI enqueues a job to a
+message broker like RabbitMQ.
+A separate worker (e.g., Celery) pulls
+the job from the queue, runs
+the heavy computation (on CPU or
+GPU nodes)
+and stores the result in a
+database.
+By the way if your FastAPI
+app is slow
+and you'd like me to take
+a look
+just send me an email here.
+Number four, the previous rules for
+endpoints also applies to Fastapi dependencies.
+Define your dependency with def if
+you're doing any blocking operation inside.
+Use async def if it's light,
+CPU-bound, and entirely non-blocking.
+And don't perform any heavy computation
+inside your dependency.
+Number Five, Don't make your users
+wait.
+When you have operations that don't
+need to block the client from
+getting a response—things
+like sending a confirmation email
+or logging event
+you should avoid making the client
+wait by doing it in the
+endpoint.
+Instead, use FastAPI's built-in BackgroundTasks. They're
+perfect for small, non-critical, "fire-and-forget" tasks.
+Since these background tasks run within
+the same event loop as your
+main application
+you'll want to follow the same
+rules for deciding between async def
+and def when defining them.
+However, it's crucial to understand the
+limitations: don't use BackgroundTasks for anything
+requiring guaranteed delivery, retries, or tasks
+that run for a long duration.
+For those more robust needs, a
+dedicated message queue and worker system
+(like Celery) is still the superior
+choice. Remember, if your FastAPI process
+crashes before a background task completes,
+that task will fail.
+Number six, don't expose Fastapi Swagger
+or ReDoc in production unless your
+API is public-facing. FastAPI automatically generates
+these docs, which is great during
+development.
+But in production, they can reveal
+endpoints that might still be incomplete
+or lack proper security.
+To prevent this, make sure to
+set docs_url, redoc_url, and openapi_url to
+None in your production settings.
+Create a custom base model and
+use it to define your Pydantic
+models.
+The benefit is that it's easier
+to manage your global configuration in
+one place.
+For example, if you want to
+return camelCase to the frontend but
+prefer snake_case in Python, you can
+set an alias generator to handle
+that.
+Another common use case is simplifying
+JSON encoding when returning data. If
+you try to return a datetime
+or Decimal object, you'll get an
+encoding error. So, define your encoders
+globally.
+You can format datetime objects as
+strings,
+convert Decimal to float,
+and if you're working with MongoDB,
+convert ObjectId instances to strings.
+Number eight, don't manually construct response
+models in your FastAPI endpoints.
+If you've set a response_model, there's
+no performance benefit
+to creating that model yourself just
+to return it.
+FastAPI will do it anyway.
+It first converts your return value
+to a dictionary or a list
+validates it against the response_model
+and then encodes it to JSON.
+Just return a plain dictionary, and
+let FastAPI take care of the
+rest.
+Number nine, validate with Pydantic and
+Not Your Code.
+Push as much validation and structure
+definition as possible into your Pydantic
+models. That's what they're built for.
+Don't scatter validation across your route
+functions with if statements and manual
+checks. It might seem easier at
+first, but it quickly turns into
+a mess. You lose consistent error
+responses, and clients get cryptic 400s
+with no clue why their request
+failed. You end up repeating the
+same logic in multiple places. And
+the worst part—your OpenAPI docs won't
+reflect any of that hidden validation.
+If Pydantic doesn't support the validation
+you need, don't write it inside
+the endpoint function—add custom validation logic
+directly inside the model instead.
+Number ten, Use dependencies for DB-based
+validation.
+If your validation logic requires a
+database query—like checking whether a resource
+belongs to the current user before
+allowing changes—don't put that logic directly
+in your endpoint.
+Instead, create a dependency and use
+it.
+The first benefit is that you
+can easily reuse the dependency across
+multiple endpoints with just a single
+line of code.
+And there's no performance hit, since
+FastAPI caches dependencies per request
+your dependency will be evaluated only
+once in a request. Overall, it's
+efficient and helps keep your endpoints
+clean.
+Number eleven, avoid creating a new
+database connection in every endpoint.
+Instead, you should use a connection
+pool and access these connections through
+dependency injection. There are two common
+ways to do this:
+The first one is storing the
+db connections pool in the app
+state. You initialize the connection pool
+within the lifespan function and then
+store it in app.state.
+After that, you create a dependency
+that retrieves a connection from this
+pool. You'll typically use an async
+with block to ensure the connection
+is properly released. This method makes
+it straightforward to clean up resources
+during shutdown, which is particularly helpful
+if you're working with multiple databases.
+Second, the legacy global-style pool. This
+approach involves defining the connection pool
+as a global variable and populating
+it during the app's lifespan event.
+While the first method (storing in
+app state) is the recommended approach,
+you'll still frequently encounter the global-style
+pool in many existing codebases.
+Number twelve, use the new lifespan
+event for managing app level resources.
+It's better to use FastAPI's newer
+lifespan feature
+instead of the older @app.on_event("startup") and
+@app.on_event("shutdown") decorators.
+Lifespan gives you a single, unified
+context to handle setup—like initializing database
+connections, cache clients, or starting background
+tasks—and cleanup when the app shuts
+down. It keeps your startup and
+shutdown logic together, which makes things
+easier to manage and reduces the
+chance you'll forget to clean something
+up.
+And if startup fails, lifespan still
+ensures cleanup happens—which isn't guaranteed with
+the old way.
+Number thirteen, don't hardcode secrets in
+your code
+use env files and config classes
+to access them.
+Never hardcode values like passwords, API
+keys, tokens , et cetera directly
+in your source code.
+Instead, use a .env file—and make
+sure to
+add .env to your .gitignore so
+it doesn't end up in version
+control.
+It's a good idea to include
+a .env.example file in your repo.
+This acts as a template, showing
+what environment variables are expected, without
+exposing any real secrets. Keep it
+up to date—it should closely mirror
+the actual .env structure.
+That said, try not to overload
+your .env file with things that
+control business logic or complex behavior.
+Keep it focused on static configuration—stuff
+like port numbers, DB URLs, credentials,
+and simple toggles like DEBUG=true. Anything
+more dynamic is usually better off
+handled directly in code.
+Also, avoid accessing os.environ all over
+your codebase. It gets messy fast.
+A better approach is to centralize
+everything in a config class—something like
+a Settings class. In my projects,
+I use Pydantic's BaseSettings. It validates
+all your environment variables upfront. If
+something's missing or misconfigured, it fails
+early right when the server starts,
+and it makes switching between development
+and production environments a lot smoother.
+Another solid option is Dynaconf. It's
+more flexible and supports things like
+multiple environments and layered settings
+Number fourteen, use structured logging and
+avoid relying on simple print statements
+for logging.
+The print() function simply doesn't offer
+the control and flexibility we need.
+For instance, there's no built-in way
+to specify a log level or
+automatically add context like request id,
+timestamps. Debugging with print() can quickly
+become a nightmare because you can't
+easily filter out irrelevant messages—every print
+statement has the same visibility.
+Instead, I highly recommend using Python's
+standard logging module, often paired with
+powerful libraries like Loguru or Structlog.
+These libraries allow you to assign
+a criticality to your logs, whether
+it's something for debugging, an informational
+message, a warning, an error, or
+a critical alert. This becomes incredibly
+useful when you're running your application.
+Depending on the environment, whether it's
+development or production, you can set
+the log level. For example, you
+might set it to DEBUG or
+INFO or ERROR, which gives you
+fine-grained control over what messages you
+see.
+In development, you'll likely want to
+see everything, so setting the log
+level to DEBUG is common.
+However, in production, you'll probably want
+to set the log level higher,
+perhaps to INFO or ERROR, based
+on your specific operational needs.
+Another incredibly useful practice is to
+add contextual information to each log,
+such as request ID. Unlike print()
+statements, where you'd have to manually
+add this to every single one
+libraries like Structlog allow you to
+create a middleware that stores context
+variables. These context variables safely pass
+request-specific data across
+asynchronous calls.
+Then, within your logger configuration, you
+can configure it to include the
+context variables, time, log level, and
+the actual message.
+The request ID is just a
+simple example. You might also want
+to log other contextual information like
+the user ID.
+Just make sure you're never logging
+anything sensitive, like database credentials or
+API keys.
+Finally, if you're running multiple instances
+of your application, it's a good
+practice to centralize your logs. To
+do this, you'll likely want to
+push these JSON logs using Filebeat
+to Elasticsearch for centralized storage and
+analysis.
+And for our last point, number
+15, we're talking about the best
+practices for deploying FastAPI.
+For local development, Uvicorn on its
+own is perfectly fine. However, when
+you move to a production environment,
+you should run Uvicorn with Gunicorn,
+specifically using the UvicornWorker class.
+Next, make sure to install uvloop
+in your Python virtual environment. FastAPI
+will automatically detect and use uvloop
+instead of the default asyncio event
+loop, which can provide a significant
+performance boost.
+Finally, you'll want to tune the
+number of workers to match your
+server's CPU. A common starting point
+is to set workers equal to
+(CPU cores * 2) + 1.
+However, this isn't a hard and
+fast rule; you should experiment and
+benchmark to find the optimal number
+that maximizes your server's performance.
+If you're looking to scale your
+application further, consider containerizing it using
+Docker.
+Don't forget to drop me an
+email here, if you want me
+to review your application

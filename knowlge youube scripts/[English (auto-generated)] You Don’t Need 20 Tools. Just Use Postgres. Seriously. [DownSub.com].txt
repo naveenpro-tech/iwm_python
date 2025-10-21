@@ -1,0 +1,73 @@
+[Music]
+Modern webdev is kind of broken. We have
+tools for everything. Yet somehow it's
+never been harder to build something
+simple. You want to deploy an app.
+Suddenly you're juggling 15 services. O
+cache, cron jobs, monitoring, vector
+search, full text search, graphql, APIs.
+Your to-do list app now needs a seed
+round. But here's a wild thought. What
+if you just use Postgres? That's right.
+The boring old SQL database you ignored
+in boot camp. It's secretly a full stack
+platform in disguise. Let me explain. N
+flexibility like no SQL. Postgres has
+JSON B. You can store dynamic
+unstructured data and still query it
+with SQL. No need to ditch schemas. You
+get structure and chaos. Best of both
+worlds. Need a cron job? Install the
+pgron extension. Schedule SQL queries to
+run every hour, every day, whenever. No
+extra server. No janky Linux scripts,
+just SQL magic caching. Use unlog
+tables. They skip disc rights, live in
+memory, and are perfect for fastchanging
+throwaway data. Still think you need
+Reddus, Firebase, Alolia. Let's go
+deeper. Want vector search for AI stuff?
+PG Vector gives you real vector data
+types. You can store embeddings, find
+nearest neighbors, and do rag style
+lookups all inside your database. Need
+full text search with fuzzy matching?
+Postgres has TS vector rank search
+results. Handle typos. Build your own
+search engine without elastic. Need
+graphql? PgraphphQL turns your tables
+into a GraphQL API. Writes SQL get
+structured queries. No back-end server
+required. Want realtime data sync like
+Firebase? ElectricSQL wraps around
+Postgress and keeps the front end fresh.
+No polling, no websocket pain, just data
+that stays up to date. Okay, but what
+about O? You can hash passwords with PG
+crypto, sign JWTs with PGJWT, and write
+rowle security policies to make sure
+users only see their own data, all
+within SQL. Now, analytics. Tired of
+Google Analytics or shipping data to a
+paid SAS. Just use PGMET. It turns
+Postgres into a time series database
+with duct DB style column storage. Great
+for metrics, dashboards, and tracking
+what users do. And if you're wondering
+how to host all this platforms like Neon
+could use serverless Postgres with
+branching, scaling, and sane pricing. At
+this point, uh, you've got a cache, a
+job scheduler, a vector store, a search
+engine, a GraphQL server, real-time
+sync, O and analytics, all built on a
+database. No JavaScript framework drama,
+no surprise invoices, no tendencies just
+to send a welcome email. So yeah,
+Postgres isn't just SQL anymore. It's
+the Swiss Army knife of modern webdev.
+And next time someone says, "Let's spin
+up six microservices and four SAS tools
+for this MVP," just smile and say, "Hey,
+why don't we try Postgress first?
+[Music]

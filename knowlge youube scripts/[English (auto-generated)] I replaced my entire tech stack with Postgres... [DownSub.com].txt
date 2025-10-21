@@ -1,0 +1,270 @@
+modern web development sucks we have
+amazing tools that solve every problem
+and technically it's never been easier
+to build a billion dooll failed app idea
+the problem is that by the time you
+deploy it you end up paying 20 different
+ycb startups to use their fancy shovels
+you think you need an in-memory cache
+database to handle your low to five
+users you need a cron service you need
+authentication performance monitoring
+analytics serverless functions and the
+list goes on it's no coincidence that
+America's homeless population started to
+rise immediately after the release of
+nextjs in 2016 but what if I told you
+you could throw all of these shovels in
+the incinerator and use nothing but
+postgressql yes the relational database
+to achieve 90% of your web development
+needs in today's video we'll look at 11
+useful unorthodox and just plain weird
+ways to use postgress by the end of it
+we will have built a full stack
+application using nothing but an open
+source database but first of all what
+makes postgress special and why not use
+something like MySQL or SQL light well
+out of the box postgress provides
+Advanced Data types like binary Json
+arrays key value stores and even
+geometric types to Define shapes but
+more importantly it's extensible and you
+can even create your own custom data
+types over the years this has led to a
+massive ecosystem of extensions where
+developers have given it all kinds of
+crazy new features it's just like
+modding a game where you take something
+that sucks like Civilization 7 and
+install a bunch of mods to make it
+playable now before we get into the
+first example I first want to warn you
+that just because you can do something
+in postgress doesn't mean you should
+before you go and cancel all your shovel
+subscriptions don't forget to think
+critically and make sure you use the
+right tool for the job one of the great
+debates among web developers is SQL
+versus nosql and one of the key selling
+points for no SQL is that you can work
+with unstructured data like objects with
+Dynamic data that might be different for
+each record you can't do that in SQL
+because every table has a fixed schema
+well actually that's not true because
+postgress supports binary Json in this
+query you'll notice how we create a
+table with a Json B type and then insert
+some values into it as raw Json strings
+so pretty cool and believe it or not we
+can actually query this data now we can
+use a select statement followed by a
+wear clause and then this syntax to
+filter and access Fields inside this
+unstructured data that feature is built
+right into postgress but now we're going
+to implement some really crazy stuff
+thanks to extensions first though you
+might be wondering where do I get a
+postgress database it's free and open
+source to host locally but an even
+easier option is neon the sponsor of
+today's video they may not condone all
+the crazy stuff I'm showing you in this
+video but they provide postgress on a
+serverless platform that makes it really
+easy to Kickstart and scale your
+projects not only do they have an
+awesome free tier but there's also
+developer friendly guides for all the
+biggest Frameworks and OMS developers
+already love postgress and neon makes it
+even easier to work with by providing
+features like branching which allows you
+to easily create different data
+workflows for development testing and
+production and will automatically scale
+up with zero effort as your app grows
+give neon a try for free right now using
+the link below to create a postgress
+database then take your connection
+details to a VSS code extension like SQL
+tools and connect to it locally and now
+we're ready to do some really crazy
+stuff with extensions developers only
+want one thing and it's disgusting a
+Chron job which is code that runs on a
+schedule now normally you would have to
+edit the cron tab file on Linux to
+achieve this or pay a sass to do it for
+you but postgress will actually give you
+a Cron job for free if we install the PG
+cron extension we can then write a SQL
+statement that runs a KRON schedule give
+it a name Define the schedule and then
+it will run the SQL statement on that
+schedule like you might want to delete
+or aggregate a bunch of data on a daily
+basis that's cool but another thing you
+think you might need but probably don't
+is an in-memory cache database like
+reddis or mcash well in postgress you
+can create your own po man's redus by
+using an unlog table as a cache this
+prevents right ahead logging where
+changes to the database are written to a
+log file before being applied to data
+files and that provides the D for
+durability in asset and that means if
+your server crashes unexpectedly
+committed transactions will not be lost
+however you don't really need that for a
+cache and disabling it provides better
+performance then you can update the
+postgress config to store it in a shared
+buffer which will keep the data highly
+available in Ram and then summon the
+autov vacu demon to avoid bloat and
+maybe throw in PG KRON to automatically
+delete any entries with an expired time
+to live but this wouldn't be a proper
+fireship video if I didn't mention Ai
+and if you're building an AI app that
+uses rag stack you might consider paying
+for a vector database but what you could
+do instead is just install the PG Vector
+extension it provides a vector data type
+that allows you to store
+multi-dimensional data then you can do
+things like make a query for nearest
+neighbors based on L2 distance and you
+can even take things a step further with
+the pgai extension not only does it
+handle Vector embeddings but it allows
+you to load your own data set and
+vectorize it all entirely in SQL code
+but speaking of vectors A more
+traditional feature you might need is a
+full Tech search engine where users type
+into a search box and get results even
+if they have typos the postgress
+actually has built-in support for this
+with the TS Vector type it'll take a
+string like this and break it up into a
+bunch of smaller parts then we can
+create a generalized inverted index for
+better performance which gives us the
+ability to then Rank and query the most
+likely results from the data using
+double app which is the tech search
+operator and now you don't have to pay
+for expensive tools like algolia or
+elastic search if you're sick of writing
+SQL code though one thing you might do
+instead is use graphql the magic PG
+graphql extension can transform your
+database into a graphql API and that
+makes it incredibly easy for any
+programming language to understand in
+query your database just add the
+extension and then start writing graphql
+resolvers directly in your SQL code and
+best of all no additional servers
+libraries or paid SAS middlemen are
+required but what if you're building a
+real-time application using tools like
+Firebase or superbase that's a difficult
+feature to roll out on your own but a
+library called electric SQL fixes this
+it's not a PG extension but rather a
+sync layer which would sit in between
+your database and your front end code to
+ensure that the end user always has
+fresh data and that means you don't have
+to mess around with websockets or write
+a bunch of broken code to automatically
+fetch data when it changes and as an
+added bonus it works great with neon but
+another thing developers like to brag
+about is rolling their own off usually
+by writing some crappy JavaScript
+instead of paying a SAS to do that for
+them but real men roll their own off
+entirely in postgress and that's
+possible when you combine a couple of
+extensions like PG crypto crypto and PG
+Json web token like if we have a table
+with a username and password we can use
+crypto to Hash the password and also
+generate Assa that ensures that when our
+database gets hacked the attacker won't
+have access to the plain text password
+and now to verify a user's login
+credentials we can write a simple query
+that matches the username to the hashed
+password with the Crypt function but the
+other thing we'll need is a way to
+validate user sessions on the server and
+one way to do that is with Json web
+tokens and PG JWT makes it really easy
+to cryptographically sign a token on the
+server and now that we have that we can
+Implement roow level security where the
+end user can only read and write data
+that's actually owned by their username
+this is a built-in feature in postgress
+where we create policies that Define
+rules about how our data can be accessed
+and in this case we'll verify the
+current user's token before executing
+any queries and that means selecting
+everything from the horse's table will
+only give us the hes owned by that user
+at this point we have a pretty complex
+application and we should start
+collecting some analytics data instead
+of Google analytics or another paid SAS
+an option you'll want to check out is PG
+moon cake basically it turns postgress
+into a Time series database and it's
+extremely fast and efficient because it
+adds support for column store tables
+with duck DB execution and all this data
+can be dropped into a cloud storage
+bucket and or visualized with other open
+source tools like grafana that's cool
+and all but we'll never actually get any
+analytics data if we don't make our data
+available on the internet to achieve
+that you might think you need to build a
+restful API with some programming
+language from scratch but another option
+is post rest which automatically turns
+your database into a uccessful API after
+you get it set up you'll be able to go
+into the browser then navigate to Local
+Host followed by a table name and it
+will automatically query your postgress
+data and return it in Json format on top
+of that you can do all kinds of other
+stuff like filtering pagination
+authentication and so on and now the
+final step to build a true full stack
+application is to store some HTML CSS
+and JavaScript in the database in fact
+there are even some crazies out there
+getting react server components to wrun
+in post grass and you really can't get
+your data any closer to the UI than that
+congratulations you're now officially a
+certified postgress Rison big shout out
+to Neon for reviewing and sponsoring
+this video and although they told me
+they don't approve of all the crazy
+stuff I showed you in this video I'm
+just going to go ahead and upload it
+anyway thanks for watching and I will
+see you in the next one
