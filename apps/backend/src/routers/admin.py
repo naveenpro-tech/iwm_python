@@ -394,16 +394,25 @@ async def import_movies_json(
                     movie_people.delete().where(movie_people.c.movie_id == movie.id)
                 )
                 await session.flush()
+
+                # Track inserted person_ids to avoid duplicates
+                inserted_person_ids = set()
+
                 async def link_person(per: PersonIn, role: str, character: Optional[str] = None):
                     p = await get_or_create_person(per.name, per.image)
-                    await session.execute(
-                        movie_people.insert().values(
-                            movie_id=movie.id,
-                            person_id=p.id,
-                            role=role,
-                            character_name=character,
+
+                    # Only insert if this person hasn't been linked yet
+                    if p.id not in inserted_person_ids:
+                        await session.execute(
+                            movie_people.insert().values(
+                                movie_id=movie.id,
+                                person_id=p.id,
+                                role=role,
+                                character_name=character,
+                            )
                         )
-                    )
+                        inserted_person_ids.add(p.id)
+
                 if m.directors:
                     for per in m.directors:
                         await link_person(per, "director")
@@ -496,10 +505,12 @@ async def import_movies_json(
             else:
                 imported += 1
 
-            await session.flush()
+            # Commit after each movie to avoid transaction rollback issues
+            await session.commit()
         except Exception as e:
+            # Rollback this movie's transaction and continue with next
+            await session.rollback()
             errors.append(f"{m.external_id}: {e}")
 
-    await session.commit()
     return ImportReportOut(imported=imported, updated=updated, failed=len(errors), errors=errors)
 

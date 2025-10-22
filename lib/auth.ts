@@ -14,6 +14,14 @@ export function storeTokens(t: Tokens) {
   if (!s) return
   s.setItem("access_token", t.access_token)
   s.setItem("refresh_token", t.refresh_token)
+
+  // Also store in cookies for middleware
+  if (typeof document !== "undefined") {
+    // Set access token cookie (expires in 30 minutes)
+    document.cookie = `access_token=${t.access_token}; path=/; max-age=1800; SameSite=Lax`
+    // Set refresh token cookie (expires in 7 days)
+    document.cookie = `refresh_token=${t.refresh_token}; path=/; max-age=604800; SameSite=Lax`
+  }
 }
 
 export function getAccessToken(): string | null {
@@ -28,7 +36,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (token) headers["Authorization"] = `Bearer ${token}`
   const res = await fetch(`${apiBase}/api/v1${path}`, { ...init, headers, cache: "no-store" })
   if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`)
+    // Try to get error message from response
+    let errorMessage = `Request failed: ${res.status}`
+    try {
+      const errorData = await res.json()
+      if (errorData.detail) {
+        errorMessage = errorData.detail
+      }
+    } catch {
+      // If JSON parsing fails, use status text
+      errorMessage = res.statusText || errorMessage
+    }
+    throw new Error(errorMessage)
   }
   return (await res.json()) as T
 }
@@ -53,5 +72,22 @@ export async function login(email: string, password: string): Promise<Tokens> {
 
 export async function me(): Promise<User> {
   return await request<User>("/auth/me")
+}
+
+export function logout() {
+  const s = storage()
+  if (!s) return
+  s.removeItem("access_token")
+  s.removeItem("refresh_token")
+
+  // Also remove cookies
+  if (typeof document !== "undefined") {
+    document.cookie = "access_token=; path=/; max-age=0"
+    document.cookie = "refresh_token=; path=/; max-age=0"
+  }
+}
+
+export function isAuthenticated(): boolean {
+  return !!getAccessToken()
 }
 

@@ -171,6 +171,7 @@ class User(Base):
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, onupdate=datetime.utcnow, nullable=True)
 
     reviews: Mapped[List["Review"]] = relationship(back_populates="author", lazy="selectin")
+    critic_profile: Mapped["CriticProfile | None"] = relationship(back_populates="user", uselist=False, lazy="selectin")
 
 
 class Review(Base):
@@ -969,3 +970,173 @@ class UserSettings(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user: Mapped["User"] = relationship(lazy="selectin")
+
+
+# --- Critic Hub domain models ---
+class CriticProfile(Base):
+    __tablename__ = "critic_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    display_name: Mapped[str] = mapped_column(String(200))
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    banner_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    banner_video_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    verification_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    verification_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    follower_count: Mapped[int] = mapped_column(Integer, default=0)
+    total_reviews: Mapped[int] = mapped_column(Integer, default=0)
+    avg_engagement: Mapped[float] = mapped_column(Float, default=0.0)
+    total_views: Mapped[int] = mapped_column(Integer, default=0)
+    review_philosophy: Mapped[str | None] = mapped_column(Text, nullable=True)
+    equipment_info: Mapped[str | None] = mapped_column(Text, nullable=True)
+    background_info: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="critic_profile", lazy="selectin")
+    social_links: Mapped[List["CriticSocialLink"]] = relationship(back_populates="critic", cascade="all, delete-orphan", lazy="selectin")
+    reviews: Mapped[List["CriticReview"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+    followers: Mapped[List["CriticFollower"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+    analytics: Mapped[List["CriticAnalytics"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+
+
+class CriticSocialLink(Base):
+    __tablename__ = "critic_social_links"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+    platform: Mapped[str] = mapped_column(String(50))
+    url: Mapped[str] = mapped_column(String(500))
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="social_links", lazy="selectin")
+
+
+class CriticReview(Base):
+    __tablename__ = "critic_reviews"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    content: Mapped[str] = mapped_column(Text)
+    rating_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    rating_value: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    numeric_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
+    youtube_embed_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_gallery: Mapped[list] = mapped_column(JSONB, default=list)
+    watch_links: Mapped[list] = mapped_column(JSONB, default=list)
+    published_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow)
+    is_draft: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    view_count: Mapped[int] = mapped_column(Integer, default=0)
+    like_count: Mapped[int] = mapped_column(Integer, default=0)
+    comment_count: Mapped[int] = mapped_column(Integer, default=0)
+    share_count: Mapped[int] = mapped_column(Integer, default=0)
+    slug: Mapped[str] = mapped_column(String(500), unique=True, index=True)
+    meta_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="reviews", lazy="selectin")
+    movie: Mapped["Movie"] = relationship(lazy="selectin")
+    comments: Mapped[List["CriticReviewComment"]] = relationship(back_populates="review", cascade="all, delete-orphan")
+    likes: Mapped[List["CriticReviewLike"]] = relationship(back_populates="review", cascade="all, delete-orphan")
+
+
+class CriticReviewComment(Base):
+    __tablename__ = "critic_review_comments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    review_id: Mapped[int] = mapped_column(ForeignKey("critic_reviews.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    parent_id: Mapped[int | None] = mapped_column(ForeignKey("critic_review_comments.id", ondelete="CASCADE"), nullable=True, index=True)
+    content: Mapped[str] = mapped_column(Text)
+    like_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Relationships
+    review: Mapped["CriticReview"] = relationship(back_populates="comments", lazy="selectin")
+    user: Mapped["User"] = relationship(lazy="selectin")
+    parent: Mapped["CriticReviewComment | None"] = relationship(remote_side=[id], lazy="selectin")
+    replies: Mapped[List["CriticReviewComment"]] = relationship(back_populates="parent", cascade="all, delete-orphan")
+
+
+class CriticFollower(Base):
+    __tablename__ = "critic_followers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    followed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="followers", lazy="selectin")
+    user: Mapped["User"] = relationship(lazy="selectin")
+
+
+class CriticReviewLike(Base):
+    __tablename__ = "critic_review_likes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    review_id: Mapped[int] = mapped_column(ForeignKey("critic_reviews.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    liked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    review: Mapped["CriticReview"] = relationship(back_populates="likes", lazy="selectin")
+    user: Mapped["User"] = relationship(lazy="selectin")
+
+
+class CriticVerificationApplication(Base):
+    __tablename__ = "critic_verification_applications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    requested_username: Mapped[str] = mapped_column(String(100))
+    requested_display_name: Mapped[str] = mapped_column(String(200))
+    bio: Mapped[str] = mapped_column(Text)
+    platform_links: Mapped[list] = mapped_column(JSONB, default=list)
+    metrics: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    sample_review_urls: Mapped[list] = mapped_column(JSONB, default=list)
+    other_platforms: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="pending", index=True)
+    admin_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship(foreign_keys=[user_id], lazy="selectin")
+    reviewer: Mapped["User | None"] = relationship(foreign_keys=[reviewed_by], lazy="selectin")
+
+
+class CriticAnalytics(Base):
+    __tablename__ = "critic_analytics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+    date: Mapped[datetime] = mapped_column(DateTime, index=True)
+    total_views: Mapped[int] = mapped_column(Integer, default=0)
+    total_likes: Mapped[int] = mapped_column(Integer, default=0)
+    total_comments: Mapped[int] = mapped_column(Integer, default=0)
+    total_shares: Mapped[int] = mapped_column(Integer, default=0)
+    new_followers: Mapped[int] = mapped_column(Integer, default=0)
+    engagement_rate: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="analytics", lazy="selectin")

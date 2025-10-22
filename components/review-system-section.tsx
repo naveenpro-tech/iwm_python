@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Edit, ThumbsUp, ThumbsDown, Star, ChevronDown, ChevronUp, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ReviewForm } from "@/components/review-form"
+import { isAuthenticated } from "@/lib/auth"
 
 interface Review {
   id: string
@@ -48,11 +50,59 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
   const [expandedReviews, setExpandedReviews] = useState<Record<string, boolean>>({})
   const [visibleSpoilers, setVisibleSpoilers] = useState<Record<string, boolean>>({})
   const [reviewVotes, setReviewVotes] = useState<Record<string, "helpful" | "unhelpful" | null>>({})
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
 
   // Safe defaults
   const distribution = Array.isArray(movie.ratingDistribution) ? movie.ratingDistribution : []
   const sentiments = movie.sentimentAnalysis || { positive: 0, neutral: 0, negative: 0, keyPhrases: [] }
-  const reviews = Array.isArray(movie.reviews) ? movie.reviews : []
+
+  // Fetch reviews from backend
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+      const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
+
+      if (!useBackend || !apiBase) {
+        // Use fallback reviews from movie prop
+        setReviews(Array.isArray(movie.reviews) ? movie.reviews : [])
+        return
+      }
+
+      setIsLoadingReviews(true)
+      try {
+        const response = await fetch(`${apiBase}/api/v1/reviews?movieId=${movie.id}&limit=50&sortBy=${activeFilter === "latest" ? "date_desc" : activeFilter === "top" ? "rating_desc" : "date_desc"}`)
+        if (response.ok) {
+          const data = await response.json()
+          // Transform backend data to match component expectations
+          const transformedReviews = Array.isArray(data) ? data.map((r: any) => ({
+            id: r.id,
+            userId: r.author?.id || "",
+            username: r.author?.name || "Anonymous",
+            avatarUrl: r.author?.avatarUrl || null,
+            rating: r.rating,
+            verified: r.isVerified || false,
+            date: new Date(r.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            content: r.content,
+            containsSpoilers: r.hasSpoilers || false,
+            helpfulCount: r.helpfulVotes || 0,
+            unhelpfulCount: r.unhelpfulVotes || 0,
+          })) : []
+          setReviews(transformedReviews)
+        } else {
+          setReviews(Array.isArray(movie.reviews) ? movie.reviews : [])
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error)
+        setReviews(Array.isArray(movie.reviews) ? movie.reviews : [])
+      } finally {
+        setIsLoadingReviews(false)
+      }
+    }
+
+    fetchReviews()
+  }, [movie.id, movie.reviews, activeFilter])
 
   // Find the max count for scaling the distribution bars
   const maxCount = distribution.length ? Math.max(...distribution.map((item) => item.count)) : 0
@@ -136,7 +186,16 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
             </motion.div>
             <p className="text-[#E0E0E0] font-dmsans text-lg mb-2">{movie.reviewCount} Verified Reviews</p>
             <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.15 }} className="mt-4 md:mt-auto">
-              <Button className="bg-[#00BFFF] text-[#1A1A1A] hover:bg-[#00A3DD] font-inter">
+              <Button
+                onClick={() => {
+                  if (!isAuthenticated()) {
+                    window.location.href = "/login?redirect=" + encodeURIComponent(window.location.pathname)
+                  } else {
+                    setShowReviewForm(true)
+                  }
+                }}
+                className="bg-[#00BFFF] text-[#1A1A1A] hover:bg-[#00A3DD] font-inter"
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Write a Review
               </Button>
@@ -229,8 +288,18 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
       </motion.div>
 
       {/* Review Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {reviews.map((review, index) => (
+      {isLoadingReviews ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-12 h-12 border-4 border-[#282828] border-t-[#00BFFF] rounded-full animate-spin"></div>
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-[#A0A0A0] font-dmsans text-lg mb-4">No reviews yet</p>
+          <p className="text-[#A0A0A0] font-dmsans">Be the first to share your thoughts about this movie!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {reviews.map((review, index) => (
           <motion.div key={review.id} variants={itemVariants} custom={index} transition={{ delay: 0.2 + index * 0.1 }}>
             <Card className="bg-[#282828] border-none shadow-md hover:bg-[#2A2A2A] transition-colors">
               <div className="p-6">
@@ -350,8 +419,49 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
               </div>
             </Card>
           </motion.div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* Review Form Modal */}
+      <AnimatePresence>
+        {showReviewForm && (
+          <ReviewForm
+            movieId={movie.id}
+            movieTitle={movie.title}
+            onClose={() => setShowReviewForm(false)}
+            onSuccess={() => {
+              // Refresh reviews after successful submission
+              const fetchReviews = async () => {
+                const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+                try {
+                  const response = await fetch(`${apiBase}/api/v1/reviews?movieId=${movie.id}&limit=50&sortBy=date_desc`)
+                  if (response.ok) {
+                    const data = await response.json()
+                    const transformedReviews = Array.isArray(data) ? data.map((r: any) => ({
+                      id: r.id,
+                      userId: r.author?.id || "",
+                      username: r.author?.name || "Anonymous",
+                      avatarUrl: r.author?.avatarUrl || null,
+                      rating: r.rating,
+                      verified: r.isVerified || false,
+                      date: new Date(r.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                      content: r.content,
+                      containsSpoilers: r.hasSpoilers || false,
+                      helpfulCount: r.helpfulVotes || 0,
+                      unhelpfulCount: r.unhelpfulVotes || 0,
+                    })) : []
+                    setReviews(transformedReviews)
+                  }
+                } catch (error) {
+                  console.error("Error refreshing reviews:", error)
+                }
+              }
+              fetchReviews()
+            }}
+          />
+        )}
+      </AnimatePresence>
     </motion.section>
   )
 }

@@ -64,6 +64,9 @@ from .routers import admin as admin_router  # Admin panel features
 from .routers import notifications as notifications_router  # User notifications
 from .routers import settings as settings_router  # User settings and preferences
 from .routers import auth as auth_router  # Authentication (login, signup, JWT)
+from .routers import critics as critics_router  # Critic Hub - Critic profiles
+from .routers import critic_reviews as critic_reviews_router  # Critic Hub - Critic reviews
+from .routers import critic_verification as critic_verification_router  # Critic Hub - Verification
 
 
 """
@@ -286,6 +289,11 @@ api.include_router(talent_hub_router.router)  # GET /api/v1/talent-hub - Casting
 
 # Admin Features
 api.include_router(admin_router.router)  # POST /api/v1/admin/import - Admin panel
+
+# Critic Hub Features
+api.include_router(critics_router.router)  # GET /api/v1/critics - Critic profiles
+api.include_router(critic_reviews_router.router)  # GET /api/v1/critic-reviews - Critic reviews
+api.include_router(critic_verification_router.router)  # POST /api/v1/critic-verification - Verification
 
 # Attach the versioned API router to the main app
 app.include_router(api)

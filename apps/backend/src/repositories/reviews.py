@@ -84,33 +84,51 @@ class ReviewRepository:
         r = res.scalar_one_or_none()
         if not r:
             return None
+
+        # Get reviewer stats
+        reviewer_reviews_count = await self.session.execute(
+            select(Review).where(Review.user_id == r.user_id)
+        )
+        total_reviews = len(reviewer_reviews_count.scalars().all())
+
         return {
             "id": r.external_id,
             "title": r.title,
             "content": r.content,
             "rating": r.rating,
-            "date": r.date.isoformat(),
-            "hasSpoilers": r.has_spoilers,
+            "createdAt": r.date.isoformat(),
+            "isSpoiler": r.has_spoilers,
             "isVerified": r.is_verified,
             "helpfulVotes": r.helpful_votes,
             "unhelpfulVotes": r.unhelpful_votes,
             "commentCount": r.comment_count,
             "engagementScore": r.engagement_score,
             "mediaUrls": r.media_urls.split(",") if r.media_urls else [],
-            "author": {
+            "reviewer": {
                 "id": r.author.external_id,
-                "name": r.author.name,
+                "username": r.author.name,
                 "avatarUrl": r.author.avatar_url,
+                "isVerifiedReviewer": r.is_verified,
+                "totalReviews": total_reviews,
+                "followerCount": 0,  # TODO: Implement followers system
             },
             "movie": {
                 "id": r.movie.external_id,
                 "title": r.movie.title,
+                "releaseYear": int(r.movie.year) if r.movie.year else None,
                 "posterUrl": r.movie.poster_url,
-                "year": int(r.movie.year) if r.movie.year else None,
+                "backdropUrl": r.movie.backdrop_url,
+                "sidduScore": r.movie.siddu_score or 0,
                 "genres": [g.name for g in r.movie.genres],
                 "country": r.movie.country,
                 "language": r.movie.language,
             },
+            "engagement": {
+                "likes": r.helpful_votes,
+                "commentsCount": r.comment_count,
+                "userHasLiked": False,  # TODO: Implement user-specific like tracking
+            },
+            "comments": [],  # TODO: Implement comments system
         }
 
     async def create(

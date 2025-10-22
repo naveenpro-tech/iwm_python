@@ -16,6 +16,7 @@ type SignupFormProps = {
 export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<{
+    name?: string
     email?: string
     password?: string
     confirmPassword?: string
@@ -25,20 +26,39 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     e.preventDefault()
     setIsLoading(true)
     setErrors({})
+    const name = (document.getElementById("signup-name") as HTMLInputElement)?.value
     const email = (document.getElementById("signup-email") as HTMLInputElement)?.value
     const password = (document.getElementById("signup-password") as HTMLInputElement)?.value
     const confirm = (document.getElementById("confirm-password") as HTMLInputElement)?.value
+
+    // Validation
+    if (!name || name.trim().length < 2) {
+      setErrors({ name: "Name must be at least 2 characters" })
+      setIsLoading(false)
+      return
+    }
     if (password !== confirm) {
       setErrors({ confirmPassword: "Passwords do not match" })
       setIsLoading(false)
       return
     }
+    if (password.length < 6) {
+      setErrors({ password: "Password must be at least 6 characters" })
+      setIsLoading(false)
+      return
+    }
+
     try {
       const { signup } = await import("@/lib/auth")
-      await signup(email, password, email.split("@")[0])
+      await signup(email, password, name.trim())
       window.location.href = "/dashboard"
-    } catch (err) {
-      setErrors({ email: "Could not sign up. Try a different email." })
+    } catch (err: any) {
+      const errorMessage = err?.message || "Could not sign up. Try a different email."
+      if (errorMessage.includes("already registered")) {
+        setErrors({ email: "Email already registered. Please login instead." })
+      } else {
+        setErrors({ email: errorMessage })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -46,6 +66,28 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="signup-name" className="text-[#E0E0E0] font-dmsans">
+          Name
+        </Label>
+        <Input
+          id="signup-name"
+          type="text"
+          placeholder="Enter your full name"
+          className="bg-[#1A1A1A] border-[#3A3A3A] text-[#E0E0E0] font-dmsans focus:border-[#00BFFF] focus:ring-[#00BFFF]"
+          required
+        />
+        {errors.name && (
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[#FF4500] text-sm font-dmsans"
+          >
+            {errors.name}
+          </motion.p>
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="signup-email" className="text-[#E0E0E0] font-dmsans">
           Email
