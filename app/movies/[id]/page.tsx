@@ -12,6 +12,9 @@ import { WhereToWatchSection } from "@/components/where-to-watch-section"
 import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { addToWatchlist } from "@/lib/api/watchlist"
+import { getCurrentUser } from "@/lib/auth"
 
 // Fallback mock movie data (used when backend is unavailable)
 const fallbackMovieData = {
@@ -452,7 +455,40 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
   const [isLoading, setIsLoading] = useState(true)
   const [movieData, setMovieData] = useState<any>(fallbackMovieData)
   const [error, setError] = useState<string | null>(null)
+  const [isAddingToWatchlist, setIsAddingToWatchlist] = useState(false)
   const { id: movieId } = usePromise(params)
+  const { toast } = useToast()
+
+  // Handler for adding to watchlist
+  const handleAddToWatchlist = async () => {
+    setIsAddingToWatchlist(true)
+    try {
+      const user = await getCurrentUser()
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to add movies to your watchlist.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      await addToWatchlist(user.id, movieId)
+      toast({
+        title: "Added to Watchlist",
+        description: `${movieData.title} has been added to your watchlist.`,
+      })
+    } catch (error) {
+      console.error("Failed to add to watchlist:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add movie to watchlist. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAddingToWatchlist(false)
+    }
+  }
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -531,7 +567,11 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Hero Section */}
-      <MovieHeroSection movie={movieData} />
+      <MovieHeroSection
+        movie={movieData}
+        onAddToWatchlist={handleAddToWatchlist}
+        isAddingToWatchlist={isAddingToWatchlist}
+      />
 
       {/* Navigation */}
       <MovieDetailsNavigation movieId={movieId} movieTitle={movieData.title} />

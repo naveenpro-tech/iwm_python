@@ -5,30 +5,11 @@ import { ActivityFeed } from "@/components/profile/activity-feed"
 import { RecentReviewsSection } from "@/components/profile/sections/overview/recent-reviews-section"
 import { WatchlistPreviewSection } from "@/components/profile/sections/overview/watchlist-preview-section"
 
-interface UserData {
-  id: string
-  username: string
-  displayName: string
-  bio: string
-  avatarUrl: string
-  coverUrl: string
-  location: string
-  memberSince: string
-  isVerified: boolean
-  stats: {
-    reviews: number
-    watchlist: number
-    favorites: number
-    following: number
-    followers: number
-  }
-}
-
 interface ProfileOverviewProps {
-  userData: UserData
+  userId: string
 }
 
-export function ProfileOverview({ userData }: ProfileOverviewProps) {
+export function ProfileOverview({ userId }: ProfileOverviewProps) {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -54,13 +35,13 @@ export function ProfileOverview({ userData }: ProfileOverviewProps) {
     >
       {/* Left Column: Activity Feed */}
       <motion.div className="lg:col-span-2" variants={itemVariants}>
-        <ActivityFeed userId={userData.id} />
+        <ActivityFeed userId={userId} />
       </motion.div>
 
       {/* Right Column: Recent Reviews & Watchlist Preview */}
       <motion.div className="space-y-6" variants={itemVariants}>
-        <RecentReviewsSection userId={userData.id} />
-        <WatchlistPreviewSection userId={userData.id} />
+        <RecentReviewsSection userId={userId} />
+        <WatchlistPreviewSection userId={userId} />
       </motion.div>
     </motion.div>
   )

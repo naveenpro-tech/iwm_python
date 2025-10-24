@@ -194,6 +194,92 @@
         ]
       }
     },
+    "/api/v1/users/{username}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get User By Username",
+        "description": "Get user profile by username.\nUsername is derived from email (part before @) or can be a custom username field.",
+        "operationId": "get_user_by_username_api_v1_users__username__get",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{username}/stats": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get User Stats",
+        "description": "Get user statistics (counts for reviews, watchlist, favorites, collections)",
+        "operationId": "get_user_stats_api_v1_users__username__stats_get",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/genres/{genre_id}": {
       "get": {
         "tags": [
@@ -8728,6 +8814,146 @@
           "answer"
         ],
         "title": "TriviaIn"
+      },
+      "UserProfileResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
+          "avatarUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarurl"
+          },
+          "bannerUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bannerurl"
+          },
+          "joinedDate": {
+            "type": "string",
+            "title": "Joineddate"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/UserStatsResponse"
+          },
+          "isVerified": {
+            "type": "boolean",
+            "title": "Isverified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "name",
+          "email",
+          "bio",
+          "avatarUrl",
+          "bannerUrl",
+          "joinedDate",
+          "location",
+          "website",
+          "stats",
+          "isVerified"
+        ],
+        "title": "UserProfileResponse"
+      },
+      "UserStatsResponse": {
+        "properties": {
+          "reviews": {
+            "type": "integer",
+            "title": "Reviews"
+          },
+          "watchlist": {
+            "type": "integer",
+            "title": "Watchlist"
+          },
+          "favorites": {
+            "type": "integer",
+            "title": "Favorites"
+          },
+          "collections": {
+            "type": "integer",
+            "title": "Collections"
+          },
+          "following": {
+            "type": "integer",
+            "title": "Following"
+          },
+          "followers": {
+            "type": "integer",
+            "title": "Followers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reviews",
+          "watchlist",
+          "favorites",
+          "collections",
+          "following",
+          "followers"
+        ],
+        "title": "UserStatsResponse"
       },
       "ValidationError": {
         "properties": {

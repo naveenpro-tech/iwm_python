@@ -27,9 +27,19 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     const email = (document.getElementById("email") as HTMLInputElement)?.value
     const password = (document.getElementById("password") as HTMLInputElement)?.value
     try {
-      const { login } = await import("@/lib/auth")
+      const { login, me } = await import("@/lib/auth")
       await login(email, password)
-      window.location.href = "/dashboard"
+
+      // Fetch user data to get username for profile redirect
+      try {
+        const user = await me()
+        // Extract username from email (before @) or use user.name as fallback
+        const username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-')
+        window.location.href = `/profile/${username}`
+      } catch {
+        // Fallback to dashboard if user data fetch fails
+        window.location.href = "/dashboard"
+      }
     } catch (err) {
       setErrors({ email: "Invalid email or password" })
     } finally {

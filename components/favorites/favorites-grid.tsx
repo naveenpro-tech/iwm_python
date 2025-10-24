@@ -44,9 +44,8 @@ export function FavoritesGrid({ favorites }: FavoritesGridProps) {
                 <Image
                   src={item.imageUrl || `/placeholder.svg?text=${item.title.replace(/\s/g, "+")}`}
                   alt={item.title}
-                  layout="fill"
-                  objectFit="cover"
-                  className="group-hover:scale-105 transition-transform duration-300"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <Badge className="absolute top-2 right-2 bg-sky-600 text-white capitalize">{item.type}</Badge>

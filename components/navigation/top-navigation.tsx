@@ -15,6 +15,7 @@ const mainNavLinks = [
   { href: "/movies", label: "Movies" },
   { href: "/tv-shows", label: "TV Shows" },
   { href: "/people", label: "People" },
+  { href: "/critics", label: "Critics" },
   { href: "/pulse", label: "Pulse" },
   { href: "/cricket", label: "Cricket" },
   { href: "/explore", label: "Explore" },

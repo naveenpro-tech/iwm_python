@@ -56,9 +56,8 @@ export const PulseTrendingCard: React.FC<PulseTrendingCardProps> = ({ pulse, cla
               <Image
                 src={pulse.content.imageUrl || "/placeholder.svg"}
                 alt="Pulse image"
-                layout="fill"
-                objectFit="cover"
-                className="transition-transform duration-300 group-hover:scale-105"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             </div>
           )}

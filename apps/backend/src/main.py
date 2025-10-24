@@ -67,6 +67,7 @@ from .routers import auth as auth_router  # Authentication (login, signup, JWT)
 from .routers import critics as critics_router  # Critic Hub - Critic profiles
 from .routers import critic_reviews as critic_reviews_router  # Critic Hub - Critic reviews
 from .routers import critic_verification as critic_verification_router  # Critic Hub - Verification
+from .routers import users as users_router  # User profiles
 
 
 """
@@ -202,23 +203,23 @@ For Beginners:
 - allow_headers: Which HTTP headers are allowed
 """
 
-# Check if wildcard ('*') is in the allowed origins
-_has_wildcard = any(o == "*" for o in settings.cors_origins)
-
-# If wildcard is present, we must disable credentials (browser security requirement)
-_allow_credentials = not _has_wildcard
-
-# Use wildcard if present, otherwise use the specific list
-_allowed_origins = ["*"] if _has_wildcard else settings.cors_origins
+# CORS Configuration - ALWAYS use specific origins with credentials enabled
+# Never use wildcard '*' when credentials are needed
+_allowed_origins = settings.cors_origins
+_allow_credentials = True
 
 # Add CORS middleware to the application
 # Middleware: Code that runs before/after each request
+# NOTE: We explicitly set allow_origin_regex to None to prevent wildcard behavior
 app.add_middleware(
     CORSMiddleware,  # The CORS middleware class
     allow_origins=_allowed_origins,  # Which origins can call this API
     allow_credentials=_allow_credentials,  # Whether to allow cookies/auth
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],  # Allow all HTTP headers
+    allow_origin_regex=None,  # Explicitly disable regex matching
+    expose_headers=[],  # No custom exposed headers
+    max_age=600,  # Cache preflight requests for 10 minutes
 )
 
 # Log the CORS configuration for debugging
@@ -258,6 +259,7 @@ api = APIRouter(prefix="/api/v1")
 # Core Features
 api.include_router(health_router.router)  # GET /api/v1/health - Health check
 api.include_router(auth_router.router)  # POST /api/v1/auth/login, /signup, etc.
+api.include_router(users_router.router)  # GET /api/v1/users - User profiles
 api.include_router(genres_router.router)  # GET /api/v1/genres - Movie genres
 api.include_router(movies_router.router)  # GET /api/v1/movies - Movie catalog
 api.include_router(people_router.router)  # GET /api/v1/people - Actors, directors

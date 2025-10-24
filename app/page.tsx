@@ -1,13 +1,16 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 
 // Skeletons
 import SectionSkeleton from "@/components/skeletons/section-skeleton"
 import BestSceneSectionSkeleton from "@/components/skeletons/best-scene-section-skeleton"
 
-// Mock data imports
+// API imports
+import { getNewReleases, getFeaturedMovies, getTopRatedMovies } from "@/lib/api/movies"
+
+// Mock data imports (for sections not yet integrated)
 import {
   mockProgressData,
   mockWhatsNextData,
@@ -16,9 +19,6 @@ import {
   mockWeeklyGemData,
 } from "@/components/homepage/activity-snapshot/mock-data"
 import {
-  mockNewReleases,
-  mockMasterpieces,
-  mockSiddusPicks,
   mockVignetteData, // This is a single object for the cinematic vignette
   mockTrendingPulses,
   mockBestScenes,
@@ -80,6 +80,46 @@ const TrendingPulseSection = dynamic(
 )
 
 export default function HomePage() {
+  const [newReleases, setNewReleases] = useState([])
+  const [masterpieces, setMasterpieces] = useState([])
+  const [siddusPicks, setSiddusPicks] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch Telugu movies from backend
+        const [releases, featured, topRated] = await Promise.all([
+          getNewReleases(10),
+          getFeaturedMovies(10),
+          getTopRatedMovies(10),
+        ])
+
+        // Transform data to match component expectations
+        const transformMovie = (movie: any) => ({
+          id: movie.id || movie.external_id,
+          title: movie.title,
+          posterUrl: movie.posterUrl || movie.poster_url || "/placeholder.svg",
+          backdropUrl: movie.backdropUrl || movie.backdrop_url || "/placeholder.svg",
+          year: movie.year,
+          rating: movie.sidduScore || movie.siddu_score || 0,
+          genres: movie.genres || [],
+        })
+
+        setNewReleases((releases.items || releases || []).map(transformMovie))
+        setMasterpieces((featured.items || featured || []).map(transformMovie))
+        setSiddusPicks((topRated.items || topRated || []).map(transformMovie))
+      } catch (error) {
+        console.error("Failed to fetch homepage data:", error)
+        // Keep empty arrays on error
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
   return (
     <div className="bg-black text-white flex flex-col min-h-screen">
       <Suspense
@@ -98,15 +138,27 @@ export default function HomePage() {
       >
         <CinematicVignetteSection vignettes={[mockVignetteData]} />
       </Suspense>
-      <Suspense fallback={<SectionSkeleton message="Loading New Releases..." />}>
-        <NewReleasesSection movies={mockNewReleases} />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton message="Loading Global Masterpieces..." />}>
-        <GlobalMasterpiecesSection films={mockMasterpieces} />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton message="Loading Siddu's Picks..." />}>
-        <SiddusPicksSection picks={mockSiddusPicks} />
-      </Suspense>
+
+      {isLoading ? (
+        <>
+          <SectionSkeleton message="Loading New Releases..." />
+          <SectionSkeleton message="Loading Global Masterpieces..." />
+          <SectionSkeleton message="Loading Siddu's Picks..." />
+        </>
+      ) : (
+        <>
+          <Suspense fallback={<SectionSkeleton message="Loading New Releases..." />}>
+            <NewReleasesSection movies={newReleases} />
+          </Suspense>
+          <Suspense fallback={<SectionSkeleton message="Loading Global Masterpieces..." />}>
+            <GlobalMasterpiecesSection films={masterpieces} />
+          </Suspense>
+          <Suspense fallback={<SectionSkeleton message="Loading Siddu's Picks..." />}>
+            <SiddusPicksSection picks={siddusPicks} />
+          </Suspense>
+        </>
+      )}
+
       <Suspense fallback={<BestSceneSectionSkeleton />}>
         <BestScenesSection scenes={mockBestScenes} />
       </Suspense>

@@ -14,37 +14,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Image from "next/image"
 
-interface UserData {
-  id: string
-  username: string
-  displayName: string
-  bio: string
-  avatarUrl: string
-  coverUrl: string
-  location: string
-  memberSince: string
-  isVerified: boolean
-  stats: {
-    reviews: number
-    watchlist: number
-    favorites: number
-    following: number
-    followers: number
-  }
-}
-
 interface ProfileSettingsProps {
-  userData: UserData
+  userId: string
 }
 
-export function ProfileSettings({ userData }: ProfileSettingsProps) {
+export function ProfileSettings({ userId }: ProfileSettingsProps) {
   const [activeTab, setActiveTab] = useState("profile")
   const [formData, setFormData] = useState({
-    displayName: userData.displayName,
-    username: userData.username,
-    bio: userData.bio,
-    location: userData.location,
-    email: "alex.johnson@example.com", // Mock email
+    displayName: "Siddu Kumar", // Mock data - will be fetched from API
+    username: "siddu-kumar",
+    bio: "Film enthusiast and critic. Love exploring cinema from around the world.",
+    location: "Bangalore, India",
+    email: "siddu@example.com", // Mock email
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",

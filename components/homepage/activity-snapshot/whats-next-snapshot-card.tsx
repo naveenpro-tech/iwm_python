@@ -30,9 +30,8 @@ export const WhatsNextSnapshotCard: React.FC<WhatsNextSnapshotCardProps> = ({ it
         <Image
           src={item.imageUrl || "/placeholder.svg?width=400&height=225&text=Siddu"}
           alt={item.title}
-          layout="fill"
-          objectFit="cover"
-          className="transition-transform duration-300 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
         <span className="absolute top-3 right-3 bg-primary/90 text-gray-900 text-xs font-semibold px-2.5 py-1 rounded-full shadow-md">

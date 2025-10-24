@@ -42,8 +42,12 @@ interface FullReviewDTO {
   comments: any[]
 }
 
-export default function FullReviewPage({ params }: { params: Promise<{ reviewId: string }> }) {
-  const { reviewId } = usePromise(params)
+export default function MovieReviewDetailPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string; reviewId: string }> 
+}) {
+  const { id: movieId, reviewId } = usePromise(params)
   const [review, setReview] = useState<FullReviewDTO | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +69,12 @@ export default function FullReviewPage({ params }: { params: Promise<{ reviewId:
           throw new Error(`Failed to fetch review: ${response.statusText}`)
         }
         const data = await response.json()
+        
+        // Verify the review belongs to this movie
+        if (data.movie.id !== movieId) {
+          throw new Error("Review does not belong to this movie")
+        }
+        
         setReview(data)
       } catch (err) {
         console.error("Error fetching review:", err)
@@ -75,7 +85,7 @@ export default function FullReviewPage({ params }: { params: Promise<{ reviewId:
     }
 
     fetchReview()
-  }, [reviewId])
+  }, [reviewId, movieId])
 
   if (isLoading) {
     return (
@@ -92,11 +102,11 @@ export default function FullReviewPage({ params }: { params: Promise<{ reviewId:
           <h1 className="text-2xl font-bold text-[#E0E0E0] mb-4">Review Not Found</h1>
           <p className="text-[#A0A0A0] mb-6">{error || "The review you're looking for doesn't exist."}</p>
           <Link
-            href="/movies"
+            href={`/movies/${movieId}`}
             className="inline-flex items-center gap-2 bg-[#00BFFF] text-[#1A1A1A] px-6 py-3 rounded-lg hover:bg-[#00A3DD] transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Movies
+            Back to Movie
           </Link>
         </div>
       </div>

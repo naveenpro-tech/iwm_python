@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { isAuthenticated } from "@/lib/auth"
+import { isAuthenticated, getCurrentUser } from "@/lib/auth"
+import { submitReview } from "@/lib/api/reviews"
 
 interface ReviewFormProps {
   movieId: string
@@ -50,42 +51,19 @@ export function ReviewForm({ movieId, movieTitle, onClose, onSuccess }: ReviewFo
     setIsSubmitting(true)
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-      const accessToken = localStorage.getItem("access_token")
-
-      // Get current user to get userId
-      const meResponse = await fetch(`${apiBase}/api/v1/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-
-      if (!meResponse.ok) {
+      // Get current user
+      const user = await getCurrentUser()
+      if (!user) {
         throw new Error("Failed to authenticate. Please log in again.")
       }
 
-      const user = await meResponse.json()
-
-      const response = await fetch(`${apiBase}/api/v1/reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          movieId,
-          userId: user.email,  // Use email as external_id
-          rating,
-          title: title.trim() || null,
-          content: content.trim(),
-          spoilers: containsSpoilers,
-        }),
+      // Submit review using API client
+      await submitReview(movieId, {
+        title: title.trim() || undefined,
+        content: content.trim(),
+        rating,
+        hasSpoilers: containsSpoilers,
       })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.detail || "Failed to submit review")
-      }
 
       setSuccess(true)
       setTimeout(() => {

@@ -45,16 +45,27 @@ export default function ScenesPage() {
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
         const response = await fetch(`${apiBase}/api/v1/scene-explorer/by-movie/${movieId}?page=${page}&limit=${limit}`)
-        if (response.ok) {
-          const data: ScenesResponse = await response.json()
-          setScenes(data.scenes || [])
-          setTotal(data.total || 0)
-        } else {
-          toast({ title: "Error", description: "Failed to load scenes", variant: "destructive" })
+
+        if (!response.ok) {
+          console.warn(`Scenes API returned ${response.status}, using empty state`)
+          setScenes([])
+          setTotal(0)
+          setLoading(false)
+          return
         }
+
+        const data: ScenesResponse = await response.json()
+        setScenes(data.scenes || [])
+        setTotal(data.total || 0)
       } catch (error) {
         console.error("Failed to fetch scenes:", error)
-        toast({ title: "Error", description: "Failed to load scenes", variant: "destructive" })
+        setScenes([])
+        setTotal(0)
+        toast({
+          title: "Unable to Load Scenes",
+          description: "Scenes for this movie are not available yet.",
+          variant: "destructive"
+        })
       } finally {
         setLoading(false)
       }

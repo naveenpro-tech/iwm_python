@@ -32,8 +32,8 @@ export const MasterpieceCard: React.FC<MasterpieceCardProps> = ({ film, index })
           <Image
             src={film.posterUrl || "/placeholder.svg?width=200&height=300&query=Classic+Movie+Poster"}
             alt={film.title}
-            layout="fill"
-            objectFit="cover"
+            fill
+            className="object-cover"
             className="transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

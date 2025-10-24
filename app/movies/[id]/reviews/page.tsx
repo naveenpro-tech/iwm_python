@@ -2,244 +2,352 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Star, AlertCircle } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
-interface Review {
-  id: string
-  title: string
-  content: string
-  rating: number
-  date: string
-  hasSpoilers: boolean
-  author: {
-    id: string
-    name: string
-    avatarUrl?: string
-  }
-}
+// Import types
+import type {
+  ReviewTab,
+  ReviewFilters,
+  SortOption,
+  PaginationState,
+  OfficialReview,
+  CriticReviewCard,
+  UserReview,
+  ReviewStats,
+  MovieContext,
+} from "@/types/review-page"
+
+// Import API client
+import { getMovieReviews, getReviewStats } from "@/lib/api/reviews"
+import { getCurrentUser } from "@/lib/auth"
+
+// Import components (will be created next)
+import ReviewHeader from "@/components/review-page/review-header"
+import VoiceOfSidduSummary from "@/components/review-page/voice-of-siddu-summary"
+import ReviewTabs from "@/components/review-page/review-tabs"
+import SidduReviewTab from "@/components/review-page/siddu-review-tab"
+import CriticReviewsTab from "@/components/review-page/critic-reviews-tab"
+import UserReviewsTab from "@/components/review-page/user-reviews-tab"
+import WriteReviewFAB from "@/components/review-page/write-review-fab"
 
 export default function ReviewsPage() {
   const params = useParams()
   const movieId = params.id as string
-  const { toast } = useToast()
 
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [showForm, setShowForm] = useState(false)
+  // ============================================================================
+  // STATE MANAGEMENT
+  // ============================================================================
 
-  // Form state
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    rating: 5,
-    spoilers: false,
+  // Tab Navigation
+  const [activeTab, setActiveTab] = useState<ReviewTab>("siddu")
+
+  // Data Loading
+  const [isLoading, setIsLoading] = useState(true)
+  const [movie, setMovie] = useState<MovieContext | null>(null)
+  const [officialReview, setOfficialReview] = useState<OfficialReview | null>(null)
+  const [criticReviews, setCriticReviews] = useState<CriticReviewCard[]>([])
+  const [userReviews, setUserReviews] = useState<UserReview[]>([])
+  const [allUserReviews, setAllUserReviews] = useState<UserReview[]>([]) // For filtering
+  const [stats, setStats] = useState<ReviewStats | null>(null)
+
+  // User Context
+  const [currentUserId, setCurrentUserId] = useState<number | undefined>(undefined)
+  const [userHasReviewed, setUserHasReviewed] = useState(false)
+  const [requiresQuiz, setRequiresQuiz] = useState(false)
+
+  // User Reviews Tab State
+  const [filters, setFilters] = useState<ReviewFilters>({
+    rating: "all",
+    verification: "all",
+    spoilers: "show_all",
+  })
+  const [sortBy, setSortBy] = useState<SortOption>("newest")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pagination, setPagination] = useState<PaginationState>({
+    page: 1,
+    hasMore: true,
+    isLoadingMore: false,
   })
 
-  // Fetch reviews
+  // ============================================================================
+  // DATA FETCHING
+  // ============================================================================
+
   useEffect(() => {
-    const fetchReviews = async () => {
+    const fetchData = async () => {
+      setIsLoading(true)
+
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-        const response = await fetch(`${apiBase}/api/v1/reviews?movieId=${movieId}&limit=50`)
-        if (response.ok) {
-          const data = await response.json()
-          setReviews(data.items || data || [])
+        // Fetch current user
+        let user = null
+        try {
+          user = await getCurrentUser()
+          setCurrentUserId(user?.id)
+        } catch (error) {
+          console.log("User not authenticated or getCurrentUser failed:", error)
+          setCurrentUserId(undefined)
         }
-      } catch (error) {
-        console.error("Failed to fetch reviews:", error)
-        toast({ title: "Error", description: "Failed to load reviews", variant: "destructive" })
+
+        // Fetch movie reviews from backend
+        const reviewsData = await getMovieReviews(movieId, 1, 100)
+
+        // Transform backend data to match component expectations
+        if (reviewsData) {
+          // Set movie context
+          setMovie({
+            id: reviewsData.movie?.id || movieId,
+            title: reviewsData.movie?.title || "Movie",
+            year: reviewsData.movie?.year || new Date().getFullYear(),
+            posterUrl: reviewsData.movie?.posterUrl || "/placeholder.svg",
+            backdropUrl: reviewsData.movie?.backdropUrl || "/placeholder.svg",
+            genres: reviewsData.movie?.genres || [],
+            runtime: reviewsData.movie?.runtime || 0,
+            director: reviewsData.movie?.director || "Unknown",
+          })
+
+          // Set official review (if exists)
+          setOfficialReview(reviewsData.official_review || null)
+
+          // Set critic reviews
+          setCriticReviews(reviewsData.critic_reviews || [])
+
+          // Set user reviews
+          const userReviewsList = reviewsData.user_reviews || []
+          setAllUserReviews(userReviewsList)
+          setUserReviews(userReviewsList.slice(0, 20))
+
+          // Set stats
+          setStats(reviewsData.stats || {
+            totalReviews: userReviewsList.length,
+            averageRating: 0,
+            ratingDistribution: {},
+            verifiedCount: 0,
+            sentimentBreakdown: { positive: 0, neutral: 0, negative: 0 },
+          })
+
+          // Check if current user has reviewed
+          if (user) {
+            const hasReviewed = userReviewsList.some((review: any) => review.userId === user.id)
+            setUserHasReviewed(hasReviewed)
+          }
+
+          setRequiresQuiz(false)
+        }
+      } catch (err) {
+        console.error("Failed to fetch reviews:", err)
+
+        // Set minimal fallback data
+        setMovie({
+          id: movieId,
+          title: "Movie",
+          year: new Date().getFullYear(),
+          posterUrl: "/placeholder.svg",
+          backdropUrl: "/placeholder.svg",
+          genres: [],
+          runtime: 0,
+          director: "Unknown",
+        })
+        setOfficialReview(null)
+        setCriticReviews([])
+        setAllUserReviews([])
+        setUserReviews([])
+        setStats({
+          totalReviews: 0,
+          averageRating: 0,
+          ratingDistribution: {},
+          verifiedCount: 0,
+          sentimentBreakdown: { positive: 0, neutral: 0, negative: 0 },
+        })
       } finally {
-        setLoading(false)
+        setIsLoading(false)
       }
     }
 
-    fetchReviews()
-  }, [movieId, toast])
+    fetchData()
+  }, [movieId])
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // ============================================================================
+  // FILTER & SORT LOGIC
+  // ============================================================================
 
-    if (!formData.title.trim() || !formData.content.trim()) {
-      toast({ title: "Error", description: "Title and content are required", variant: "destructive" })
-      return
+  useEffect(() => {
+    let filtered = [...allUserReviews]
+
+    // Apply rating filter
+    if (filters.rating !== "all") {
+      filtered = filtered.filter((review) => review.rating === Number(filters.rating))
     }
 
-    setSubmitting(true)
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-      const response = await fetch(`${apiBase}/api/v1/reviews`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          movieId,
-          userId: "user-123", // TODO: Get from auth context
-          rating: formData.rating,
-          title: formData.title,
-          content: formData.content,
-          spoilers: formData.spoilers,
-        }),
-      })
-
-      if (response.ok) {
-        const newReview = await response.json()
-        setReviews([newReview, ...reviews])
-        setFormData({ title: "", content: "", rating: 5, spoilers: false })
-        setShowForm(false)
-        toast({ title: "Success", description: "Review posted successfully!" })
-      } else {
-        toast({ title: "Error", description: "Failed to post review", variant: "destructive" })
-      }
-    } catch (error) {
-      console.error("Failed to submit review:", error)
-      toast({ title: "Error", description: "Failed to post review", variant: "destructive" })
-    } finally {
-      setSubmitting(false)
+    // Apply verification filter
+    if (filters.verification === "verified") {
+      filtered = filtered.filter((review) => review.user.is_verified)
+    } else if (filters.verification === "unverified") {
+      filtered = filtered.filter((review) => !review.user.is_verified)
     }
+
+    // Apply spoiler filter
+    if (filters.spoilers === "hide_spoilers") {
+      filtered = filtered.filter((review) => !review.contains_spoilers)
+    }
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (review) =>
+          review.content.toLowerCase().includes(query) ||
+          review.user.display_name.toLowerCase().includes(query) ||
+          review.user.username.toLowerCase().includes(query)
+      )
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case "newest":
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        break
+      case "oldest":
+        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        break
+      case "highest_rated":
+        filtered.sort((a, b) => b.rating - a.rating)
+        break
+      case "lowest_rated":
+        filtered.sort((a, b) => a.rating - b.rating)
+        break
+      case "most_helpful":
+        filtered.sort((a, b) => b.helpful_count - a.helpful_count)
+        break
+      case "most_comments":
+        filtered.sort((a, b) => b.comment_count - a.comment_count)
+        break
+    }
+
+    // Update user reviews with first page
+    setUserReviews(filtered.slice(0, 20))
+    setPagination({
+      page: 1,
+      hasMore: filtered.length > 20,
+      isLoadingMore: false,
+    })
+  }, [filters, sortBy, searchQuery, allUserReviews])
+
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+
+  const handleFilterChange = (newFilters: ReviewFilters) => {
+    setFilters(newFilters)
   }
 
-  if (loading) {
+  const handleSortChange = (newSort: SortOption) => {
+    setSortBy(newSort)
+  }
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+  }
+
+  const handleLoadMore = () => {
+    // Implement infinite scroll
+    setPagination((prev) => ({ ...prev, isLoadingMore: true }))
+
+    setTimeout(() => {
+      const nextPage = pagination.page + 1
+      const startIndex = nextPage * 20
+      const endIndex = startIndex + 20
+
+      // Apply same filters to get filtered list
+      let filtered = [...allUserReviews]
+      // ... apply same filter logic as above ...
+
+      const newReviews = filtered.slice(startIndex, endIndex)
+      setUserReviews((prev) => [...prev, ...newReviews])
+      setPagination({
+        page: nextPage,
+        hasMore: endIndex < filtered.length,
+        isLoadingMore: false,
+      })
+    }, 500)
+  }
+
+  // ============================================================================
+  // LOADING STATE
+  // ============================================================================
+
+  if (isLoading || !movie || !stats) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-[#1A1A1A]">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#00BFFF] border-r-transparent"></div>
+          <p className="mt-4 text-[#E0E0E0]">Loading reviews...</p>
+        </div>
       </div>
     )
   }
 
+  // ============================================================================
+  // RENDER
+  // ============================================================================
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Movie Reviews</h1>
-        <p className="text-muted-foreground">Read and share reviews from the community</p>
-      </div>
+    <div className="min-h-screen bg-[#1A1A1A]">
+      {/* Header */}
+      <ReviewHeader movie={movie} />
 
-      {/* Review Form */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Write a Review</CardTitle>
-          <CardDescription>Share your thoughts about this movie</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!showForm ? (
-            <Button onClick={() => setShowForm(true)} className="w-full">
-              Write a Review
-            </Button>
-          ) : (
-            <form onSubmit={handleSubmitReview} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Review Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Give your review a title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-              </div>
+      {/* Voice of Siddu Verse Summary */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      >
+        <VoiceOfSidduSummary stats={stats} />
+      </motion.div>
 
-              <div className="space-y-2">
-                <Label htmlFor="rating">Rating</Label>
-                <Select value={formData.rating.toString()} onValueChange={(val) => setFormData({ ...formData, rating: Number(val) })}>
-                  <SelectTrigger id="rating">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => (
-                      <SelectItem key={r} value={r.toString()}>
-                        {r} / 10
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Tabbed Navigation */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ReviewTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          reviewCounts={{
+            official: stats.total_reviews.official,
+            critics: stats.total_reviews.critics,
+            users: stats.total_reviews.users,
+          }}
+        />
 
-              <div className="space-y-2">
-                <Label htmlFor="content">Your Review</Label>
-                <Textarea
-                  id="content"
-                  placeholder="Write your review here..."
-                  rows={5}
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                />
-              </div>
+        {/* Tab Content */}
+        <div className="mt-8 pb-24">
+          {activeTab === "siddu" && <SidduReviewTab review={officialReview} isLoading={false} />}
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="spoilers"
-                  checked={formData.spoilers}
-                  onChange={(e) => setFormData({ ...formData, spoilers: e.target.checked })}
-                  className="rounded"
-                />
-                <Label htmlFor="spoilers" className="cursor-pointer">
-                  This review contains spoilers
-                </Label>
-              </div>
+          {activeTab === "critics" && <CriticReviewsTab reviews={criticReviews} isLoading={false} />}
 
-              <div className="flex gap-2">
-                <Button type="submit" disabled={submitting}>
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Post Review
-                </Button>
-                <Button variant="outline" onClick={() => setShowForm(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
+          {activeTab === "users" && (
+            <UserReviewsTab
+              reviews={userReviews}
+              isLoading={false}
+              filters={filters}
+              sortBy={sortBy}
+              searchQuery={searchQuery}
+              pagination={pagination}
+              onFilterChange={handleFilterChange}
+              onSortChange={handleSortChange}
+              onSearchChange={handleSearchChange}
+              onLoadMore={handleLoadMore}
+              currentUserId={currentUserId}
+            />
           )}
-        </CardContent>
-      </Card>
-
-      {/* Reviews List */}
-      <div className="space-y-4">
-        {reviews.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">No reviews yet. Be the first to review!</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <AnimatePresence>
-            {reviews.map((review) => (
-              <motion.div key={review.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-lg">{review.title}</h3>
-                        <p className="text-sm text-muted-foreground">by {review.author.name}</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={16} className={i < Math.round(review.rating / 2) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"} />
-                        ))}
-                      </div>
-                    </div>
-
-                    {review.hasSpoilers && (
-                      <div className="flex items-center gap-2 mb-3 p-2 bg-yellow-50 dark:bg-yellow-950 rounded text-sm text-yellow-800 dark:text-yellow-200">
-                        <AlertCircle size={16} />
-                        Contains spoilers
-                      </div>
-                    )}
-
-                    <p className="text-sm mb-2">{review.content}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(review.date).toLocaleDateString()}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
+        </div>
       </div>
+
+      {/* Write Review FAB */}
+      <WriteReviewFAB
+        movieId={Number(movieId)}
+        isLoggedIn={!!currentUserId}
+        hasReviewed={userHasReviewed}
+        requiresQuiz={requiresQuiz}
+      />
     </div>
   )
 }

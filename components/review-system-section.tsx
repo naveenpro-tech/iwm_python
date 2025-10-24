@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ReviewForm } from "@/components/review-form"
 import { isAuthenticated } from "@/lib/auth"
+import { getMovieReviews } from "@/lib/api/reviews"
 
 interface Review {
   id: string
@@ -61,40 +62,30 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
   // Fetch reviews from backend
   useEffect(() => {
     const fetchReviews = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-      const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
-
-      if (!useBackend || !apiBase) {
-        // Use fallback reviews from movie prop
-        setReviews(Array.isArray(movie.reviews) ? movie.reviews : [])
-        return
-      }
-
       setIsLoadingReviews(true)
       try {
-        const response = await fetch(`${apiBase}/api/v1/reviews?movieId=${movie.id}&limit=50&sortBy=${activeFilter === "latest" ? "date_desc" : activeFilter === "top" ? "rating_desc" : "date_desc"}`)
-        if (response.ok) {
-          const data = await response.json()
-          // Transform backend data to match component expectations
-          const transformedReviews = Array.isArray(data) ? data.map((r: any) => ({
-            id: r.id,
-            userId: r.author?.id || "",
-            username: r.author?.name || "Anonymous",
-            avatarUrl: r.author?.avatarUrl || null,
-            rating: r.rating,
-            verified: r.isVerified || false,
-            date: new Date(r.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-            content: r.content,
-            containsSpoilers: r.hasSpoilers || false,
-            helpfulCount: r.helpfulVotes || 0,
-            unhelpfulCount: r.unhelpfulVotes || 0,
-          })) : []
-          setReviews(transformedReviews)
-        } else {
-          setReviews(Array.isArray(movie.reviews) ? movie.reviews : [])
-        }
+        const data = await getMovieReviews(movie.id, 1, 50)
+
+        // Transform backend data to match component expectations
+        const userReviewsList = data.user_reviews || []
+        const transformedReviews = userReviewsList.map((r: any) => ({
+          id: r.id || r.external_id,
+          userId: r.user?.id || r.userId || "",
+          username: r.user?.name || "Anonymous",
+          avatarUrl: r.user?.avatarUrl || null,
+          rating: r.rating,
+          verified: r.isVerified || false,
+          date: new Date(r.date || r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          content: r.content,
+          containsSpoilers: r.hasSpoilers || r.has_spoilers || false,
+          helpfulCount: r.helpfulVotes || r.helpful_votes || 0,
+          unhelpfulCount: r.unhelpfulVotes || r.unhelpful_votes || 0,
+        }))
+
+        setReviews(transformedReviews)
       } catch (error) {
         console.error("Error fetching reviews:", error)
+        // Use fallback reviews from movie prop
         setReviews(Array.isArray(movie.reviews) ? movie.reviews : [])
       } finally {
         setIsLoadingReviews(false)

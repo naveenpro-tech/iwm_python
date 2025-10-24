@@ -162,7 +162,7 @@ function RelatedReviewCard({ review }: { review: RelatedReview }) {
 
   return (
     <Link
-      href={`/reviews/${review.id}`}
+      href={`/movies/${movieId}/reviews/${review.id}`}
       className="flex-shrink-0 w-80 bg-[#1A1A1A] rounded-lg border border-[#3A3A3A] hover:border-[#00BFFF] transition-all p-4 group"
     >
       {/* Rating */}

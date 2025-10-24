@@ -57,9 +57,8 @@ export function FavoritesList({ favorites }: FavoritesListProps) {
               <Image
                 src={item.imageUrl || `/placeholder.svg?text=${item.title.replace(/\s/g, "+")}`}
                 alt={item.title}
-                layout="fill"
-                objectFit="cover"
-                className="group-hover:scale-105 transition-transform duration-300"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>
           </Link>

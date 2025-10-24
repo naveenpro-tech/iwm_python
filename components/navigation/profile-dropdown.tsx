@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -15,19 +16,46 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { User, Settings, LogOut, LayoutDashboard, Bell, Heart, ListChecks } from "lucide-react"
 
-// Mock user data - replace with actual auth state
-const mockUser = {
-  name: "Siddharth",
-  email: "siddharth@example.com",
-  avatarUrl: "/placeholder.svg?width=40&height=40&text=S", // Replace with actual avatar
-  isLoggedIn: true, // Simulate logged-in state
-}
-
 export function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false)
-  const user = mockUser // In a real app, get this from context or auth hook
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
-  if (!user.isLoggedIn) {
+  useEffect(() => {
+    // Fetch current user data
+    const fetchUser = async () => {
+      try {
+        const { me } = await import("@/lib/auth")
+        const userData = await me()
+        setUser(userData)
+      } catch (error) {
+        console.error("Failed to fetch user:", error)
+        setUser(null)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchUser()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      const { logout } = await import("@/lib/auth")
+      await logout()
+      router.push("/login")
+    } catch (error) {
+      console.error("Logout failed:", error)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-9 w-9 rounded-full bg-[#3A3A3A] animate-pulse" />
+    )
+  }
+
+  if (!user) {
     return (
       <Link href="/login" passHref legacyBehavior>
         <Button variant="outline" className="text-sm border-primary text-primary hover:bg-primary/10">
@@ -36,6 +64,9 @@ export function ProfileDropdown() {
       </Link>
     )
   }
+
+  // Generate username from email (part before @)
+  const username = user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9-]/g, '-') || 'user'
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -60,7 +91,7 @@ export function ProfileDropdown() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#3A3A3A]" />
-        <Link href="/profile" passHref legacyBehavior>
+        <Link href={`/profile/${username}`} passHref legacyBehavior>
           <DropdownMenuItem className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
             <User className="mr-2 h-4 w-4" />
             Profile
@@ -99,7 +130,7 @@ export function ProfileDropdown() {
         </Link>
         <DropdownMenuSeparator className="bg-[#3A3A3A]" />
         <DropdownMenuItem
-          onClick={() => console.log("Logout")} // Replace with actual logout logic
+          onClick={handleLogout}
           className="cursor-pointer text-red-400 hover:bg-red-500/20 focus:bg-red-500/20 focus:text-red-300 hover:text-red-300"
         >
           <LogOut className="mr-2 h-4 w-4" />

@@ -20,9 +20,11 @@ interface MovieHeroSectionProps {
     criticsScore?: number
     synopsis: string
   }
+  onAddToWatchlist?: () => void
+  isAddingToWatchlist?: boolean
 }
 
-export function MovieHeroSection({ movie }: MovieHeroSectionProps) {
+export function MovieHeroSection({ movie, onAddToWatchlist, isAddingToWatchlist }: MovieHeroSectionProps) {
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -171,9 +173,11 @@ export function MovieHeroSection({ movie }: MovieHeroSectionProps) {
                     <Button
                       variant="outline"
                       className="w-full sm:w-auto border-[#00BFFF] text-[#E0E0E0] hover:bg-[#00BFFF]/10 font-inter"
+                      onClick={onAddToWatchlist}
+                      disabled={isAddingToWatchlist}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Add to Watchlist
+                      {isAddingToWatchlist ? "Adding..." : "Add to Watchlist"}
                     </Button>
                   </motion.div>
 

@@ -1,0 +1,28 @@
+{
+  "name": "Siddu Global Entertainment Hub",
+  "short_name": "Siddu Hub",
+  "description": "The definitive digital destination for cinematic masterpieces, visual treats, and real-time cricket updates.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["entertainment", "movies", "cricket"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/placeholder-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

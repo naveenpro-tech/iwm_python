@@ -96,7 +96,7 @@ export function FestivalCoverage({ festivalId, coverageItems = mockCoverageItems
             <Card className="bg-gray-800 border-gray-700 text-gray-100 h-full flex flex-col overflow-hidden hover:shadow-xl hover:shadow-sky-500/20 transition-shadow duration-300">
               {item.imageUrl && (
                 <div className="relative h-48 w-full">
-                  <Image src={item.imageUrl || "/placeholder.svg"} alt={item.title} layout="fill" objectFit="cover" />
+                  <Image src={item.imageUrl || "/placeholder.svg"} alt={item.title} fill className="object-cover" />
                 </div>
               )}
               <CardHeader>

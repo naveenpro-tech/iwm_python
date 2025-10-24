@@ -151,7 +151,7 @@ export function ReviewListItem({ review }: ReviewListItemProps) {
                 </button>
               </div>
               <Link
-                href={`/reviews/${review.id}`}
+                href={`/movies/${review.movie.id}/reviews/${review.id}`}
                 className="flex items-center text-xs text-siddu-text-subtle hover:text-siddu-text-light"
               >
                 <MessageCircle size={14} className="mr-1" />

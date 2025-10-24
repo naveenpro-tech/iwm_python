@@ -9,27 +9,38 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
   const movieId = params.id
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
+  // Fallback metadata
+  const fallbackMetadata: Metadata = {
+    title: "Movie Details - Siddu Global Entertainment Hub",
+    description: "Explore detailed information, reviews, and more about this movie.",
+    openGraph: {
+      title: "Movie Details",
+      description: "Explore detailed information, reviews, and more about this movie.",
+      siteName: "Siddu Global Entertainment Hub",
+    },
+  }
+
   try {
     const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`, {
-      cache: "revalidate",
-      next: { revalidate: 3600 }, // Revalidate every hour
+      cache: "no-store", // Changed from revalidate to avoid caching issues during development
+      next: { revalidate: 3600 },
     })
 
     if (!response.ok) {
-      throw new Error("Failed to fetch movie")
+      console.warn(`Failed to fetch movie metadata for ${movieId}: ${response.statusText}`)
+      return fallbackMetadata
     }
 
     const movie = await response.json()
 
     const title = `${movie.title} (${movie.year || "N/A"}) - Movie Details`
-    const description = movie.synopsis || `Watch ${movie.title} and explore detailed information, reviews, and more.`
-    const imageUrl = movie.posterUrl || movie.backdropUrl || "/default-movie-poster.png"
+    const description = movie.overview || movie.synopsis || `Watch ${movie.title} and explore detailed information, reviews, and more.`
+    const imageUrl = movie.posterUrl || movie.poster_url || movie.backdropUrl || movie.backdrop_url || "/placeholder.svg"
     const url = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001"}/movies/${movieId}`
 
     return {
       title,
       description,
-      canonical: url,
       openGraph: {
         title,
         description,
@@ -42,14 +53,8 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
             height: 630,
             alt: movie.title,
           },
-          {
-            url: imageUrl,
-            width: 800,
-            height: 600,
-            alt: movie.title,
-          },
         ],
-        siteName: "Movie Database",
+        siteName: "Siddu Global Entertainment Hub",
         locale: "en_US",
       },
       twitter: {
@@ -57,36 +62,25 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
         title,
         description,
         images: [imageUrl],
-        creator: "@moviedatabase",
       },
       keywords: [
         movie.title,
         "movie",
         "film",
+        "Telugu cinema",
         ...(movie.genres || []),
-        movie.year,
+        String(movie.year),
         "reviews",
         "ratings",
-      ],
-      authors: movie.directors?.map((d: any) => ({ name: d.name })) || [],
+      ].filter(Boolean),
       robots: {
         index: true,
         follow: true,
-        googleBot: {
-          index: true,
-          follow: true,
-          "max-snippet": -1,
-          "max-image-preview": "large",
-          "max-video-preview": -1,
-        },
       },
     }
   } catch (error) {
-    console.error("Failed to generate metadata:", error)
-    return {
-      title: "Movie Details",
-      description: "Explore movie details, reviews, and ratings",
-    }
+    console.error(`Error generating metadata for movie ${movieId}:`, error)
+    return fallbackMetadata
   }
 }
 

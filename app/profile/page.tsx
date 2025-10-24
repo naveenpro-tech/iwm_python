@@ -1,67 +1,54 @@
 "use client"
 
-import { useState } from "react"
-import { ProfileHeader } from "@/components/profile/profile-header"
-import { ProfileNavigation } from "@/components/profile/profile-navigation"
-import { ProfileOverview } from "@/components/profile/sections/profile-overview"
-import { ProfileReviews } from "@/components/profile/sections/profile-reviews"
-import { ProfileWatchlist } from "@/components/profile/sections/profile-watchlist"
-import { ProfileFavorites } from "@/components/profile/sections/profile-favorites"
-import { ProfileHistory } from "@/components/profile/sections/profile-history"
-import { ProfileSettings } from "@/components/profile/sections/profile-settings"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
-// Mock user data
-const userData = {
-  id: "u1",
-  username: "CinematicDreamer",
-  displayName: "Alex Johnson",
-  bio: "Film enthusiast with a passion for visual storytelling. I believe cinema is the most powerful art form that connects us across cultures and time.",
-  avatarUrl: "/user-avatar-1.png",
-  coverUrl: "/profile-cover-cinematic.png",
-  location: "New York, USA",
-  memberSince: "2021",
-  isVerified: true,
-  stats: {
-    reviews: 127,
-    watchlist: 43,
-    favorites: 68,
-    following: 215,
-    followers: 189,
-  },
-}
+/**
+ * Redirect page for /profile route
+ * Redirects authenticated users to their profile page: /profile/[username]
+ * Redirects unauthenticated users to login page
+ */
+export default function ProfileRedirectPage() {
+  const router = useRouter()
 
-type ProfileSection = "overview" | "reviews" | "watchlist" | "favorites" | "history" | "settings"
+  useEffect(() => {
+    const redirectToUserProfile = async () => {
+      try {
+        // Check if user is authenticated
+        const { isAuthenticated, me } = await import("@/lib/auth")
 
-export default function ProfilePage() {
-  const [activeSection, setActiveSection] = useState<ProfileSection>("overview")
+        if (!isAuthenticated()) {
+          // Not authenticated - redirect to login
+          router.push("/login")
+          return
+        }
 
-  const renderSection = () => {
-    switch (activeSection) {
-      case "overview":
-        return <ProfileOverview userData={userData} />
-      case "reviews":
-        return <ProfileReviews userId={userData.id} />
-      case "watchlist":
-        return <ProfileWatchlist userId={userData.id} />
-      case "favorites":
-        return <ProfileFavorites userId={userData.id} />
-      case "history":
-        return <ProfileHistory userId={userData.id} />
-      case "settings":
-        return <ProfileSettings userData={userData} />
-      default:
-        return <ProfileOverview userData={userData} />
+        // Fetch user data to get username
+        try {
+          const user = await me()
+          // Extract username from email (before @) or use user.username if available
+          const username = user.username || user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-')
+          router.push(`/profile/${username}`)
+        } catch (error) {
+          console.error("Failed to fetch user data:", error)
+          // Fallback to login if user data fetch fails
+          router.push("/login")
+        }
+      } catch (error) {
+        console.error("Redirect error:", error)
+        router.push("/login")
+      }
     }
-  }
+
+    redirectToUserProfile()
+  }, [router])
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] pt-14 md:pt-16">
-      <ProfileHeader userData={userData} />
-
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-20">
-        <ProfileNavigation activeSection={activeSection} onSectionChange={setActiveSection} stats={userData.stats} />
-
-        <div className="mt-6">{renderSection()}</div>
+    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="w-12 h-12 text-[#00BFFF] animate-spin" />
+        <p className="text-[#E0E0E0] font-dm-sans text-lg">Redirecting to your profile...</p>
       </div>
     </div>
   )

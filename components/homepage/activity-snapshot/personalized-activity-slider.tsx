@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { PersonalizedActivitySliderProps } from "./types" // Adjusted path if types.ts is in the same folder
@@ -33,7 +33,7 @@ export const PersonalizedActivitySlider: React.FC<PersonalizedActivitySliderProp
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0) // 0 for initial, 1 for next, -1 for prev
 
-  const paginate = (newDirection: number) => {
+  const paginate = useCallback((newDirection: number) => {
     setDirection(newDirection)
     setCurrentIndex((prevIndex) => {
       const nextIndex = prevIndex + newDirection
@@ -41,7 +41,7 @@ export const PersonalizedActivitySlider: React.FC<PersonalizedActivitySliderProp
       if (nextIndex >= allItems.length) return 0
       return nextIndex
     })
-  }
+  }, [allItems.length])
 
   useEffect(() => {
     if (allItems.length <= 1) return
@@ -49,7 +49,7 @@ export const PersonalizedActivitySlider: React.FC<PersonalizedActivitySliderProp
       paginate(1)
     }, 7000)
     return () => clearInterval(timer)
-  }, [currentIndex, allItems.length])
+  }, [allItems.length, paginate]) // paginate is now stable via useCallback
 
   if (!allItems.length) {
     return (

@@ -10,6 +10,7 @@ interface ProfileNavigationProps {
     reviews: number
     watchlist: number
     favorites: number
+    collections: number
     following: number
     followers: number
   }
@@ -23,6 +24,7 @@ export function ProfileNavigation({ activeSection, onSectionChange, stats }: Pro
     { id: "reviews", label: "Reviews", count: stats.reviews },
     { id: "watchlist", label: "Watchlist", count: stats.watchlist },
     { id: "favorites", label: "Favorites", count: stats.favorites },
+    { id: "collections", label: "Collections", count: stats.collections },
     { id: "history", label: "History" },
     { id: "settings", label: "Settings" },
   ]

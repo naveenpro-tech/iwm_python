@@ -1,5 +1,11 @@
 export type Tokens = { access_token: string; refresh_token: string; token_type: string }
-export type User = { id: string; email: string; name: string; avatarUrl?: string | null }
+export type User = {
+  id: string
+  email: string
+  name: string
+  username?: string
+  avatarUrl?: string | null
+}
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
 const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
@@ -72,6 +78,14 @@ export async function login(email: string, password: string): Promise<Tokens> {
 
 export async function me(): Promise<User> {
   return await request<User>("/auth/me")
+}
+
+/**
+ * Get the current authenticated user
+ * Alias for me() function for consistency with other API clients
+ */
+export async function getCurrentUser(): Promise<User> {
+  return await me()
 }
 
 export function logout() {

@@ -30,9 +30,8 @@ export const RecommendationSnapshotCard: React.FC<RecommendationSnapshotCardProp
         <Image
           src={item.posterUrl || "/placeholder.svg?width=300&height=450&text=Recommendation"}
           alt={item.title}
-          layout="fill"
-          objectFit="cover"
-          className="transition-transform duration-300 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 flex flex-col justify-end">
           <h3 className="text-lg font-semibold text-white shadow-text line-clamp-2">{item.title}</h3>

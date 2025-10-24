@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { use, useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
 import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
@@ -213,7 +213,10 @@ const mockMovieTimelineEvents: TimelineEventData[] = [
   },
 ]
 
-export default function MovieTimelinePage({ params }: { params: { id: string } }) {
+export default function MovieTimelinePage({ params }: { params: Promise<{ id: string }> }) {
+  // Unwrap params Promise (Next.js 15 requirement)
+  const { id: movieId } = use(params)
+
   const [selectedEvent, setSelectedEvent] = useState<TimelineEventData | null>(null)
   const [zoomLevel, setZoomLevel] = useState(3) // 1-5, with 5 being most zoomed in
   const [activeCategory, setActiveCategory] = useState<TimelineCategory | null>(null)
@@ -225,7 +228,7 @@ export default function MovieTimelinePage({ params }: { params: { id: string } }
 
   // Movie data
   const movie = {
-    id: params.id,
+    id: movieId,
     title: movieTitle,
   }
 
@@ -234,7 +237,7 @@ export default function MovieTimelinePage({ params }: { params: { id: string } }
       setIsLoading(true)
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-        const response = await fetch(`${apiBase}/api/v1/movies/${params.id}`)
+        const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         if (response.ok) {
           const data = await response.json()
           setMovieTitle(data.title || "Movie")
@@ -266,7 +269,7 @@ export default function MovieTimelinePage({ params }: { params: { id: string } }
     }
 
     fetchMovieAndTimeline()
-  }, [params.id])
+  }, [movieId])
 
   const filteredEvents = useMemo(() => {
     const eventsToFilter = timelineEvents.length > 0 ? timelineEvents : mockMovieTimelineEvents
