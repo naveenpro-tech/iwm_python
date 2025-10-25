@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus } from "lucide-react"
 import type { UserCollection } from "@/types/profile"
-import { mockUserCollections } from "@/lib/profile/mock-user-collections"
+import { getUserCollections } from "@/lib/api/collections"
 import { CollectionCardProfile } from "../collections/collection-card-profile"
 import { CreateCollectionModalProfile } from "../collections/create-collection-modal-profile"
 import { EditCollectionModalProfile } from "../collections/edit-collection-modal-profile"
@@ -27,17 +27,31 @@ export function ProfileCollections({ userId }: ProfileCollectionsProps) {
     const loadCollections = async () => {
       setIsLoading(true)
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500))
-        setCollections(mockUserCollections)
+        const data = await getUserCollections(userId)
+        const items: any[] = Array.isArray(data) ? data : data?.items || []
+        // Map to UserCollection type shape if necessary
+        const mapped: UserCollection[] = items.map((c: any) => ({
+          id: c.id || c.external_id || c.slug || `collection-${Math.random()}`,
+          title: c.title || c.name || "Untitled",
+          description: c.description || "",
+          coverImage: c.coverImage || c.posterUrl || "",
+          movieCount: c.movieCount ?? c.movies?.length ?? 0,
+          isPublic: c.isPublic ?? c.public ?? true,
+          createdAt: c.createdAt || c.created_at || "",
+          updatedAt: c.updatedAt || c.updated_at || "",
+          movies: c.movies || [],
+          tags: c.tags || [],
+        }))
+        setCollections(mapped)
       } catch (error) {
         console.error("Failed to load collections:", error)
+        setCollections([])
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadCollections()
+    if (userId) loadCollections()
   }, [userId])
 
   // Handle create collection

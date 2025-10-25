@@ -196,3 +196,70 @@ class ReviewRepository:
             },
         }
 
+    async def update(
+        self,
+        review_id: str,
+        user_id: int,
+        title: Optional[str] = None,
+        content: Optional[str] = None,
+        rating: Optional[float] = None,
+        has_spoilers: Optional[bool] = None,
+    ) -> dict[str, Any] | None:
+        """Update an existing review"""
+        if not self.session:
+            return None
+
+        # Get review
+        q = select(Review).where(Review.external_id == review_id)
+        res = await self.session.execute(q)
+        review = res.scalar_one_or_none()
+        if not review:
+            return None
+
+        # Verify ownership
+        if review.user_id != user_id:
+            raise ValueError("User does not own this review")
+
+        # Update fields
+        if title is not None:
+            review.title = title
+        if content is not None:
+            review.content = content
+        if rating is not None:
+            if not (0 <= rating <= 10):
+                raise ValueError("Rating must be between 0 and 10")
+            review.rating = rating
+        if has_spoilers is not None:
+            review.has_spoilers = has_spoilers
+
+        await self.session.flush()
+
+        return {
+            "id": review.external_id,
+            "title": review.title,
+            "content": review.content,
+            "rating": review.rating,
+            "date": review.date.isoformat(),
+            "hasSpoilers": review.has_spoilers,
+        }
+
+    async def delete(self, review_id: str, user_id: int) -> bool:
+        """Delete a review"""
+        if not self.session:
+            return False
+
+        # Get review
+        q = select(Review).where(Review.external_id == review_id)
+        res = await self.session.execute(q)
+        review = res.scalar_one_or_none()
+        if not review:
+            return False
+
+        # Verify ownership
+        if review.user_id != user_id:
+            raise ValueError("User does not own this review")
+
+        await self.session.delete(review)
+        await self.session.flush()
+        return True
+

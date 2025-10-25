@@ -1,22 +1,43 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ThumbsUp, ThumbsDown, MessageCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react"
+import { ThumbsUp, ThumbsDown, MessageCircle, AlertTriangle, ChevronDown, ChevronUp, Pencil, Trash2, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Review } from "./types"
 import { formatDate } from "@/lib/utils"
+import { me } from "@/lib/auth"
+import { deleteReview } from "@/lib/api/reviews"
+import { useToast } from "@/hooks/use-toast"
+import { EditReviewModal } from "./edit-review-modal"
 
 interface ReviewListItemProps {
   review: Review
+  onReviewUpdated?: () => void
 }
 
-export function ReviewListItem({ review }: ReviewListItemProps) {
+export function ReviewListItem({ review, onReviewUpdated }: ReviewListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isHelpful, setIsHelpful] = useState<boolean | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await me()
+        setCurrentUser(user)
+      } catch (error) {
+        console.debug("User not authenticated")
+      }
+    }
+    fetchUser()
+  }, [])
 
   // Truncate review text if needed
   const shouldTruncate = review.content.length > 300
@@ -26,6 +47,48 @@ export function ReviewListItem({ review }: ReviewListItemProps) {
   const handleHelpfulVote = (helpful: boolean) => {
     setIsHelpful(helpful)
     // In a real app, this would send the vote to the server
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deleteReview(review.id)
+      toast({
+        title: "Success",
+        description: "Review deleted successfully",
+      })
+      if (onReviewUpdated) {
+        onReviewUpdated()
+      } else {
+        window.location.reload()
+      }
+    } catch (error: any) {
+      console.error("Error deleting review:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete review",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false)
+    toast({
+      title: "Success",
+      description: "Review updated successfully",
+    })
+    if (onReviewUpdated) {
+      onReviewUpdated()
+    } else {
+      window.location.reload()
+    }
   }
 
   return (
@@ -131,36 +194,87 @@ export function ReviewListItem({ review }: ReviewListItemProps) {
             )}
 
             {/* Review Footer */}
-            <div className="mt-4 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button
-                  className={`flex items-center text-xs ${isHelpful === true ? "text-siddu-electric-blue" : "text-siddu-text-subtle hover:text-siddu-text-light"}`}
-                  onClick={() => handleHelpfulVote(true)}
-                  aria-label="Mark as helpful"
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-4">
+                  <button
+                    className={`flex items-center text-xs ${isHelpful === true ? "text-siddu-electric-blue" : "text-siddu-text-subtle hover:text-siddu-text-light"}`}
+                    onClick={() => handleHelpfulVote(true)}
+                    aria-label="Mark as helpful"
+                  >
+                    <ThumbsUp size={14} className="mr-1" />
+                    <span>{isHelpful === true ? review.helpfulVotes + 1 : review.helpfulVotes}</span>
+                  </button>
+                  <button
+                    className={`flex items-center text-xs ${isHelpful === false ? "text-siddu-electric-blue" : "text-siddu-text-subtle hover:text-siddu-text-light"}`}
+                    onClick={() => handleHelpfulVote(false)}
+                    aria-label="Mark as unhelpful"
+                  >
+                    <ThumbsDown size={14} className="mr-1" />
+                    <span>{isHelpful === false ? review.unhelpfulVotes + 1 : review.unhelpfulVotes}</span>
+                  </button>
+                </div>
+                <Link
+                  href={`/movies/${review.movie.id}/reviews/${review.id}`}
+                  className="flex items-center text-xs text-siddu-text-subtle hover:text-siddu-text-light"
                 >
-                  <ThumbsUp size={14} className="mr-1" />
-                  <span>{isHelpful === true ? review.helpfulVotes + 1 : review.helpfulVotes}</span>
-                </button>
-                <button
-                  className={`flex items-center text-xs ${isHelpful === false ? "text-siddu-electric-blue" : "text-siddu-text-subtle hover:text-siddu-text-light"}`}
-                  onClick={() => handleHelpfulVote(false)}
-                  aria-label="Mark as unhelpful"
-                >
-                  <ThumbsDown size={14} className="mr-1" />
-                  <span>{isHelpful === false ? review.unhelpfulVotes + 1 : review.unhelpfulVotes}</span>
-                </button>
+                  <MessageCircle size={14} className="mr-1" />
+                  <span>{review.commentCount}</span>
+                </Link>
               </div>
-              <Link
-                href={`/movies/${review.movie.id}/reviews/${review.id}`}
-                className="flex items-center text-xs text-siddu-text-subtle hover:text-siddu-text-light"
-              >
-                <MessageCircle size={14} className="mr-1" />
-                <span>{review.commentCount}</span>
-              </Link>
+
+              {/* Edit/Delete Buttons - Only show if user owns the review */}
+              {currentUser?.id === review.author.id && (
+                <div className="flex gap-2 pt-3 border-t border-siddu-border-subtle">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="flex-1 border-siddu-border-subtle hover:bg-siddu-bg-card"
+                  >
+                    <Pencil className="w-3 h-3 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="flex-1"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-3 h-3 mr-2" />
+                        Delete
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <EditReviewModal
+          review={{
+            id: review.id,
+            title: review.title,
+            content: review.content,
+            rating: review.rating,
+            hasSpoilers: review.hasSpoilers,
+          }}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </motion.div>
   )
 }

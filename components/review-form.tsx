@@ -63,7 +63,7 @@ export function ReviewForm({ movieId, movieTitle, onClose, onSuccess }: ReviewFo
         content: content.trim(),
         rating,
         hasSpoilers: containsSpoilers,
-      })
+      }, user.id)
 
       setSuccess(true)
       setTimeout(() => {

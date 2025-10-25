@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Loader2, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { getUserWatchlist } from "@/lib/api/watchlist"
 
 interface WatchlistMovie {
   id: string
@@ -23,42 +24,27 @@ export function WatchlistPreviewSection({ userId }: WatchlistPreviewSectionProps
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate API call to fetch watchlist
     const fetchWatchlist = async () => {
       setIsLoading(true)
-
-      // Mock data - in a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const mockWatchlist: WatchlistMovie[] = [
-        {
-          id: "m2",
-          title: "Challengers",
-          posterUrl: "/challengers-poster.png",
-          year: "2024",
-          addedDate: "Yesterday",
-        },
-        {
-          id: "m5",
-          title: "Killers of the Flower Moon",
-          posterUrl: "/killers-of-the-flower-moon-poster.png",
-          year: "2023",
-          addedDate: "Last week",
-        },
-        {
-          id: "m6",
-          title: "Poor Things",
-          posterUrl: "/poor-things-poster.png",
-          year: "2023",
-          addedDate: "2 weeks ago",
-        },
-      ]
-
-      setMovies(mockWatchlist)
-      setIsLoading(false)
+      try {
+        const data = await getUserWatchlist(userId, 1, 9)
+        const items = Array.isArray(data) ? data : data?.items || []
+        const mapped: WatchlistMovie[] = items.slice(0, 9).map((w: any) => ({
+          id: w.movieId || w.movie?.id || w.id,
+          title: w.title || w.movie?.title || "",
+          posterUrl: w.posterUrl || w.movie?.posterUrl || "",
+          year: String(w.releaseDate || w.movie?.year || ""),
+          addedDate: w.dateAdded || "",
+        }))
+        setMovies(mapped)
+      } catch (err) {
+        console.error("Failed to load watchlist preview:", err)
+        setMovies([])
+      } finally {
+        setIsLoading(false)
+      }
     }
-
-    fetchWatchlist()
+    if (userId) fetchWatchlist()
   }, [userId])
 
   const containerVariants = {

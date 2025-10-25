@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { Edit, ThumbsUp, ThumbsDown, Star, ChevronDown, ChevronUp, Check } from "lucide-react"
+import { Edit, ThumbsUp, ThumbsDown, Star, ChevronDown, ChevronUp, Check, Pencil, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ReviewForm } from "@/components/review-form"
-import { isAuthenticated } from "@/lib/auth"
-import { getMovieReviews } from "@/lib/api/reviews"
+import { isAuthenticated, getCurrentUser } from "@/lib/auth"
+import { getMovieReviews, deleteReview } from "@/lib/api/reviews"
+import { useToast } from "@/hooks/use-toast"
+import { EditReviewModal } from "@/components/reviews/edit-review-modal"
 
 interface Review {
   id: string
@@ -54,10 +56,27 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [reviews, setReviews] = useState<Review[]>([])
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
+  const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const { toast } = useToast()
 
   // Safe defaults
   const distribution = Array.isArray(movie.ratingDistribution) ? movie.ratingDistribution : []
   const sentiments = movie.sentimentAnalysis || { positive: 0, neutral: 0, negative: 0, keyPhrases: [] }
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getCurrentUser()
+        setCurrentUser(user)
+      } catch (error) {
+        console.error("Error fetching current user:", error)
+      }
+    }
+    fetchUser()
+  }, [])
 
   // Fetch reviews from backend
   useEffect(() => {
@@ -67,12 +86,13 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
         const data = await getMovieReviews(movie.id, 1, 50)
 
         // Transform backend data to match component expectations
-        const userReviewsList = data.user_reviews || []
+        // Backend returns a flat array of reviews
+        const userReviewsList = Array.isArray(data) ? data : []
         const transformedReviews = userReviewsList.map((r: any) => ({
           id: r.id || r.external_id,
-          userId: r.user?.id || r.userId || "",
-          username: r.user?.name || "Anonymous",
-          avatarUrl: r.user?.avatarUrl || null,
+          userId: r.author?.id || r.user?.id || r.userId || "",
+          username: r.author?.name || r.user?.name || "Anonymous",
+          avatarUrl: r.author?.avatarUrl || r.user?.avatarUrl || null,
           rating: r.rating,
           verified: r.isVerified || false,
           date: new Date(r.date || r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
@@ -141,6 +161,31 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
       ...prev,
       [reviewId]: prev[reviewId] === voteType ? null : voteType,
     }))
+  }
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+      return
+    }
+
+    setDeletingReviewId(reviewId)
+    try {
+      await deleteReview(reviewId)
+      toast({
+        title: "Review deleted",
+        description: "Your review has been successfully deleted.",
+      })
+      // Remove the review from the list
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId))
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete review. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeletingReviewId(null)
+    }
   }
 
   const renderStars = (rating: number) => {
@@ -407,6 +452,40 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
                     </button>
                   </div>
                 </div>
+
+                {/* Edit/Delete Buttons - Only show if user owns the review */}
+                {currentUser?.id === review.userId && (
+                  <div className="flex gap-2 pt-3 border-t border-[#3A3A3A] mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingReview(review)}
+                      className="flex-1 border-[#3A3A3A] hover:bg-[#3A3A3A]"
+                    >
+                      <Pencil className="w-3 h-3 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteReview(review.id)}
+                      disabled={deletingReviewId === review.id}
+                      className="flex-1"
+                    >
+                      {deletingReviewId === review.id ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-3 h-3 mr-2" />
+                          Delete
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             </Card>
           </motion.div>
@@ -453,6 +532,64 @@ export function ReviewSystemSection({ movie }: ReviewSystemSectionProps) {
           />
         )}
       </AnimatePresence>
+
+      {/* Edit Review Modal */}
+      {editingReview && (
+        <EditReviewModal
+          review={{
+            id: editingReview.id,
+            title: "",
+            content: editingReview.content,
+            rating: editingReview.rating,
+            hasSpoilers: editingReview.containsSpoilers,
+            author: {
+              id: editingReview.userId,
+              name: editingReview.username,
+              avatarUrl: editingReview.avatarUrl || "",
+            },
+            movie: {
+              id: movie.id,
+              title: movie.title,
+            },
+            date: editingReview.date,
+            helpfulVotes: editingReview.helpfulCount,
+            unhelpfulVotes: editingReview.unhelpfulCount,
+            commentCount: 0,
+            isVerified: editingReview.verified,
+          }}
+          onClose={() => setEditingReview(null)}
+          onSuccess={() => {
+            setEditingReview(null)
+            // Refresh reviews
+            const fetchReviews = async () => {
+              const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+              try {
+                const response = await fetch(`${apiBase}/api/v1/reviews?movieId=${movie.id}&limit=50&sortBy=date_desc`)
+                if (response.ok) {
+                  const data = await response.json()
+                  const transformedReviews = Array.isArray(data) ? data.map((r: any) => ({
+                    id: r.id,
+                    userId: r.author?.id || "",
+                    username: r.author?.name || "Anonymous",
+                    avatarUrl: r.author?.avatarUrl || null,
+                    rating: r.rating,
+                    verified: r.isVerified || false,
+                    date: new Date(r.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                    content: r.content,
+                    containsSpoilers: r.hasSpoilers || false,
+                    helpfulCount: r.helpfulVotes || 0,
+                    unhelpfulCount: r.unhelpfulVotes || 0,
+                  })) : []
+                  setReviews(transformedReviews)
+                }
+              } catch (error) {
+                console.error("Error refreshing reviews:", error)
+              }
+            }
+            fetchReviews()
+          }}
+        />
+      )}
     </motion.section>
   )
 }

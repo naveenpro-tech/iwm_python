@@ -1,12 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { Heart, MoreVertical, Play, Share2, Trash2, Users } from "lucide-react"
+import { Heart, MoreVertical, Play, Share2, Trash2, Users, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { deleteCollection } from "@/lib/api/collections"
+import { useToast } from "@/hooks/use-toast"
 import type { Collection } from "./types"
 
 interface CollectionCardProps {
@@ -16,6 +19,9 @@ interface CollectionCardProps {
 }
 
 export function CollectionCard({ collection, variant, onDelete }: CollectionCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
+
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -23,6 +29,33 @@ export function CollectionCard({ collection, variant, onDelete }: CollectionCard
       y: 0,
       transition: { duration: 0.4 },
     },
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this collection? This action cannot be undone.")) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deleteCollection(collection.id)
+      toast({
+        title: "Success",
+        description: "Collection deleted successfully",
+      })
+      if (onDelete) {
+        onDelete()
+      }
+    } catch (error: any) {
+      console.error("Error deleting collection:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete collection",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -91,14 +124,27 @@ export function CollectionCard({ collection, variant, onDelete }: CollectionCard
           {variant === "user" && onDelete && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#A0A0A0] hover:text-white">
-                  <MoreVertical className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-[#A0A0A0] hover:text-white"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MoreVertical className="h-4 w-4" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#2A2A2A] border-[#444444]">
-                <DropdownMenuItem className="text-red-400 hover:text-red-300" onClick={onDelete}>
+                <DropdownMenuItem
+                  className="text-red-400 hover:text-red-300"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Collection
+                  {isDeleting ? "Deleting..." : "Delete Collection"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

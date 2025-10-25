@@ -6,6 +6,8 @@ import { motion } from "framer-motion"
 import { Edit, MapPin, Calendar, Check, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useMobile } from "@/hooks/use-mobile"
+import { EditProfileModal } from "./edit-profile-modal"
+import { useToast } from "@/hooks/use-toast"
 
 interface ProfileHeaderProps {
   name: string
@@ -25,6 +27,7 @@ interface ProfileHeaderProps {
     followers: number
   }
   isVerified?: boolean
+  onProfileUpdate?: (data: { name: string; bio: string; location?: string; website?: string }) => Promise<void>
 }
 
 export function ProfileHeader({
@@ -37,10 +40,49 @@ export function ProfileHeader({
   location,
   website,
   stats,
-  isVerified = false
+  isVerified = false,
+  onProfileUpdate
 }: ProfileHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const isMobile = useMobile()
+  const { toast } = useToast()
+
+  const handleShare = async () => {
+    const profileUrl = `${window.location.origin}/profile/${username}`
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${name}'s Profile`,
+          text: `Check out ${name}'s profile on Siddu Global Entertainment Hub`,
+          url: profileUrl,
+        })
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(profileUrl)
+        toast({
+          title: "Link Copied",
+          description: "Profile link copied to clipboard",
+        })
+      }
+    } catch (error) {
+      console.error("Error sharing:", error)
+      // If share fails, try clipboard as fallback
+      try {
+        await navigator.clipboard.writeText(profileUrl)
+        toast({
+          title: "Link Copied",
+          description: "Profile link copied to clipboard",
+        })
+      } catch (clipboardError) {
+        toast({
+          title: "Error",
+          description: "Failed to share profile",
+          variant: "destructive",
+        })
+      }
+    }
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -124,6 +166,7 @@ export function ProfileHeader({
                   variant="outline"
                   size={isMobile ? "sm" : "default"}
                   className="border-[#3A3A3A] text-[#E0E0E0] hover:bg-[#3A3A3A]"
+                  onClick={handleShare}
                 >
                   <Share2 className="w-4 h-4" />
                   <span className="sr-only md:not-sr-only md:ml-2">Share</span>
@@ -150,6 +193,15 @@ export function ProfileHeader({
           </motion.div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditing && onProfileUpdate && (
+        <EditProfileModal
+          currentData={{ name, bio, location, website, avatarUrl }}
+          onClose={() => setIsEditing(false)}
+          onSave={onProfileUpdate}
+        />
+      )}
     </motion.div>
   )
 }

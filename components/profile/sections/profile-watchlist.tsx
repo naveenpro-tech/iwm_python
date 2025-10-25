@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/profile/empty-state"
 import { AddToCollectionModal } from "@/components/profile/collections/add-to-collection-modal"
 import Image from "next/image"
 import Link from "next/link"
+import { getUserWatchlist } from "@/lib/api/watchlist"
 
 type ViewMode = "grid" | "list"
 type Priority = "high" | "medium" | "low"
@@ -41,106 +42,35 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
   const [addToCollectionMovie, setAddToCollectionMovie] = useState<{ id: string; title: string } | null>(null)
 
   useEffect(() => {
-    // Simulate API call to fetch watchlist
     const fetchWatchlist = async () => {
       setIsLoading(true)
-
-      // Mock data - in a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-
-      const mockWatchlist: WatchlistMovie[] = [
-        {
-          id: "m2",
-          title: "Challengers",
-          posterUrl: "/challengers-poster.png",
-          year: "2024",
-          genres: ["Drama", "Sport"],
-          addedDate: "Yesterday",
-          releaseStatus: "released",
-          sidduScore: 8.7,
-          priority: "high",
-        },
-        {
-          id: "m5",
-          title: "Killers of the Flower Moon",
-          posterUrl: "/killers-of-the-flower-moon-poster.png",
-          year: "2023",
-          genres: ["Crime", "Drama", "Western"],
-          addedDate: "Last week",
-          releaseStatus: "released",
-          sidduScore: 9.2,
-          priority: "high",
-        },
-        {
-          id: "m6",
-          title: "Poor Things",
-          posterUrl: "/poor-things-poster.png",
-          year: "2023",
-          genres: ["Comedy", "Drama", "Romance", "Sci-Fi"],
-          addedDate: "2 weeks ago",
-          releaseStatus: "released",
-          sidduScore: 8.7,
-          priority: "medium",
-        },
-        {
-          id: "m7",
-          title: "Furiosa: A Mad Max Saga",
-          posterUrl: "/action-movie-poster.png",
-          year: "2024",
-          genres: ["Action", "Adventure", "Sci-Fi"],
-          addedDate: "3 weeks ago",
-          releaseStatus: "upcoming",
-          priority: "high",
-        },
-        {
-          id: "m8",
-          title: "The Fall Guy",
-          posterUrl: "/sci-fi-movie-poster.png",
-          year: "2024",
-          genres: ["Action", "Comedy"],
-          addedDate: "1 month ago",
-          releaseStatus: "upcoming",
-          priority: "medium",
-        },
-        {
-          id: "m9",
-          title: "Kingdom of the Planet of the Apes",
-          posterUrl: "/sci-fi-movie-poster.png",
-          year: "2024",
-          genres: ["Action", "Adventure", "Sci-Fi"],
-          addedDate: "1 month ago",
-          releaseStatus: "upcoming",
-          priority: "low",
-        },
-        {
-          id: "m10",
-          title: "Barbie",
-          posterUrl: "/barbie-movie-poster.png",
-          year: "2023",
-          genres: ["Adventure", "Comedy", "Fantasy"],
-          addedDate: "2 months ago",
-          releaseStatus: "released",
-          sidduScore: 8.9,
-          priority: "low",
-        },
-        {
-          id: "m11",
-          title: "Oppenheimer",
-          posterUrl: "/oppenheimer-inspired-poster.png",
-          year: "2023",
-          genres: ["Biography", "Drama", "History"],
-          addedDate: "3 months ago",
-          releaseStatus: "released",
-          sidduScore: 9.4,
-          priority: "medium",
-        },
-      ]
-
-      setMovies(mockWatchlist)
-      setIsLoading(false)
+      try {
+        const data = await getUserWatchlist(userId, 1, 100)
+        const items = Array.isArray(data) ? data : data?.items || []
+        const mapped: WatchlistMovie[] = items.map((w: any) => {
+          const year = w.releaseDate || w.movie?.year || ""
+          const releaseStatus: "released" | "upcoming" = year && Number(year) <= new Date().getFullYear() ? "released" : "upcoming"
+          return {
+            id: w.movieId || w.movie?.id || w.id,
+            title: w.title || w.movie?.title || "",
+            posterUrl: w.posterUrl || w.movie?.posterUrl || "",
+            year: String(year || ""),
+            genres: w.genres || w.movie?.genres || [],
+            addedDate: w.dateAdded || "",
+            releaseStatus,
+            sidduScore: typeof w.rating === "number" ? w.rating : undefined,
+            priority: (w.priority as Priority) || "medium",
+          }
+        })
+        setMovies(mapped)
+      } catch (err) {
+        console.error("Failed to load watchlist:", err)
+        setMovies([])
+      } finally {
+        setIsLoading(false)
+      }
     }
-
-    fetchWatchlist()
+    if (userId) fetchWatchlist()
   }, [userId])
 
   // Action handlers

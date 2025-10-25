@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { X, Plus, Check } from "lucide-react"
 import type { UserCollection } from "@/types/profile"
-import { mockUserCollections } from "@/lib/profile/mock-user-collections"
+import { getUserCollections, addMovieToCollection, removeMovieFromCollection, createCollection } from "@/lib/api/collections"
+import { useToast } from "@/hooks/use-toast"
 
 interface AddToCollectionModalProps {
   movieId: string
@@ -19,30 +20,39 @@ export function AddToCollectionModal({
 }: AddToCollectionModalProps) {
   const [collections, setCollections] = useState<UserCollection[]>([])
   const [selectedCollections, setSelectedCollections] = useState<Set<string>>(new Set())
+  const [initialCollections, setInitialCollections] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     const loadCollections = async () => {
       setIsLoading(true)
       try {
-        await new Promise(resolve => setTimeout(resolve, 300))
-        setCollections(mockUserCollections)
-        
+        const data = await getUserCollections()
+        const collectionsArray = Array.isArray(data) ? data : []
+        setCollections(collectionsArray)
+
         // Pre-select collections that already contain this movie
-        const alreadyIn = mockUserCollections
-          .filter(c => c.movies.some(m => m.id === movieId))
-          .map(c => c.id)
+        const alreadyIn = collectionsArray
+          .filter((c: any) => c.movies?.some((m: any) => m.id === movieId || m.external_id === movieId))
+          .map((c: any) => c.id || c.external_id)
         setSelectedCollections(new Set(alreadyIn))
+        setInitialCollections(new Set(alreadyIn))
       } catch (error) {
         console.error("Failed to load collections:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load collections. Please try again.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
     loadCollections()
-  }, [movieId])
+  }, [movieId, toast])
 
   const toggleCollection = (collectionId: string) => {
     setSelectedCollections(prev => {
@@ -60,15 +70,33 @@ export function AddToCollectionModal({
     setIsSaving(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // In real implementation, this would update the backend
-      console.log("Adding movie to collections:", Array.from(selectedCollections))
-      
+      // Determine which collections to add to and remove from
+      const toAdd = Array.from(selectedCollections).filter(id => !initialCollections.has(id))
+      const toRemove = Array.from(initialCollections).filter(id => !selectedCollections.has(id))
+
+      // Add movie to new collections
+      for (const collectionId of toAdd) {
+        await addMovieToCollection(collectionId, movieId)
+      }
+
+      // Remove movie from deselected collections
+      for (const collectionId of toRemove) {
+        await removeMovieFromCollection(collectionId, movieId)
+      }
+
+      toast({
+        title: "Success",
+        description: `${movieTitle} has been updated in your collections.`,
+      })
+
       onClose()
     } catch (error) {
-      console.error("Failed to add to collections:", error)
+      console.error("Failed to update collections:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update collections. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsSaving(false)
     }

@@ -22,9 +22,10 @@ interface MovieHeroSectionProps {
   }
   onAddToWatchlist?: () => void
   isAddingToWatchlist?: boolean
+  onAddToCollection?: () => void
 }
 
-export function MovieHeroSection({ movie, onAddToWatchlist, isAddingToWatchlist }: MovieHeroSectionProps) {
+export function MovieHeroSection({ movie, onAddToWatchlist, isAddingToWatchlist, onAddToCollection }: MovieHeroSectionProps) {
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -180,6 +181,19 @@ export function MovieHeroSection({ movie, onAddToWatchlist, isAddingToWatchlist 
                       {isAddingToWatchlist ? "Adding..." : "Add to Watchlist"}
                     </Button>
                   </motion.div>
+
+                  {onAddToCollection && (
+                    <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.15 }}>
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto border-[#FFD700] text-[#E0E0E0] hover:bg-[#FFD700]/10 font-inter"
+                        onClick={onAddToCollection}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add to Collection
+                      </Button>
+                    </motion.div>
+                  )}
 
                   <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.15 }}>
                     <Button

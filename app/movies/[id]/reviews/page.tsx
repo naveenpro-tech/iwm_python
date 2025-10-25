@@ -123,6 +123,11 @@ export default function ReviewsPage() {
             ratingDistribution: {},
             verifiedCount: 0,
             sentimentBreakdown: { positive: 0, neutral: 0, negative: 0 },
+            total_reviews: {
+              official: officialReview ? 1 : 0,
+              critics: criticReviews.length,
+              users: userReviewsList.length,
+            },
           })
 
           // Check if current user has reviewed
@@ -157,6 +162,11 @@ export default function ReviewsPage() {
           ratingDistribution: {},
           verifiedCount: 0,
           sentimentBreakdown: { positive: 0, neutral: 0, negative: 0 },
+          total_reviews: {
+            official: 0,
+            critics: 0,
+            users: 0,
+          },
         })
       } finally {
         setIsLoading(false)
@@ -311,9 +321,9 @@ export default function ReviewsPage() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           reviewCounts={{
-            official: stats.total_reviews.official,
-            critics: stats.total_reviews.critics,
-            users: stats.total_reviews.users,
+            official: stats?.total_reviews?.official || 0,
+            critics: stats?.total_reviews?.critics || 0,
+            users: stats?.total_reviews?.users || 0,
           }}
         />
 

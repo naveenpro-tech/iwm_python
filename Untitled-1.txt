@@ -1,0 +1,1 @@
+cd c:\iwm\v142 && git log --oneline

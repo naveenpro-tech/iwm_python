@@ -8,23 +8,33 @@ import { PopularCollections } from "./popular-collections"
 import { UserCollections } from "./user-collections"
 import { CollectionsEmptyState } from "./collections-empty-state"
 import { CollectionsSkeleton } from "./collections-skeleton"
-import { mockFeaturedCollections, mockPopularCollections, mockUserCollections } from "./mock-data"
+import { getUserCollections } from "@/lib/api/collections"
+import { getCurrentUser } from "@/lib/auth"
 
 export function CollectionsContainer() {
   const [isLoading, setIsLoading] = useState(true)
-  const [userCollections, setUserCollections] = useState(mockUserCollections)
+  const [userCollections, setUserCollections] = useState<any[]>([])
 
   useEffect(() => {
-    // Simulate API loading
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
+    const load = async () => {
+      setIsLoading(true)
+      try {
+        const user = await getCurrentUser()
+        const data = await getUserCollections(user.id)
+        const items = Array.isArray(data) ? data : data?.items || []
+        setUserCollections(items)
+      } catch (err) {
+        console.error("Failed to load user collections:", err)
+        setUserCollections([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
   }, [])
 
   const handleCreateCollection = (collection: any) => {
-    // In a real app, this would make an API call to create the collection
+    // TODO: Integrate createCollection API and refresh; keeping optimistic update for now
     setUserCollections((prev) => [...prev, collection])
   }
 
@@ -42,8 +52,8 @@ export function CollectionsContainer() {
       <CollectionsHeader onCreateCollection={handleCreateCollection} />
 
       <div className="container mx-auto px-4 py-8 space-y-12">
-        <FeaturedCollections collections={mockFeaturedCollections} />
-        <PopularCollections collections={mockPopularCollections} />
+        <FeaturedCollections collections={[]} />
+        <PopularCollections collections={[]} />
 
         {userCollections.length > 0 ? (
           <UserCollections

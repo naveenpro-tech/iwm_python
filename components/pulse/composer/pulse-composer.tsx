@@ -5,7 +5,7 @@
  * Main composer with expandable textarea, media upload, emoji picker, and tagging
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CurrentUser, PulseMedia, TaggedItem } from '@/types/pulse'
 import ComposerTextarea from './composer-textarea'
@@ -16,38 +16,100 @@ import EmojiPickerButton from './emoji-picker-button'
 import TagSearchButton from './tag-search-button'
 import TagChip from './tag-chip'
 import PostButton from './post-button'
+import { me } from '@/lib/auth'
+import { createPulse } from '@/lib/api/pulses'
+import { useToast } from '@/hooks/use-toast'
 
 interface PulseComposerProps {
   currentUser: CurrentUser
   onSubmit: (content: string, media: PulseMedia[], taggedItems: TaggedItem[]) => void
   isSubmitting?: boolean
+  onPulseCreated?: () => void
 }
 
 export default function PulseComposer({
   currentUser,
   onSubmit,
   isSubmitting = false,
+  onPulseCreated,
 }: PulseComposerProps) {
   const [content, setContent] = useState('')
   const [media, setMedia] = useState<PulseMedia[]>([])
   const [taggedItems, setTaggedItems] = useState<TaggedItem[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
+  const [authUser, setAuthUser] = useState<any>(null)
+  const [isPosting, setIsPosting] = useState(false)
+  const { toast } = useToast()
 
-  const MAX_CHARS = 500
+  const MAX_CHARS = 280 // Changed from 500 to 280 as per requirements
   const charCount = content.length
   const isOverLimit = charCount > MAX_CHARS
-  const canPost = content.trim().length > 0 && !isOverLimit && !isSubmitting
+  const canPost = content.trim().length > 0 && !isOverLimit && !isPosting
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await me()
+        setAuthUser(user)
+      } catch (error) {
+        console.debug("User not authenticated")
+      }
+    }
+    fetchUser()
+  }, [])
+
+  const handleSubmit = async () => {
     if (!canPost) return
 
-    onSubmit(content, media, taggedItems)
-    
-    // Reset form
-    setContent('')
-    setMedia([])
-    setTaggedItems([])
-    setIsExpanded(false)
+    setIsPosting(true)
+
+    try {
+      // Extract hashtags from content
+      const hashtagRegex = /#(\w+)/g
+      const hashtags = content.match(hashtagRegex) || []
+
+      // Get linked movie ID from tagged items
+      const linkedMovieId = taggedItems.find(tag => tag.type === 'movie')?.id
+
+      // Prepare media URLs
+      const contentMedia = media.length > 0 ? media.map(m => m.url) : undefined
+
+      // Call real API
+      await createPulse({
+        contentText: content.trim(),
+        contentMedia,
+        linkedMovieId,
+        hashtags,
+      })
+
+      toast({
+        title: "Success",
+        description: "Pulse posted successfully",
+      })
+
+      // Call original onSubmit for UI update
+      onSubmit(content, media, taggedItems)
+
+      // Reset form
+      setContent('')
+      setMedia([])
+      setTaggedItems([])
+      setIsExpanded(false)
+
+      // Notify parent to refresh feed
+      if (onPulseCreated) {
+        onPulseCreated()
+      }
+    } catch (error: any) {
+      console.error("Error creating pulse:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to post pulse",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPosting(false)
+    }
   }
 
   const handleMediaAdd = (newMedia: PulseMedia[]) => {
@@ -149,7 +211,7 @@ export default function PulseComposer({
               <PostButton
                 onClick={handleSubmit}
                 disabled={!canPost}
-                isSubmitting={isSubmitting}
+                isSubmitting={isPosting}
               />
             </div>
           </div>

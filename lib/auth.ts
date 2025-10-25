@@ -35,6 +35,17 @@ export function getAccessToken(): string | null {
   return s ? s.getItem("access_token") : null
 }
 
+export function getAuthHeaders(): Record<string, string> {
+  const token = getAccessToken()
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+  return headers
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!useBackend || !apiBase) throw new Error("Backend not enabled")
   const headers: Record<string, string> = { "Content-Type": "application/json" }

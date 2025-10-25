@@ -1,10 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Star, ThumbsUp, ThumbsDown, MessageCircle, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react"
+import { Star, ThumbsUp, ThumbsDown, MessageCircle, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Pencil, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { UserReviewCardProps } from "@/types/review-page"
+import { me } from "@/lib/auth"
+import { deleteReview } from "@/lib/api/reviews"
+import { useToast } from "@/hooks/use-toast"
+import { EditReviewModal } from "@/components/reviews/edit-review-modal"
 
 export default function UserReviewCard({
   review,
@@ -17,6 +21,22 @@ export default function UserReviewCard({
   const [helpfulCount, setHelpfulCount] = useState(review.helpful_count)
   const [unhelpfulCount, setUnhelpfulCount] = useState(review.unhelpful_count)
   const [userVote, setUserVote] = useState<"helpful" | "unhelpful" | null>(review.user_vote || null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await me()
+        setCurrentUser(user)
+      } catch (error) {
+        console.debug("User not authenticated")
+      }
+    }
+    fetchUser()
+  }, [])
 
   const handleHelpfulClick = () => {
     if (userVote === "helpful") {
@@ -44,6 +64,40 @@ export default function UserReviewCard({
       setUserVote("unhelpful")
     }
     onUnhelpfulClick(review.id)
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deleteReview(review.id)
+      toast({
+        title: "Success",
+        description: "Review deleted successfully",
+      })
+      window.location.reload()
+    } catch (error: any) {
+      console.error("Error deleting review:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete review",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false)
+    toast({
+      title: "Success",
+      description: "Review updated successfully",
+    })
+    window.location.reload()
   }
 
   const renderStars = (rating: number) => {
@@ -161,45 +215,96 @@ export default function UserReviewCard({
       )}
 
       {/* Footer: Timestamp & Actions */}
-      <div className="flex items-center justify-between pt-4 border-t border-[#3A3A3A]">
-        <div className="text-xs text-[#A0A0A0]">
-          {new Date(review.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </div>
+      <div className="pt-4 border-t border-[#3A3A3A] space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-[#A0A0A0]">
+            {new Date(review.created_at).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </div>
 
-        <div className="flex items-center gap-4">
-          {/* Helpful Button */}
-          <button
-            onClick={handleHelpfulClick}
-            className={`flex items-center gap-1 text-sm ${
-              userVote === "helpful" ? "text-[#10B981]" : "text-[#A0A0A0]"
-            } hover:text-[#10B981] transition-colors`}
-          >
-            <ThumbsUp className="w-4 h-4" />
-            <span>{helpfulCount}</span>
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Helpful Button */}
+            <button
+              onClick={handleHelpfulClick}
+              className={`flex items-center gap-1 text-sm ${
+                userVote === "helpful" ? "text-[#10B981]" : "text-[#A0A0A0]"
+              } hover:text-[#10B981] transition-colors`}
+            >
+              <ThumbsUp className="w-4 h-4" />
+              <span>{helpfulCount}</span>
+            </button>
 
-          {/* Unhelpful Button */}
-          <button
-            onClick={handleUnhelpfulClick}
-            className={`flex items-center gap-1 text-sm ${
-              userVote === "unhelpful" ? "text-[#EF4444]" : "text-[#A0A0A0]"
-            } hover:text-[#EF4444] transition-colors`}
-          >
-            <ThumbsDown className="w-4 h-4" />
-            <span>{unhelpfulCount}</span>
-          </button>
+            {/* Unhelpful Button */}
+            <button
+              onClick={handleUnhelpfulClick}
+              className={`flex items-center gap-1 text-sm ${
+                userVote === "unhelpful" ? "text-[#EF4444]" : "text-[#A0A0A0]"
+              } hover:text-[#EF4444] transition-colors`}
+            >
+              <ThumbsDown className="w-4 h-4" />
+              <span>{unhelpfulCount}</span>
+            </button>
 
-          {/* Comments */}
-          <div className="flex items-center gap-1 text-sm text-[#A0A0A0]">
-            <MessageCircle className="w-4 h-4" />
-            <span>{review.comment_count}</span>
+            {/* Comments */}
+            <div className="flex items-center gap-1 text-sm text-[#A0A0A0]">
+              <MessageCircle className="w-4 h-4" />
+              <span>{review.comment_count}</span>
+            </div>
           </div>
         </div>
+
+        {/* Edit/Delete Buttons - Only show if user owns the review */}
+        {currentUser?.id === review.user.id && (
+          <div className="flex gap-2 pt-3 border-t border-[#3A3A3A]">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex-1 border-[#3A3A3A] hover:bg-[#3A3A3A]"
+            >
+              <Pencil className="w-3 h-3 mr-2" />
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-3 h-3 mr-2" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <EditReviewModal
+          review={{
+            id: review.id,
+            title: "",
+            content: review.content,
+            rating: review.rating,
+            hasSpoilers: review.contains_spoilers,
+          }}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   )
 }

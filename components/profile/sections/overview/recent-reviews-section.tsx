@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Loader2, Star, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { getUserReviews } from "@/lib/api/reviews"
 
 interface Review {
   id: string
@@ -25,39 +26,29 @@ export function RecentReviewsSection({ userId }: RecentReviewsSectionProps) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate API call to fetch recent reviews
     const fetchReviews = async () => {
       setIsLoading(true)
-
-      // Mock data - in a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 800))
-
-      const mockReviews: Review[] = [
-        {
-          id: "r1",
-          movieId: "m1",
-          movieTitle: "Dune: Part Two",
-          moviePosterUrl: "/dune-part-two-poster.png",
-          rating: 9,
-          content: "Denis Villeneuve has outdone himself with this epic conclusion...",
-          date: "2 hours ago",
-        },
-        {
-          id: "r2",
-          movieId: "m3",
-          movieTitle: "Oppenheimer",
-          moviePosterUrl: "/oppenheimer-inspired-poster.png",
-          rating: 10,
-          content: "Christopher Nolan's masterpiece. The performances are incredible...",
-          date: "3 days ago",
-        },
-      ]
-
-      setReviews(mockReviews)
-      setIsLoading(false)
+      try {
+        const data = await getUserReviews(userId, 1, 5, "date_desc")
+        const items = Array.isArray(data) ? data : data?.items || []
+        const mapped: Review[] = items.slice(0, 3).map((r: any) => ({
+          id: r.id,
+          movieId: r.movie?.id || "",
+          movieTitle: r.movie?.title || "",
+          moviePosterUrl: r.movie?.posterUrl || "",
+          rating: Number(r.rating || 0),
+          content: r.content || "",
+          date: r.date || r.createdAt || "",
+        }))
+        setReviews(mapped)
+      } catch (err) {
+        console.error("Failed to load recent reviews:", err)
+        setReviews([])
+      } finally {
+        setIsLoading(false)
+      }
     }
-
-    fetchReviews()
+    if (userId) fetchReviews()
   }, [userId])
 
   const containerVariants = {

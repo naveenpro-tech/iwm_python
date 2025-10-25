@@ -34,6 +34,7 @@ class WatchlistRepository:
         return [
             {
                 "id": w.external_id,
+                "movieId": w.movie.external_id,
                 "title": w.movie.title,
                 "posterUrl": w.movie.poster_url,
                 "dateAdded": w.date_added.isoformat(),
@@ -58,6 +59,7 @@ class WatchlistRepository:
             return None
         return {
             "id": w.external_id,
+            "movieId": w.movie.external_id,
             "title": w.movie.title,
             "posterUrl": w.movie.poster_url,
             "dateAdded": w.date_added.isoformat(),
@@ -76,7 +78,7 @@ class WatchlistRepository:
         user_id: str,
         status: str = "want-to-watch",
         progress: Optional[int] = None,
-        rating: Optional[float] = None,
+        rating: Optional[float] = None,  # Kept for API compatibility but not used
     ) -> dict[str, Any]:
         """Create a new watchlist item"""
         if not self.session:
@@ -93,14 +95,13 @@ class WatchlistRepository:
         if not movie:
             raise ValueError(f"Movie {movie_id} not found")
 
-        # Create watchlist item
+        # Create watchlist item (rating not included as it's not in the model)
         watchlist_item = Watchlist(
             external_id=str(uuid.uuid4()),
             user_id=user.id,
             movie_id=movie.id,
             status=status,
             progress=progress,
-            rating=rating,
             date_added=datetime.utcnow(),
         )
         self.session.add(watchlist_item)
@@ -112,7 +113,6 @@ class WatchlistRepository:
             "userId": user.external_id,
             "status": watchlist_item.status,
             "progress": watchlist_item.progress,
-            "rating": watchlist_item.rating,
             "dateAdded": watchlist_item.date_added.isoformat(),
         }
 
@@ -122,6 +122,7 @@ class WatchlistRepository:
         status: Optional[str] = None,
         progress: Optional[int] = None,
         rating: Optional[float] = None,
+        priority: Optional[str] = None,
     ) -> dict[str, Any] | None:
         """Update a watchlist item"""
         if not self.session:
@@ -139,6 +140,8 @@ class WatchlistRepository:
             w.progress = progress
         if rating is not None:
             w.rating = rating
+        if priority is not None:
+            w.priority = priority
 
         await self.session.flush()
 
@@ -147,6 +150,7 @@ class WatchlistRepository:
             "status": w.status,
             "progress": w.progress,
             "rating": w.rating,
+            "priority": w.priority,
         }
 
     async def delete(self, watchlist_id: str) -> bool:

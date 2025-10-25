@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Optional
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
 from ..repositories.reviews import ReviewRepository
+from ..dependencies.auth import get_current_user
+from ..models import User
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -18,6 +20,13 @@ class ReviewIn(BaseModel):
     title: Optional[str] = None
     content: str
     spoilers: bool = False
+
+
+class ReviewUpdateBody(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    rating: Optional[float] = None
+    hasSpoilers: Optional[bool] = None
 
 
 @router.get("")
@@ -74,4 +83,60 @@ async def create_review(body: ReviewIn, session: AsyncSession = Depends(get_sess
     except Exception as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail="Failed to create review")
+
+
+@router.put("/{review_id}")
+async def update_review(
+    review_id: str,
+    body: ReviewUpdateBody,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Update an existing review. User must own the review."""
+    repo = ReviewRepository(session)
+    try:
+        result = await repo.update(
+            review_id=review_id,
+            user_id=current_user.id,
+            title=body.title,
+            content=body.content,
+            rating=body.rating,
+            has_spoilers=body.hasSpoilers,
+        )
+        if not result:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found")
+        await session.commit()
+        return result
+    except ValueError as e:
+        await session.rollback()
+        if "does not own" in str(e):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to update review")
+
+
+@router.delete("/{review_id}")
+async def delete_review(
+    review_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Delete a review. User must own the review."""
+    repo = ReviewRepository(session)
+    try:
+        result = await repo.delete(review_id=review_id, user_id=current_user.id)
+        if not result:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found")
+        await session.commit()
+        return {"deleted": True}
+    except ValueError as e:
+        await session.rollback()
+        if "does not own" in str(e):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to delete review")
 

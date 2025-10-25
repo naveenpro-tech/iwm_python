@@ -1,13 +1,26 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
 
 from ..db import get_session
 from ..repositories.collections import CollectionRepository
+from ..dependencies.auth import get_current_user
+from ..models import User
 
 router = APIRouter(prefix="/collections", tags=["collections"])
+
+
+class CollectionCreateBody(BaseModel):
+    title: str = Field(..., min_length=3, max_length=100)
+    description: str = Field(default="", max_length=500)
+    isPublic: bool = True
+
+
+class AddMovieBody(BaseModel):
+    movieId: str
 
 
 @router.get("")
@@ -37,4 +50,111 @@ async def get_collection(collection_id: str, session: AsyncSession = Depends(get
     if not data:
         raise HTTPException(status_code=404, detail="Collection not found")
     return data
+
+
+@router.post("")
+async def create_collection(
+    body: CollectionCreateBody,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Create a new collection"""
+    repo = CollectionRepository(session)
+    try:
+        result = await repo.create(
+            user_id=current_user.id,
+            title=body.title,
+            description=body.description,
+            is_public=body.isPublic,
+        )
+        await session.commit()
+        return result
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to create collection")
+
+
+@router.post("/{collection_id}/movies")
+async def add_movie_to_collection(
+    collection_id: str,
+    body: AddMovieBody,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Add a movie to a collection. User must own the collection."""
+    repo = CollectionRepository(session)
+    try:
+        result = await repo.add_movie(
+            collection_id=collection_id,
+            movie_id=body.movieId,
+            user_id=current_user.id,
+        )
+        if not result:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+        await session.commit()
+        return {"added": True}
+    except ValueError as e:
+        await session.rollback()
+        if "does not own" in str(e):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to add movie to collection")
+
+
+@router.delete("/{collection_id}/movies/{movie_id}")
+async def remove_movie_from_collection(
+    collection_id: str,
+    movie_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Remove a movie from a collection. User must own the collection."""
+    repo = CollectionRepository(session)
+    try:
+        result = await repo.remove_movie(
+            collection_id=collection_id,
+            movie_id=movie_id,
+            user_id=current_user.id,
+        )
+        if not result:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection or movie not found")
+        await session.commit()
+        return {"removed": True}
+    except ValueError as e:
+        await session.rollback()
+        if "does not own" in str(e):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to remove movie from collection")
+
+
+@router.delete("/{collection_id}")
+async def delete_collection(
+    collection_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Delete a collection. User must own the collection."""
+    repo = CollectionRepository(session)
+    try:
+        result = await repo.delete_collection(
+            collection_id=collection_id,
+            user_id=current_user.id,
+        )
+        if not result:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+        await session.commit()
+        return {"deleted": True}
+    except ValueError as e:
+        await session.rollback()
+        if "does not own" in str(e):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to delete collection")
 

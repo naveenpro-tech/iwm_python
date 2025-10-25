@@ -9,7 +9,9 @@ import { WatchlistSkeleton } from "./watchlist-skeleton"
 import { WatchlistToolbar } from "./watchlist-toolbar"
 import { WatchlistStatistics } from "./watchlist-statistics"
 import { BatchActionsBar } from "./batch-actions-bar"
-import { mockWatchlistItems } from "./mock-data"
+import { getUserWatchlist, removeFromWatchlist, updateWatchlistItem } from "@/lib/api/watchlist"
+import { getCurrentUser } from "@/lib/auth"
+import { useToast } from "@/hooks/use-toast"
 import type { WatchlistItem, WatchStatus, SortOption, GroupByOption } from "./types"
 
 export function WatchlistContainer() {
@@ -22,16 +24,49 @@ export function WatchlistContainer() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [isBatchMode, setIsBatchMode] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate API fetch with delay
-    const timer = setTimeout(() => {
-      setItems(mockWatchlistItems)
-      setFilteredItems(mockWatchlistItems)
-      setIsLoading(false)
-    }, 1000)
+    async function fetchWatchlist() {
+      try {
+        const user = await getCurrentUser()
+        if (!user) {
+          setIsLoading(false)
+          return
+        }
 
-    return () => clearTimeout(timer)
+        const response = await getUserWatchlist(user.id)
+        const watchlistData = response.items || response || []
+
+        // Transform API data to match WatchlistItem type
+        const transformedItems: WatchlistItem[] = watchlistData.map((item: any) => ({
+          id: item.id || item.external_id,
+          movieId: item.movieId || item.movie_id,
+          title: item.title || item.movie?.title || "Unknown Title",
+          releaseDate: item.releaseDate || item.movie?.release_date || item.movie?.releaseDate || "Unknown",
+          posterUrl: item.posterUrl || item.movie?.poster_url || item.movie?.posterUrl || "/placeholder.svg",
+          rating: item.rating || item.movie?.vote_average || item.movie?.rating || 0,
+          status: item.status as WatchStatus,
+          priority: item.priority as "high" | "medium" | "low",
+          progress: item.progress || 0,
+          dateAdded: item.dateAdded || item.date_added || new Date().toISOString(),
+        }))
+
+        setItems(transformedItems)
+        setFilteredItems(transformedItems)
+      } catch (error) {
+        console.error("Error fetching watchlist:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load watchlist. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchWatchlist()
   }, [])
 
   useEffect(() => {
@@ -83,21 +118,73 @@ export function WatchlistContainer() {
     setViewMode(mode)
   }
 
-  const handleUpdateStatus = (itemId: string, newStatus: WatchStatus) => {
-    setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item)))
+  const handleUpdateStatus = async (itemId: string, newStatus: WatchStatus) => {
+    try {
+      await updateWatchlistItem(itemId, { status: newStatus })
+      setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item)))
+      toast({
+        title: "Status Updated",
+        description: `Status changed to ${newStatus.replace("-", " ")}`,
+      })
+    } catch (error) {
+      console.error("Error updating status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleUpdatePriority = (itemId: string, newPriority: "high" | "medium" | "low") => {
-    setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, priority: newPriority } : item)))
+  const handleUpdatePriority = async (itemId: string, newPriority: "high" | "medium" | "low") => {
+    try {
+      await updateWatchlistItem(itemId, { priority: newPriority })
+      setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, priority: newPriority } : item)))
+      toast({
+        title: "Priority Updated",
+        description: `Priority changed to ${newPriority}`,
+      })
+    } catch (error) {
+      console.error("Error updating priority:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update priority. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleUpdateProgress = (itemId: string, newProgress: number) => {
-    setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, progress: newProgress } : item)))
+  const handleUpdateProgress = async (itemId: string, newProgress: number) => {
+    try {
+      await updateWatchlistItem(itemId, { progress: newProgress })
+      setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, progress: newProgress } : item)))
+    } catch (error) {
+      console.error("Error updating progress:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update progress. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleRemoveItem = (itemId: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== itemId))
-    setSelectedItems((prev) => prev.filter((id) => id !== itemId))
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      await removeFromWatchlist(itemId)
+      setItems((prev) => prev.filter((item) => item.id !== itemId))
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId))
+      toast({
+        title: "Removed from Watchlist",
+        description: "Movie has been removed from your watchlist.",
+      })
+    } catch (error) {
+      console.error("Error removing from watchlist:", error)
+      toast({
+        title: "Error",
+        description: "Failed to remove from watchlist. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const toggleItemSelection = (itemId: string) => {
@@ -119,24 +206,66 @@ export function WatchlistContainer() {
     }
   }
 
-  const handleBatchUpdateStatus = (newStatus: WatchStatus) => {
-    setItems((prev) => prev.map((item) => (selectedItems.includes(item.id) ? { ...item, status: newStatus } : item)))
-    setSelectedItems([])
-    setIsBatchMode(false)
+  const handleBatchUpdateStatus = async (newStatus: WatchStatus) => {
+    try {
+      await Promise.all(selectedItems.map((itemId) => updateWatchlistItem(itemId, { status: newStatus })))
+      setItems((prev) => prev.map((item) => (selectedItems.includes(item.id) ? { ...item, status: newStatus } : item)))
+      setSelectedItems([])
+      setIsBatchMode(false)
+      toast({
+        title: "Batch Update Complete",
+        description: `Updated ${selectedItems.length} items to ${newStatus.replace("-", " ")}`,
+      })
+    } catch (error) {
+      console.error("Error batch updating status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update some items. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleBatchUpdatePriority = (newPriority: "high" | "medium" | "low") => {
-    setItems((prev) =>
-      prev.map((item) => (selectedItems.includes(item.id) ? { ...item, priority: newPriority } : item)),
-    )
-    setSelectedItems([])
-    setIsBatchMode(false)
+  const handleBatchUpdatePriority = async (newPriority: "high" | "medium" | "low") => {
+    try {
+      await Promise.all(selectedItems.map((itemId) => updateWatchlistItem(itemId, { priority: newPriority })))
+      setItems((prev) =>
+        prev.map((item) => (selectedItems.includes(item.id) ? { ...item, priority: newPriority } : item)),
+      )
+      setSelectedItems([])
+      setIsBatchMode(false)
+      toast({
+        title: "Batch Update Complete",
+        description: `Updated ${selectedItems.length} items to ${newPriority} priority`,
+      })
+    } catch (error) {
+      console.error("Error batch updating priority:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update some items. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleBatchRemove = () => {
-    setItems((prev) => prev.filter((item) => !selectedItems.includes(item.id)))
-    setSelectedItems([])
-    setIsBatchMode(false)
+  const handleBatchRemove = async () => {
+    try {
+      await Promise.all(selectedItems.map((itemId) => removeFromWatchlist(itemId)))
+      setItems((prev) => prev.filter((item) => !selectedItems.includes(item.id)))
+      setSelectedItems([])
+      setIsBatchMode(false)
+      toast({
+        title: "Batch Remove Complete",
+        description: `Removed ${selectedItems.length} items from watchlist`,
+      })
+    } catch (error) {
+      console.error("Error batch removing items:", error)
+      toast({
+        title: "Error",
+        description: "Failed to remove some items. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   if (isLoading) {

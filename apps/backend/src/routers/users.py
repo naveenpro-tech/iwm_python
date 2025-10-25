@@ -46,28 +46,42 @@ async def get_user_by_username(
 ) -> Any:
     """
     Get user profile by username.
-    Username is derived from email (part before @) or can be a custom username field.
+    Try multiple strategies:
+    1. Exact email match
+    2. Email prefix match (username@)
+    3. External_id match
     """
-    # For now, we'll use email as username (part before @)
-    # In the future, add a username field to the User model
-    
-    # Try to find user by email starting with username
-    query = select(User).where(User.email.like(f"{username}%"))
+    user = None
+
+    # Try exact email match first
+    query = select(User).where(User.email == username)
     result = await session.execute(query)
     user = result.scalar_one_or_none()
-    
+
+    # If not found, try email prefix (limit to 1 to avoid MultipleResultsFound error)
+    if not user:
+        query = select(User).where(User.email.like(f"{username}@%")).limit(1)
+        result = await session.execute(query)
+        user = result.scalar_one_or_none()
+
+    # If still not found, try external_id
+    if not user:
+        query = select(User).where(User.external_id == username)
+        result = await session.execute(query)
+        user = result.scalar_one_or_none()
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     # Get user stats
     stats = await get_user_stats_internal(user.id, session)
-    
+
     # Extract username from email
     email_username = user.email.split('@')[0] if '@' in user.email else user.email
-    
+
     return UserProfileResponse(
         id=user.external_id,
         username=email_username,

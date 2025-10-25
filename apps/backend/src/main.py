@@ -51,6 +51,8 @@ from .routers import search as search_router  # Search functionality
 from .routers import reviews as reviews_router  # User reviews and ratings
 from .routers import collections as collections_router  # User-created movie collections
 from .routers import watchlist as watchlist_router  # User watchlist
+from .routers import playlists as playlists_router  # User playlists
+
 from .routers import favorites as favorites_router  # User favorites
 from .routers import awards as awards_router  # Award ceremonies (Oscars, Golden Globes, etc.)
 from .routers import box_office as box_office_router  # Box office data and trends
@@ -267,6 +269,8 @@ api.include_router(search_router.router)  # GET /api/v1/search - Search function
 
 # User Features
 api.include_router(reviews_router.router)  # POST /api/v1/reviews - User reviews
+api.include_router(playlists_router.router)  # GET /api/v1/playlists - User playlists
+
 api.include_router(collections_router.router)  # GET /api/v1/collections - User collections
 api.include_router(watchlist_router.router)  # GET /api/v1/watchlist - User watchlist
 api.include_router(favorites_router.router)  # GET /api/v1/favorites - User favorites

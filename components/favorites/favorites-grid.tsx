@@ -1,21 +1,55 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Heart, CalendarDays, StarIcon } from "lucide-react" // Renamed Star to StarIcon
+import { Heart, CalendarDays, StarIcon, Loader2 } from "lucide-react" // Renamed Star to StarIcon
+import { removeFromFavorites } from "@/lib/api/favorites"
+import { useToast } from "@/hooks/use-toast"
 import type { FavoriteItem } from "./types"
 
 interface FavoritesGridProps {
   favorites: FavoriteItem[]
+  onRemove?: (id: string) => void
 }
 
-export function FavoritesGrid({ favorites }: FavoritesGridProps) {
+export function FavoritesGrid({ favorites, onRemove }: FavoritesGridProps) {
+  const [removingId, setRemovingId] = useState<string | null>(null)
+  const { toast } = useToast()
+
   if (favorites.length === 0) {
     return null // Empty state handled by FavoritesEmptyState
+  }
+
+  const handleRemove = async (favoriteId: string) => {
+    if (!confirm("Remove this item from your favorites?")) {
+      return
+    }
+
+    setRemovingId(favoriteId)
+    try {
+      await removeFromFavorites(favoriteId)
+      toast({
+        title: "Success",
+        description: "Removed from favorites",
+      })
+      if (onRemove) {
+        onRemove(favoriteId)
+      }
+    } catch (error: any) {
+      console.error("Error removing from favorites:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove from favorites",
+        variant: "destructive",
+      })
+    } finally {
+      setRemovingId(null)
+    }
   }
 
   return (
@@ -75,8 +109,20 @@ export function FavoritesGrid({ favorites }: FavoritesGridProps) {
                 variant="ghost"
                 size="sm"
                 className="text-red-500 hover:bg-red-500/10 hover:text-red-400 w-full justify-start"
+                onClick={() => handleRemove(item.id)}
+                disabled={removingId === item.id}
               >
-                <Heart className="h-4 w-4 mr-2 fill-current" /> Remove
+                {removingId === item.id ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <Heart className="h-4 w-4 mr-2 fill-current" />
+                    Remove
+                  </>
+                )}
               </Button>
             </CardFooter>
           </Card>

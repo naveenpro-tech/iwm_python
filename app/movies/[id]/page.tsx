@@ -15,6 +15,7 @@ import { useParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { addToWatchlist } from "@/lib/api/watchlist"
 import { getCurrentUser } from "@/lib/auth"
+import { AddToCollectionModal } from "@/components/profile/collections/add-to-collection-modal"
 
 // Fallback mock movie data (used when backend is unavailable)
 const fallbackMovieData = {
@@ -456,6 +457,7 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
   const [movieData, setMovieData] = useState<any>(fallbackMovieData)
   const [error, setError] = useState<string | null>(null)
   const [isAddingToWatchlist, setIsAddingToWatchlist] = useState(false)
+  const [showCollectionModal, setShowCollectionModal] = useState(false)
   const { id: movieId } = usePromise(params)
   const { toast } = useToast()
 
@@ -507,6 +509,39 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
         }
         const data = await response.json()
 
+        // Fetch reviews to calculate rating distribution
+        let ratingDistribution = fallbackMovieData.ratingDistribution
+        let reviewCount = 0
+        try {
+          const reviewsResponse = await fetch(`${apiBase}/api/v1/reviews?movieId=${movieId}&limit=1000`)
+          if (reviewsResponse.ok) {
+            const reviews = await reviewsResponse.json()
+            reviewCount = Array.isArray(reviews) ? reviews.length : 0
+
+            // Calculate rating distribution from actual reviews
+            if (reviewCount > 0) {
+              const distribution: { [key: number]: number } = {}
+              for (let i = 1; i <= 10; i++) {
+                distribution[i] = 0
+              }
+
+              reviews.forEach((review: any) => {
+                const rating = Math.round(review.rating || 0)
+                if (rating >= 1 && rating <= 10) {
+                  distribution[rating]++
+                }
+              })
+
+              ratingDistribution = Object.entries(distribution).map(([rating, count]) => ({
+                rating: Number.parseInt(rating),
+                count,
+              })).reverse() // Sort from 10 to 1
+            }
+          }
+        } catch (reviewError) {
+          console.error("Error fetching reviews for rating distribution:", reviewError)
+        }
+
         // Transform backend data to match component expectations
         const transformedData = {
           id: data.id,
@@ -519,8 +554,8 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
           rating: data.rating || "Not Rated",
           sidduScore: data.sidduScore || 0,
           criticsScore: data.criticsScore || 0,
-          reviewCount: data.reviews?.length || 0,
-          ratingDistribution: fallbackMovieData.ratingDistribution, // TODO: Calculate from reviews
+          reviewCount,
+          ratingDistribution,
           sentimentAnalysis: fallbackMovieData.sentimentAnalysis, // TODO: Calculate from reviews
           synopsis: data.synopsis || data.overview || "",
           directors: data.directors || [],
@@ -571,6 +606,7 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
         movie={movieData}
         onAddToWatchlist={handleAddToWatchlist}
         isAddingToWatchlist={isAddingToWatchlist}
+        onAddToCollection={() => setShowCollectionModal(true)}
       />
 
       {/* Navigation */}
@@ -606,6 +642,15 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
           Additional movie details would appear here
         </div>
       </div>
+
+      {/* Add to Collection Modal */}
+      {showCollectionModal && (
+        <AddToCollectionModal
+          movieId={movieId}
+          movieTitle={movieData.title}
+          onClose={() => setShowCollectionModal(false)}
+        />
+      )}
     </div>
   )
 }

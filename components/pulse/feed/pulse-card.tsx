@@ -5,7 +5,7 @@
  * Main card component for pulse posts
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PulsePost, PulseComment } from '@/types/pulse'
 import PulseCardHeader from './pulse-card-header'
@@ -14,6 +14,11 @@ import MediaGrid from './media-grid'
 import TaggedItemCard from './tagged-item-card'
 import PulseCardActions from './pulse-card-actions'
 import CommentSection from './comment-section'
+import { me } from '@/lib/auth'
+import { deletePulse } from '@/lib/api/pulses'
+import { useToast } from '@/hooks/use-toast'
+import { Button } from '@/components/ui/button'
+import { Trash2, Loader2 } from 'lucide-react'
 
 interface PulseCardProps {
   post: PulsePost
@@ -22,6 +27,7 @@ interface PulseCardProps {
   onComment: (postId: string, content: string) => void
   onEcho: (postId: string, type: 'echo' | 'quote_echo', quoteContent?: string) => void
   onBookmark: (postId: string) => void
+  onPulseDeleted?: () => void
 }
 
 export default function PulseCard({
@@ -31,8 +37,24 @@ export default function PulseCard({
   onComment,
   onEcho,
   onBookmark,
+  onPulseDeleted,
 }: PulseCardProps) {
   const [isCommentSectionExpanded, setIsCommentSectionExpanded] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await me()
+        setCurrentUser(user)
+      } catch (error) {
+        console.debug("User not authenticated")
+      }
+    }
+    fetchUser()
+  }, [])
 
   const handleCommentClick = () => {
     setIsCommentSectionExpanded(!isCommentSectionExpanded)
@@ -40,6 +62,35 @@ export default function PulseCard({
 
   const handleCommentSubmit = (content: string) => {
     onComment(post.id, content)
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this pulse? This action cannot be undone.")) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deletePulse(post.id)
+      toast({
+        title: "Success",
+        description: "Pulse deleted successfully",
+      })
+      if (onPulseDeleted) {
+        onPulseDeleted()
+      } else {
+        window.location.reload()
+      }
+    } catch (error: any) {
+      console.error("Error deleting pulse:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete pulse",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   // Handle echo/repost display
@@ -81,8 +132,33 @@ export default function PulseCard({
 
   return (
     <div className="bg-[#282828] border border-[#3A3A3A] rounded-xl p-6 hover:border-[#00BFFF]/30 transition-colors">
-      {/* Header */}
-      <PulseCardHeader post={post} />
+      {/* Header with Delete Button */}
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <PulseCardHeader post={post} />
+        </div>
+        {currentUser?.id === post.author.id && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="text-[#A0A0A0] hover:text-red-500 hover:bg-red-500/10"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete
+              </>
+            )}
+          </Button>
+        )}
+      </div>
 
       {/* Content */}
       <div className="mt-4">

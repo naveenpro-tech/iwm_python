@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import { ProfileNavigation } from "@/components/profile/profile-navigation"
@@ -10,11 +10,14 @@ import { ProfileReviews } from "@/components/profile/sections/profile-reviews"
 import { ProfileWatchlist } from "@/components/profile/sections/profile-watchlist"
 import { ProfileFavorites } from "@/components/profile/sections/profile-favorites"
 import { ProfileCollections } from "@/components/profile/sections/profile-collections"
+import { ProfilePlaylists } from "@/components/profile/sections/profile-playlists"
 import { ProfileHistory } from "@/components/profile/sections/profile-history"
 import { ProfileSettings } from "@/components/profile/sections/profile-settings"
 import { Loader2 } from "lucide-react"
+import { updateUserProfile } from "@/lib/api/profile"
+import { useToast } from "@/hooks/use-toast"
 
-type ProfileSection = "overview" | "reviews" | "watchlist" | "favorites" | "collections" | "history" | "settings"
+type ProfileSection = "overview" | "reviews" | "watchlist" | "favorites" | "collections" | "playlists" | "history" | "settings"
 
 interface UserData {
   id: string
@@ -40,12 +43,39 @@ interface UserData {
 export default function UserProfilePage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const username = params.username as string
+  const { toast } = useToast()
 
   const [activeSection, setActiveSection] = useState<ProfileSection>("overview")
   const [userData, setUserData] = useState<UserData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const handleProfileUpdate = async (data: {
+    name: string
+    bio: string
+    location?: string
+    website?: string
+  }) => {
+    if (!userData) return
+
+    try {
+      await updateUserProfile(userData.id, data)
+
+      // Update local state
+      setUserData({
+        ...userData,
+        name: data.name,
+        bio: data.bio,
+        location: data.location,
+        website: data.website,
+      })
+    } catch (error) {
+      console.error("Error updating profile:", error)
+      throw error
+    }
+  }
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -56,7 +86,7 @@ export default function UserProfilePage() {
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
         // Fetch user profile from backend
-        const response = await fetch(`${apiBase}/api/v1/users/profile/${username}`, {
+        const response = await fetch(`${apiBase}/api/v1/users/${username}`, {
           cache: "no-store",
         })
 
@@ -76,12 +106,12 @@ export default function UserProfilePage() {
         const transformedUserData: UserData = {
           id: data.id || data.external_id,
           username: data.username || username,
-          name: data.name || data.display_name || "User",
+          name: data.name || data.display_name || username,
           email: data.email || "",
           bio: data.bio || "",
           avatarUrl: data.avatar_url || data.avatarUrl || "/placeholder.svg?height=120&width=120",
           bannerUrl: data.banner_url || data.bannerUrl || "/placeholder.svg?height=300&width=1200",
-          joinedDate: data.joined_date || data.created_at || "Recently",
+          joinedDate: data.joined_date || data.created_at || "",
           location: data.location || "",
           website: data.website || "",
           stats: {
@@ -106,7 +136,17 @@ export default function UserProfilePage() {
     if (username) {
       fetchUserData()
     }
+
   }, [username])
+
+  // Allow deep-linking to specific section via ?section=...
+  useEffect(() => {
+    const sectionParam = (searchParams?.get('section') || '').toLowerCase()
+    const valid = ["overview","reviews","watchlist","favorites","collections","playlists","history","settings"] as const
+    if (sectionParam && (valid as readonly string[]).includes(sectionParam) && sectionParam !== activeSection) {
+      setActiveSection(sectionParam as ProfileSection)
+    }
+  }, [searchParams])
 
   const renderSection = () => {
     if (!userData) return null
@@ -115,6 +155,7 @@ export default function UserProfilePage() {
       case "overview":
         return <ProfileOverview userId={userData.id} />
       case "reviews":
+
         return <ProfileReviews userId={userData.id} />
       case "watchlist":
         return <ProfileWatchlist userId={userData.id} />
@@ -122,6 +163,8 @@ export default function UserProfilePage() {
         return <ProfileFavorites userId={userData.id} />
       case "collections":
         return <ProfileCollections userId={userData.id} />
+      case "playlists":
+        return <ProfilePlaylists userId={userData.id} />
       case "history":
         return <ProfileHistory userId={userData.id} />
       case "settings":
@@ -176,6 +219,7 @@ export default function UserProfilePage() {
         location={userData.location}
         website={userData.website}
         stats={userData.stats}
+        onProfileUpdate={handleProfileUpdate}
       />
 
       {/* Profile Navigation */}

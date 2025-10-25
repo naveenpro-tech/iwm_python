@@ -3,12 +3,13 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 import json
+import uuid
 
 from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Pulse, User, UserFollow
+from ..models import Pulse, User, UserFollow, Movie
 
 
 def _slugify_username(name: str | None) -> str:
@@ -191,4 +192,64 @@ class PulseRepository:
             "timestamp": p.created_at.replace(microsecond=0).isoformat() + "Z",
             "editedAt": p.edited_at.replace(microsecond=0).isoformat() + "Z" if p.edited_at else None,
         }
+
+    async def create(
+        self,
+        user_id: int,
+        content_text: str,
+        content_media: Optional[List[str]] = None,
+        linked_movie_id: Optional[str] = None,
+        hashtags: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Create a new pulse"""
+        # Validate content length
+        if len(content_text) > 280:
+            raise ValueError("Content text must be 280 characters or less")
+
+        # Get linked movie if provided
+        movie_id_db = None
+        if linked_movie_id:
+            movie_res = await self.session.execute(
+                select(Movie).where(Movie.external_id == linked_movie_id)
+            )
+            movie = movie_res.scalar_one_or_none()
+            if movie:
+                movie_id_db = movie.id
+
+        # Create pulse
+        pulse = Pulse(
+            external_id=str(uuid.uuid4()),
+            user_id=user_id,
+            content_text=content_text,
+            content_media=json.dumps(content_media) if content_media else None,
+            linked_movie_id=movie_id_db,
+            hashtags=json.dumps(hashtags) if hashtags else None,
+            reactions_json="{}",
+            reactions_total=0,
+            comments_count=0,
+            shares_count=0,
+            created_at=datetime.utcnow(),
+        )
+        self.session.add(pulse)
+        await self.session.flush()
+        await self.session.refresh(pulse, ["user", "linked_movie"])
+
+        return self._to_dto(pulse)
+
+    async def delete(self, pulse_id: str, user_id: int) -> bool:
+        """Delete a pulse"""
+        # Get pulse
+        q = select(Pulse).where(Pulse.external_id == pulse_id)
+        res = await self.session.execute(q)
+        pulse = res.scalar_one_or_none()
+        if not pulse:
+            return False
+
+        # Verify ownership
+        if pulse.user_id != user_id:
+            raise ValueError("User does not own this pulse")
+
+        await self.session.delete(pulse)
+        await self.session.flush()
+        return True
 

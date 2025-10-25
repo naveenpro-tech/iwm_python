@@ -23,6 +23,7 @@ interface PulseFeedProps {
   onComment: (postId: string, content: string) => void
   onEcho: (postId: string, type: 'echo' | 'quote_echo', quoteContent?: string) => void
   onBookmark: (postId: string) => void
+  onPulseDeleted?: () => void
 }
 
 export default function PulseFeed({
@@ -36,6 +37,7 @@ export default function PulseFeed({
   onComment,
   onEcho,
   onBookmark,
+  onPulseDeleted,
 }: PulseFeedProps) {
   if (isLoading) {
     return (
@@ -81,6 +83,7 @@ export default function PulseFeed({
               onComment={onComment}
               onEcho={onEcho}
               onBookmark={onBookmark}
+              onPulseDeleted={onPulseDeleted}
             />
           </motion.div>
         ))}

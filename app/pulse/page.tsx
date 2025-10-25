@@ -114,6 +114,12 @@ export default function PulsePage() {
     }, 1000)
   }
 
+  // Refresh feed function
+  const refreshFeed = () => {
+    // Reload the page to fetch fresh data
+    window.location.reload()
+  }
+
   // Handle new post submission
   const handlePostSubmit = (content: string, media: PulseMedia[], taggedItems: TaggedItem[]) => {
     setIsSubmitting(true)
@@ -243,6 +249,7 @@ export default function PulsePage() {
               currentUser={mockCurrentUser}
               onSubmit={handlePostSubmit}
               isSubmitting={isSubmitting}
+              onPulseCreated={refreshFeed}
             />
           }
           tabs={<FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />}
@@ -258,6 +265,7 @@ export default function PulsePage() {
               onComment={handleComment}
               onEcho={handleEcho}
               onBookmark={handleBookmark}
+              onPulseDeleted={refreshFeed}
             />
           }
         />

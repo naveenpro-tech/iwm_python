@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EmptyState } from "@/components/profile/empty-state"
 import Image from "next/image"
 import Link from "next/link"
+import { getUserReviews } from "@/lib/api/reviews"
 
 interface Review {
   id: string
@@ -34,86 +35,32 @@ export function ProfileReviews({ userId }: ProfileReviewsProps) {
   const [filterRating, setFilterRating] = useState("all")
 
   useEffect(() => {
-    // Simulate API call to fetch reviews
     const fetchReviews = async () => {
       setIsLoading(true)
-
-      // Mock data - in a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-
-      const mockReviews: Review[] = [
-        {
-          id: "r1",
-          movieId: "m1",
-          movieTitle: "Dune: Part Two",
-          moviePosterUrl: "/dune-part-two-poster.png",
-          movieYear: "2024",
-          rating: 9,
-          content:
-            "Denis Villeneuve has outdone himself with this epic conclusion. The visual effects are breathtaking, and the performances are stellar across the board. A masterclass in sci-fi filmmaking that expands on the first film in every way. The score by Hans Zimmer is once again phenomenal, creating an immersive atmosphere that pulls you into the world of Arrakis.",
-          date: "2 hours ago",
-          likes: 24,
-          comments: 5,
-        },
-        {
-          id: "r2",
-          movieId: "m3",
-          movieTitle: "Oppenheimer",
-          moviePosterUrl: "/oppenheimer-inspired-poster.png",
-          movieYear: "2023",
-          rating: 10,
-          content:
-            "Christopher Nolan's masterpiece. The performances are incredible, especially Cillian Murphy who delivers a career-defining performance as J. Robert Oppenheimer. The way Nolan weaves together multiple timelines is nothing short of brilliant. The film is both a character study and a historical epic that leaves you thinking long after the credits roll.",
-          date: "3 days ago",
-          likes: 87,
-          comments: 12,
-        },
-        {
-          id: "r3",
-          movieId: "m4",
-          movieTitle: "Poor Things",
-          moviePosterUrl: "/poor-things-poster.png",
-          movieYear: "2023",
-          rating: 8,
-          content:
-            "Yorgos Lanthimos creates a bizarre yet captivating world in Poor Things. Emma Stone gives an absolutely fearless performance that deserves all the accolades. The production design and cinematography are stunning, creating a unique visual language that perfectly complements the strange narrative.",
-          date: "2 weeks ago",
-          likes: 45,
-          comments: 8,
-        },
-        {
-          id: "r4",
-          movieId: "m5",
-          movieTitle: "Killers of the Flower Moon",
-          moviePosterUrl: "/killers-of-the-flower-moon-poster.png",
-          movieYear: "2023",
-          rating: 9,
-          content:
-            "Scorsese delivers another masterpiece with Killers of the Flower Moon. The film is a haunting examination of greed, betrayal, and the systematic exploitation of the Osage Nation. Leonardo DiCaprio and Lily Gladstone deliver powerful performances, but it's Robert De Niro who steals every scene he's in with his chilling portrayal.",
-          date: "1 month ago",
-          likes: 62,
-          comments: 15,
-        },
-        {
-          id: "r5",
-          movieId: "m6",
-          movieTitle: "Barbie",
-          moviePosterUrl: "/barbie-movie-poster.png",
-          movieYear: "2023",
-          rating: 7,
-          content:
-            "Greta Gerwig's Barbie is much more than just a movie about a doll. It's a clever commentary on gender roles, identity, and corporate feminism. Margot Robbie and Ryan Gosling are perfectly cast, bringing both humor and heart to their roles. The production design is a visual feast of pink perfection.",
-          date: "2 months ago",
-          likes: 53,
-          comments: 9,
-        },
-      ]
-
-      setReviews(mockReviews)
-      setIsLoading(false)
+      try {
+        const data = await getUserReviews(userId, 1, 100, "date_desc")
+        const items = Array.isArray(data) ? data : data?.items || []
+        const mapped: Review[] = items.map((r: any) => ({
+          id: r.id,
+          movieId: r.movie?.id || "",
+          movieTitle: r.movie?.title || "",
+          moviePosterUrl: r.movie?.posterUrl || "",
+          movieYear: String(r.movie?.year || ""),
+          rating: Number(r.rating || 0),
+          content: r.content || "",
+          date: r.date || r.createdAt || "",
+          likes: Number(r.helpfulVotes || 0),
+          comments: Number(r.commentCount || 0),
+        }))
+        setReviews(mapped)
+      } catch (err) {
+        console.error("Failed to load user reviews:", err)
+        setReviews([])
+      } finally {
+        setIsLoading(false)
+      }
     }
-
-    fetchReviews()
+    if (userId) fetchReviews()
   }, [userId])
 
   // Filter and sort reviews

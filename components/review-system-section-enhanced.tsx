@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence, useInView } from "framer-motion"
 import {
@@ -19,6 +19,9 @@ import {
   Share,
   Flag,
   Info,
+  Pencil,
+  Trash2,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -30,6 +33,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
+import { me } from "@/lib/auth"
+import { deleteReview } from "@/lib/api/reviews"
+import { useToast } from "@/hooks/use-toast"
+import { EditReviewModal } from "@/components/reviews/edit-review-modal"
 
 interface Review {
   id: string
@@ -85,8 +92,24 @@ export function ReviewSystemSectionEnhanced({ movie }: ReviewSystemSectionEnhanc
   const [containsSpoilers, setContainsSpoilers] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showReviewSuccess, setShowReviewSuccess] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await me()
+        setCurrentUser(user)
+      } catch (error) {
+        console.debug("User not authenticated")
+      }
+    }
+    fetchUser()
+  }, [])
 
   // Find the max count for scaling the distribution bars
   const maxCount = Math.max(...movie.ratingDistribution.map((item) => item.count))
@@ -134,6 +157,41 @@ export function ReviewSystemSectionEnhanced({ movie }: ReviewSystemSectionEnhanc
       ...prev,
       [reviewId]: prev[reviewId] === voteType ? null : voteType,
     }))
+  }
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+      return
+    }
+
+    setDeletingReviewId(reviewId)
+    try {
+      await deleteReview(reviewId)
+      toast({
+        title: "Success",
+        description: "Review deleted successfully",
+      })
+      // Refresh the page to show updated reviews
+      window.location.reload()
+    } catch (error: any) {
+      console.error("Error deleting review:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete review",
+        variant: "destructive",
+      })
+    } finally {
+      setDeletingReviewId(null)
+    }
+  }
+
+  const handleEditSuccess = () => {
+    setEditingReviewId(null)
+    toast({
+      title: "Success",
+      description: "Review updated successfully",
+    })
+    window.location.reload()
   }
 
   const handleSubmitReview = () => {
@@ -785,85 +843,121 @@ export function ReviewSystemSectionEnhanced({ movie }: ReviewSystemSectionEnhanc
                   </div>
 
                   {/* Review Footer */}
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-dmsans text-[#A0A0A0]">Was this review helpful?</div>
-                    <div className="flex items-center gap-4">
-                      <motion.button
-                        className={`flex items-center gap-1 ${
-                          reviewVotes[review.id] === "helpful" ? "text-[#00BFFF]" : "text-[#A0A0A0]"
-                        } hover:text-[#00BFFF] transition-colors`}
-                        onClick={() => handleVote(review.id, "helpful")}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <ThumbsUp className="w-4 h-4" />
-                        <span>{review.helpfulCount + (reviewVotes[review.id] === "helpful" ? 1 : 0)}</span>
-                      </motion.button>
-                      <motion.button
-                        className={`flex items-center gap-1 ${
-                          reviewVotes[review.id] === "unhelpful" ? "text-[#FF4500]" : "text-[#A0A0A0]"
-                        } hover:text-[#FF4500] transition-colors`}
-                        onClick={() => handleVote(review.id, "unhelpful")}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <ThumbsDown className="w-4 h-4" />
-                        <span>{review.unhelpfulCount + (reviewVotes[review.id] === "unhelpful" ? 1 : 0)}</span>
-                      </motion.button>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-dmsans text-[#A0A0A0]">Was this review helpful?</div>
+                      <div className="flex items-center gap-4">
+                        <motion.button
+                          className={`flex items-center gap-1 ${
+                            reviewVotes[review.id] === "helpful" ? "text-[#00BFFF]" : "text-[#A0A0A0]"
+                          } hover:text-[#00BFFF] transition-colors`}
+                          onClick={() => handleVote(review.id, "helpful")}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                          <span>{review.helpfulCount + (reviewVotes[review.id] === "helpful" ? 1 : 0)}</span>
+                        </motion.button>
+                        <motion.button
+                          className={`flex items-center gap-1 ${
+                            reviewVotes[review.id] === "unhelpful" ? "text-[#FF4500]" : "text-[#A0A0A0]"
+                          } hover:text-[#FF4500] transition-colors`}
+                          onClick={() => handleVote(review.id, "unhelpful")}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <ThumbsDown className="w-4 h-4" />
+                          <span>{review.unhelpfulCount + (reviewVotes[review.id] === "unhelpful" ? 1 : 0)}</span>
+                        </motion.button>
 
-                      <div className="flex items-center gap-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <motion.button
-                                className="text-[#A0A0A0] hover:text-[#E0E0E0] transition-colors"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <MessageSquare className="w-4 h-4" />
-                              </motion.button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Comment on this review</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex items-center gap-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <motion.button
+                                  className="text-[#A0A0A0] hover:text-[#E0E0E0] transition-colors"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                </motion.button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Comment on this review</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <motion.button
-                                className="text-[#A0A0A0] hover:text-[#E0E0E0] transition-colors"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Share className="w-4 h-4" />
-                              </motion.button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Share this review</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <motion.button
+                                  className="text-[#A0A0A0] hover:text-[#E0E0E0] transition-colors"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Share className="w-4 h-4" />
+                                </motion.button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Share this review</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <motion.button
-                                className="text-[#A0A0A0] hover:text-[#FF4500] transition-colors"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Flag className="w-4 h-4" />
-                              </motion.button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Report this review</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <motion.button
+                                  className="text-[#A0A0A0] hover:text-[#FF4500] transition-colors"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Flag className="w-4 h-4" />
+                                </motion.button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Report this review</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Edit/Delete Buttons - Only show if user owns the review */}
+                    {currentUser?.id === review.userId && (
+                      <div className="flex gap-2 pt-3 border-t border-[#3A3A3A]">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingReviewId(review.id)}
+                          className="flex-1 border-[#3A3A3A] hover:bg-[#3A3A3A]"
+                        >
+                          <Pencil className="w-3 h-3 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteReview(review.id)}
+                          disabled={deletingReviewId === review.id}
+                          className="flex-1"
+                        >
+                          {deletingReviewId === review.id ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-3 h-3 mr-2" />
+                              Delete
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -871,6 +965,21 @@ export function ReviewSystemSectionEnhanced({ movie }: ReviewSystemSectionEnhanc
           ))
         )}
       </div>
+
+      {/* Edit Review Modal */}
+      {editingReviewId && (
+        <EditReviewModal
+          review={{
+            id: editingReviewId,
+            title: movie.reviews.find((r) => r.id === editingReviewId)?.content.split("\n")[0] || "",
+            content: movie.reviews.find((r) => r.id === editingReviewId)?.content || "",
+            rating: movie.reviews.find((r) => r.id === editingReviewId)?.rating || 0,
+            hasSpoilers: movie.reviews.find((r) => r.id === editingReviewId)?.containsSpoilers || false,
+          }}
+          onClose={() => setEditingReviewId(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
 
       {/* Load More Button */}
       {filteredReviews.length > 0 && (

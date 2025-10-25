@@ -23,6 +23,7 @@ class WatchlistItemUpdate(BaseModel):
     status: Optional[str] = None
     progress: Optional[int] = None
     rating: Optional[float] = None
+    priority: Optional[str] = None
 
 
 @router.get("")
@@ -73,13 +74,14 @@ async def add_to_watchlist(body: WatchlistItemIn, session: AsyncSession = Depend
 async def update_watchlist_item(
     watchlist_id: str, body: WatchlistItemUpdate, session: AsyncSession = Depends(get_session)
 ) -> Any:
-    """Update watchlist item status, progress, or rating"""
+    """Update watchlist item status, progress, rating, or priority"""
     repo = WatchlistRepository(session)
     result = await repo.update(
         watchlist_id=watchlist_id,
         status=body.status,
         progress=body.progress,
         rating=body.rating,
+        priority=body.priority,
     )
     if not result:
         raise HTTPException(status_code=404, detail="Watchlist item not found")

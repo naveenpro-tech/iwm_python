@@ -94,5 +94,5 @@ async def logout() -> Any:
 
 @router.get("/me", response_model=MeResponse)
 async def me(user: User = Depends(get_current_user)) -> Any:
-    return MeResponse(id=str(user.id), email=user.email, name=user.name, avatarUrl=user.avatar_url)
+    return MeResponse(id=user.external_id, email=user.email, name=user.name, avatarUrl=user.avatar_url)
 
