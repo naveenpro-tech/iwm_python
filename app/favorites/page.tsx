@@ -77,10 +77,10 @@ export default function FavoritesPage() {
 
         {sortedFavorites.length > 0 ? (
           <div className="mt-8">
-            {viewMode === "grid" && <FavoritesGrid movies={sortedFavorites} onRemove={removeFavorite} />}
-            {viewMode === "list" && <FavoritesList movies={sortedFavorites} onRemove={removeFavorite} />}
-            {viewMode === "wall" && <FavoritesWall movies={sortedFavorites} onRemove={removeFavorite} />}
-            {viewMode === "insights" && <FavoritesInsights movies={favorites} />}
+            {viewMode === "grid" && <FavoritesGrid favorites={sortedFavorites} onRemove={removeFavorite} />}
+            {viewMode === "list" && <FavoritesList favorites={sortedFavorites} onRemove={removeFavorite} />}
+            {viewMode === "wall" && <FavoritesWall favorites={sortedFavorites} onRemove={removeFavorite} />}
+            {viewMode === "insights" && <FavoritesInsights favorites={favorites} />}
           </div>
         ) : (
           <FavoritesEmptyState hasSearch={filters.searchTerm.length > 0} />

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react"
 import Image from "next/image"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { Play, Plus } from "lucide-react"
+import { Play, Plus, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface MovieHeroSectionProps {
@@ -23,9 +23,20 @@ interface MovieHeroSectionProps {
   onAddToWatchlist?: () => void
   isAddingToWatchlist?: boolean
   onAddToCollection?: () => void
+  onToggleFavorite?: () => void
+  isFavorited?: boolean
+  isTogglingFavorite?: boolean
 }
 
-export function MovieHeroSection({ movie, onAddToWatchlist, isAddingToWatchlist, onAddToCollection }: MovieHeroSectionProps) {
+export function MovieHeroSection({
+  movie,
+  onAddToWatchlist,
+  isAddingToWatchlist,
+  onAddToCollection,
+  onToggleFavorite,
+  isFavorited = false,
+  isTogglingFavorite = false
+}: MovieHeroSectionProps) {
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -181,6 +192,28 @@ export function MovieHeroSection({ movie, onAddToWatchlist, isAddingToWatchlist,
                       {isAddingToWatchlist ? "Adding..." : "Add to Watchlist"}
                     </Button>
                   </motion.div>
+
+                  {onToggleFavorite && (
+                    <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.15 }}>
+                      <Button
+                        variant="outline"
+                        className={`w-full sm:w-auto font-inter ${
+                          isFavorited
+                            ? "border-[#FF1744] text-[#FF1744] hover:bg-[#FF1744]/10"
+                            : "border-[#E0E0E0] text-[#E0E0E0] hover:bg-[#E0E0E0]/10"
+                        }`}
+                        onClick={onToggleFavorite}
+                        disabled={isTogglingFavorite}
+                      >
+                        <Heart className={`mr-2 h-4 w-4 ${isFavorited ? "fill-current" : ""}`} />
+                        {isTogglingFavorite
+                          ? "Updating..."
+                          : isFavorited
+                          ? "Remove from Favorites"
+                          : "Add to Favorites"}
+                      </Button>
+                    </motion.div>
+                  )}
 
                   {onAddToCollection && (
                     <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.15 }}>

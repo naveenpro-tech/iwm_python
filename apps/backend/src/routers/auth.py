@@ -39,6 +39,36 @@ class MeResponse(BaseModel):
     avatarUrl: str | None = None
 
 
+class AuthMeResponse(BaseModel):
+    """
+    Enhanced /me endpoint response with roles and profile presence information.
+
+    Fields:
+    - user_id: Internal database user ID
+    - external_id: External user identifier (email-based)
+    - email: User's email address
+    - username: Username derived from email prefix
+    - name: User's full name
+    - avatar_url: URL to user's avatar image
+    - roles: List of roles assigned to this user (e.g., ["User", "Critic", "Talent"])
+    - has_critic_profile: Whether user has an active CriticProfile
+    - has_talent_profile: Whether user has an active TalentProfile (future)
+    - has_industry_profile: Whether user has an active IndustryProfile (future)
+    - default_role: User's default role for profile display (future, from user_role_profiles)
+    """
+    user_id: int
+    external_id: str
+    email: EmailStr
+    username: str
+    name: str
+    avatar_url: str | None = None
+    roles: list[str] = []
+    has_critic_profile: bool = False
+    has_talent_profile: bool = False
+    has_industry_profile: bool = False
+    default_role: str | None = None
+
+
 @router.post("/signup", response_model=TokenResponse)
 async def signup(body: SignupBody, session: AsyncSession = Depends(get_session)) -> Any:
     # email uniqueness
@@ -53,7 +83,23 @@ async def signup(body: SignupBody, session: AsyncSession = Depends(get_session))
     )
     session.add(user)
     await session.flush()
+
+    # Create AdminUserMeta with all available roles for testing
+    from ..models import AdminUserMeta
+    import logging
+    logger = logging.getLogger(__name__)
+
+    admin_meta = AdminUserMeta(
+        user_id=user.id,
+        email=user.email,
+        roles=["lover", "critic", "talent", "industry"],  # All roles available for new users
+        status="Active",
+    )
+    logger.info(f"Creating AdminUserMeta for user {user.id} with roles: {admin_meta.roles}")
+    session.add(admin_meta)
     await session.commit()
+    logger.info(f"AdminUserMeta created successfully for user {user.id}")
+
     sub = str(user.id)
     return TokenResponse(access_token=create_access_token(sub), refresh_token=create_refresh_token(sub))
 
@@ -95,4 +141,114 @@ async def logout() -> Any:
 @router.get("/me", response_model=MeResponse)
 async def me(user: User = Depends(get_current_user)) -> Any:
     return MeResponse(id=user.external_id, email=user.email, name=user.name, avatarUrl=user.avatar_url)
+
+
+@router.get("/me/enhanced", response_model=AuthMeResponse)
+async def me_enhanced(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Any:
+    """
+    Get current authenticated user with roles and profile presence information.
+
+    Returns:
+    - User ID, email, name, avatar
+    - Roles from AdminUserMeta.roles JSONB array
+    - Profile presence flags (has_critic_profile, has_talent_profile, has_industry_profile)
+    - Default role (from user_role_profiles when available)
+
+    Requires: Valid JWT access token
+    Returns: 401 Unauthorized if token is invalid or missing
+    """
+    from sqlalchemy import exists
+    from ..models import AdminUserMeta, CriticProfile
+
+    # Extract username from email (email prefix before @)
+    username = user.email.split('@')[0] if '@' in user.email else user.email
+
+    # Fetch AdminUserMeta to get roles
+    admin_meta_query = select(AdminUserMeta).where(AdminUserMeta.user_id == user.id)
+    admin_meta_result = await session.execute(admin_meta_query)
+    admin_meta = admin_meta_result.scalar_one_or_none()
+
+    roles = admin_meta.roles if admin_meta else []
+
+    # Check for CriticProfile existence using EXISTS query for performance
+    critic_exists_query = select(exists(select(1).select_from(CriticProfile).where(CriticProfile.user_id == user.id)))
+    critic_exists_result = await session.execute(critic_exists_query)
+    has_critic_profile = critic_exists_result.scalar() or False
+
+    # TalentProfile and IndustryProfile checks will be added after tables are created
+    has_talent_profile = False
+    has_industry_profile = False
+    default_role = None  # Will be populated from user_role_profiles after table creation
+
+    return AuthMeResponse(
+        user_id=user.id,
+        external_id=user.external_id,
+        email=user.email,
+        username=username,
+        name=user.name,
+        avatar_url=user.avatar_url,
+        roles=roles,
+        has_critic_profile=has_critic_profile,
+        has_talent_profile=has_talent_profile,
+        has_industry_profile=has_industry_profile,
+        default_role=default_role,
+    )
+
+
+class UpdateProfileBody(BaseModel):
+    name: str | None = None
+    avatar_url: str | None = None
+    bio: str | None = None
+    location: str | None = None
+    website: str | None = None
+
+
+@router.put("/me")
+async def update_me(
+    body: UpdateProfileBody,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> MeResponse:
+    """Update current user profile"""
+    if body.name is not None:
+        user.name = body.name
+    if body.avatar_url is not None:
+        user.avatar_url = body.avatar_url
+    if body.bio is not None:
+        user.bio = body.bio
+    if body.location is not None:
+        user.location = body.location
+    if body.website is not None:
+        user.website = body.website
+
+    await session.commit()
+    await session.refresh(user)
+
+    return MeResponse(id=user.external_id, email=user.email, name=user.name, avatarUrl=user.avatar_url)
+
+
+class ChangePasswordBody(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+async def change_password(
+    body: ChangePasswordBody,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Change user password"""
+    # Verify current password
+    if not verify_password(body.current_password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+
+    # Update password
+    user.hashed_password = hash_password(body.new_password)
+    await session.commit()
+
+    return {"ok": True, "message": "Password changed successfully"}
 

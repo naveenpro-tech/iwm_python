@@ -20,11 +20,17 @@ export function CollectionsContainer() {
       setIsLoading(true)
       try {
         const user = await getCurrentUser()
+        if (!user || !user.id) {
+          console.warn("No user found, showing empty collections")
+          setUserCollections([])
+          return
+        }
         const data = await getUserCollections(user.id)
         const items = Array.isArray(data) ? data : data?.items || []
         setUserCollections(items)
       } catch (err) {
         console.error("Failed to load user collections:", err)
+        // Don't fail silently - still show the page with empty state
         setUserCollections([])
       } finally {
         setIsLoading(false)

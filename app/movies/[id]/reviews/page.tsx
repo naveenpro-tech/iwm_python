@@ -92,47 +92,88 @@ export default function ReviewsPage() {
         const reviewsData = await getMovieReviews(movieId, 1, 100)
 
         // Transform backend data to match component expectations
-        if (reviewsData) {
-          // Set movie context
-          setMovie({
-            id: reviewsData.movie?.id || movieId,
-            title: reviewsData.movie?.title || "Movie",
-            year: reviewsData.movie?.year || new Date().getFullYear(),
-            posterUrl: reviewsData.movie?.posterUrl || "/placeholder.svg",
-            backdropUrl: reviewsData.movie?.backdropUrl || "/placeholder.svg",
-            genres: reviewsData.movie?.genres || [],
-            runtime: reviewsData.movie?.runtime || 0,
-            director: reviewsData.movie?.director || "Unknown",
-          })
+        if (reviewsData && Array.isArray(reviewsData)) {
+          // Backend returns an array of reviews, categorize them
+          const allReviews = reviewsData
 
-          // Set official review (if exists)
-          setOfficialReview(reviewsData.official_review || null)
+          // Separate reviews by type (for now, all are user reviews since we don't have critic/official distinction)
+          const userReviewsList = allReviews.map((review: any) => ({
+            id: review.id,
+            movie_id: movieId,
+            user: {
+              username: review.author.id, // Using ID as username for now
+              display_name: review.author.name,
+              avatar_url: review.author.avatarUrl || "/placeholder.svg",
+              is_verified: review.isVerified || false,
+            },
+            rating: review.rating,
+            content: review.content,
+            contains_spoilers: review.hasSpoilers || false,
+            helpful_count: review.helpfulVotes || 0,
+            unhelpful_count: review.unhelpfulVotes || 0,
+            comment_count: review.commentCount || 0,
+            created_at: review.date,
+            user_vote: null,
+          }))
 
-          // Set critic reviews
-          setCriticReviews(reviewsData.critic_reviews || [])
+          // Set movie context from first review's movie data (if available)
+          if (allReviews.length > 0 && allReviews[0].movie) {
+            setMovie({
+              id: allReviews[0].movie.id || movieId,
+              title: allReviews[0].movie.title || "Movie",
+              year: allReviews[0].movie.year || new Date().getFullYear(),
+              posterUrl: allReviews[0].movie.posterUrl || "/placeholder.svg",
+              backdropUrl: "/placeholder.svg",
+              genres: allReviews[0].movie.genres || [],
+              runtime: 0,
+              director: "Unknown",
+            })
+          } else {
+            setMovie({
+              id: movieId,
+              title: "Movie",
+              year: new Date().getFullYear(),
+              posterUrl: "/placeholder.svg",
+              backdropUrl: "/placeholder.svg",
+              genres: [],
+              runtime: 0,
+              director: "Unknown",
+            })
+          }
+
+          // Set official review (none for now)
+          setOfficialReview(null)
+
+          // Set critic reviews (none for now)
+          setCriticReviews([])
 
           // Set user reviews
-          const userReviewsList = reviewsData.user_reviews || []
           setAllUserReviews(userReviewsList)
           setUserReviews(userReviewsList.slice(0, 20))
 
-          // Set stats
-          setStats(reviewsData.stats || {
-            totalReviews: userReviewsList.length,
-            averageRating: 0,
+          // Calculate stats from reviews
+          const totalReviews = userReviewsList.length
+          const averageRating = totalReviews > 0
+            ? userReviewsList.reduce((sum: number, r: any) => sum + r.rating, 0) / totalReviews
+            : 0
+
+          setStats({
+            siddu_score: averageRating,
+            totalReviews,
+            averageRating,
             ratingDistribution: {},
-            verifiedCount: 0,
+            verifiedCount: userReviewsList.filter((r: any) => r.isVerified).length,
             sentimentBreakdown: { positive: 0, neutral: 0, negative: 0 },
             total_reviews: {
-              official: officialReview ? 1 : 0,
-              critics: criticReviews.length,
-              users: userReviewsList.length,
+              official: 0,
+              critics: 0,
+              users: totalReviews,
             },
           })
 
           // Check if current user has reviewed
           if (user) {
-            const hasReviewed = userReviewsList.some((review: any) => review.userId === user.id)
+            const hasReviewed = userReviewsList.some((review: any) => review.user.username === user.id)
             setUserHasReviewed(hasReviewed)
           }
 
@@ -157,6 +198,7 @@ export default function ReviewsPage() {
         setAllUserReviews([])
         setUserReviews([])
         setStats({
+          siddu_score: 0,
           totalReviews: 0,
           averageRating: 0,
           ratingDistribution: {},

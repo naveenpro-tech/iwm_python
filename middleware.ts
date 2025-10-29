@@ -11,14 +11,26 @@ const protectedRoutes = [
   "/reviews/new",
   "/pulse",
   "/notifications",
+  "/settings",
 ]
 
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ["/login", "/signup"]
 
+// Routes that are public (don't require authentication)
+const publicRoutes = [
+  /^\/collections\/[^/]+\/public$/,  // Public collection view: /collections/{id}/public
+]
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const accessToken = request.cookies.get("access_token")?.value
+
+  // Check if the route is public
+  const isPublicRoute = publicRoutes.some((route) => route.test(pathname))
+  if (isPublicRoute) {
+    return NextResponse.next()
+  }
 
   // Check if the route is protected
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))

@@ -51,8 +51,6 @@ from .routers import search as search_router  # Search functionality
 from .routers import reviews as reviews_router  # User reviews and ratings
 from .routers import collections as collections_router  # User-created movie collections
 from .routers import watchlist as watchlist_router  # User watchlist
-from .routers import playlists as playlists_router  # User playlists
-
 from .routers import favorites as favorites_router  # User favorites
 from .routers import awards as awards_router  # Award ceremonies (Oscars, Golden Globes, etc.)
 from .routers import box_office as box_office_router  # Box office data and trends
@@ -70,6 +68,8 @@ from .routers import critics as critics_router  # Critic Hub - Critic profiles
 from .routers import critic_reviews as critic_reviews_router  # Critic Hub - Critic reviews
 from .routers import critic_verification as critic_verification_router  # Critic Hub - Verification
 from .routers import users as users_router  # User profiles
+from .routers import roles as roles_router  # Role management (multi-role profiles)
+from .routers import user_roles as user_roles_router  # User roles switcher
 
 
 """
@@ -269,13 +269,13 @@ api.include_router(search_router.router)  # GET /api/v1/search - Search function
 
 # User Features
 api.include_router(reviews_router.router)  # POST /api/v1/reviews - User reviews
-api.include_router(playlists_router.router)  # GET /api/v1/playlists - User playlists
-
 api.include_router(collections_router.router)  # GET /api/v1/collections - User collections
 api.include_router(watchlist_router.router)  # GET /api/v1/watchlist - User watchlist
 api.include_router(favorites_router.router)  # GET /api/v1/favorites - User favorites
 api.include_router(settings_router.router)  # GET /api/v1/settings - User settings
 api.include_router(notifications_router.router)  # GET /api/v1/notifications - Notifications
+api.include_router(roles_router.router)  # GET/PUT /api/v1/roles - Role management
+api.include_router(user_roles_router.router)  # GET/POST /api/v1/users/me/roles - Role switcher
 
 # Industry Features
 api.include_router(box_office_router.router)  # GET /api/v1/box-office - Box office data

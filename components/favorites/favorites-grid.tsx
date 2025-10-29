@@ -21,7 +21,7 @@ export function FavoritesGrid({ favorites, onRemove }: FavoritesGridProps) {
   const [removingId, setRemovingId] = useState<string | null>(null)
   const { toast } = useToast()
 
-  if (favorites.length === 0) {
+  if (!favorites || favorites.length === 0) {
     return null // Empty state handled by FavoritesEmptyState
   }
 

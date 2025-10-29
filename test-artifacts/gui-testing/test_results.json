@@ -1,0 +1,186 @@
+{
+  "timestamp": "2025-10-29T06:35:04.812756",
+  "environment": {
+    "frontend_url": "http://localhost:3002",
+    "backend_url": "http://localhost:8000",
+    "browser": "Chromium",
+    "viewport": "1920x1080"
+  },
+  "test_account": {
+    "email": "freshtest@iwm.com",
+    "password": "rmrnn0077",
+    "username": "freshtest"
+  },
+  "workflows": {
+    "signup_login": {
+      "name": "Account Creation & Login",
+      "status": "PASS",
+      "steps": [
+        "Navigate to http://localhost:3002",
+        "Fill signup form with email=freshtest@iwm.com",
+        "Submit signup form",
+        "Current URL after signup: http://localhost:3002/signup",
+        "Extracting auth token from localStorage",
+        "Verify authentication by checking for profile dropdown or user avatar",
+        "\u26a0\ufe0f Profile dropdown not found, checking URL"
+      ],
+      "errors": []
+    },
+    "watchlist": {
+      "name": "Watchlist Test",
+      "status": "FAIL",
+      "steps": [
+        "Navigate to /movies",
+        "Find first movie link",
+        "Found movie ID: 28331933-7eda-47cb-8a9d-dbe57e2fa89e",
+        "Navigate to movie detail page",
+        "Find 'Add to Watchlist' button"
+      ],
+      "errors": [
+        "Watchlist button not found"
+      ],
+      "movie_id": "28331933-7eda-47cb-8a9d-dbe57e2fa89e",
+      "movie_title": null
+    },
+    "favorites": {
+      "name": "Favorites Test",
+      "status": "PASS",
+      "steps": [
+        "Navigate to /movies to find a different movie",
+        "Find second movie link",
+        "\u26a0\ufe0f Could not find second movie, using first movie",
+        "Navigate to movie detail page: 28331933-7eda-47cb-8a9d-dbe57e2fa89e",
+        "Movie title: Parasite",
+        "Find 'Add to Favorites' button",
+        "Click 'Add to Favorites' button",
+        "Check for error toasts",
+        "\u2705 Favorites add successful",
+        "Click 'Add to Favorites' button again (test idempotency)",
+        "\u2705 Idempotency test passed"
+      ],
+      "errors": [],
+      "movie_id": "28331933-7eda-47cb-8a9d-dbe57e2fa89e",
+      "movie_title": "Parasite"
+    },
+    "collections": {
+      "name": "Collections Test",
+      "status": "FAIL",
+      "steps": [
+        "Navigate to /collections",
+        "Wait for collections page to load",
+        "Find 'Create Collection' button",
+        "Button not found with standard selectors, trying alternative selectors"
+      ],
+      "errors": [
+        "Create collection button not found - page may not have loaded properly"
+      ],
+      "collection_id": null
+    },
+    "profile": {
+      "name": "Profile Test",
+      "status": "PASS",
+      "steps": [
+        "Navigate to /profile/freshtest",
+        "Verify Overview tab shows watchlist preview",
+        "Click 'Favorites' tab",
+        "Click 'Collections' tab"
+      ],
+      "errors": []
+    }
+  },
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to check favorite status: Error: Not authenticated\n    at request (webpack-internal:///(app-pages-browser)/./lib/auth.ts:70:15)\n    at async me (webpack-internal:///(app-pages-browser)/./lib/auth.ts:98:12)\n    at async getCurrentUser (webpack-internal:///(app-pages-browser)/./lib/auth.ts:104:12)\n    at async MovieDetailsPage.useEffect.checkFavoriteStatus (webpack-internal:///(app-pages-browser)/./app/movies/[id]/page.tsx:647:38)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to check favorite status: Error: Not authenticated\n    at request (webpack-internal:///(app-pages-browser)/./lib/auth.ts:70:15)\n    at async me (webpack-internal:///(app-pages-browser)/./lib/auth.ts:98:12)\n    at async getCurrentUser (webpack-internal:///(app-pages-browser)/./lib/auth.ts:104:12)\n    at async MovieDetailsPage.useEffect.checkFavoriteStatus (webpack-internal:///(app-pages-browser)/./app/movies/[id]/page.tsx:647:38)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Error fetching current user: Error: Not authenticated\n    at request (webpack-internal:///(app-pages-browser)/./lib/auth.ts:70:15)\n    at async me (webpack-internal:///(app-pages-browser)/./lib/auth.ts:98:12)\n    at async getCurrentUser (webpack-internal:///(app-pages-browser)/./lib/auth.ts:104:12)\n    at async ReviewSystemSection.useEffect.fetchUser (webpack-internal:///(app-pages-browser)/./components/review-system-section.tsx:71:38)"
+    },
+    {
+      "type": "error",
+      "text": "Error fetching current user: Error: Not authenticated\n    at request (webpack-internal:///(app-pages-browser)/./lib/auth.ts:70:15)\n    at async me (webpack-internal:///(app-pages-browser)/./lib/auth.ts:98:12)\n    at async getCurrentUser (webpack-internal:///(app-pages-browser)/./lib/auth.ts:104:12)\n    at async ReviewSystemSection.useEffect.fetchUser (webpack-internal:///(app-pages-browser)/./components/review-system-section.tsx:71:38)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to toggle favorite: Error: Not authenticated\n    at request (webpack-internal:///(app-pages-browser)/./lib/auth.ts:70:15)\n    at async me (webpack-internal:///(app-pages-browser)/./lib/auth.ts:98:12)\n    at async getCurrentUser (webpack-internal:///(app-pages-browser)/./lib/auth.ts:104:12)\n    at async handleToggleFavorite (webpack-internal:///(app-pages-browser)/./app/movies/[id]/page.tsx:595:26)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to toggle favorite: Error: Not authenticated\n    at request (webpack-internal:///(app-pages-browser)/./lib/auth.ts:70:15)\n    at async me (webpack-internal:///(app-pages-browser)/./lib/auth.ts:98:12)\n    at async getCurrentUser (webpack-internal:///(app-pages-browser)/./lib/auth.ts:104:12)\n    at async handleToggleFavorite (webpack-internal:///(app-pages-browser)/./app/movies/[id]/page.tsx:595:26)"
+    }
+  ],
+  "network_errors": [
+    {
+      "url": "http://localhost:3002/_next/static/webpack/d30c53829e64f46b.webpack.hot-update.json",
+      "status": 404,
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "status": 401,
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "status": 401,
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "status": 401,
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "status": 401,
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "status": 401,
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "status": 401,
+      "method": "GET"
+    }
+  ]
+}

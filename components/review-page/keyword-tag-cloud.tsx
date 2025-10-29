@@ -17,20 +17,24 @@ export default function KeywordTagCloud({ keywords }: KeywordTagCloudProps) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      {keywords.map((keyword, index) => (
-        <motion.div
-          key={keyword.keyword}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-          className={`px-3 py-1.5 rounded-full border text-sm font-medium ${getSentimentColor(
-            keyword.sentiment
-          )} transition-all duration-200 hover:scale-105 cursor-default`}
-        >
-          {keyword.keyword}
-          <span className="ml-1.5 text-xs opacity-70">({keyword.count})</span>
-        </motion.div>
-      ))}
+      {keywords && keywords.length > 0 ? (
+        keywords.map((keyword, index) => (
+          <motion.div
+            key={keyword.keyword}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            className={`px-3 py-1.5 rounded-full border text-sm font-medium ${getSentimentColor(
+              keyword.sentiment
+            )} transition-all duration-200 hover:scale-105 cursor-default`}
+          >
+            {keyword.keyword}
+            <span className="ml-1.5 text-xs opacity-70">({keyword.count})</span>
+          </motion.div>
+        ))
+      ) : (
+        <p className="text-sm text-[#A0A0A0]">No keywords available</p>
+      )}
     </div>
   )
 }

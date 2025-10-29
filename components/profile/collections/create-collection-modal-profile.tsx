@@ -4,6 +4,8 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { X, Lock, Globe } from "lucide-react"
 import type { UserCollection } from "@/types/profile"
+import { createCollection } from "@/lib/api/collections"
+import { toast } from "@/hooks/use-toast"
 
 interface CreateCollectionModalProfileProps {
   onClose: () => void
@@ -47,25 +49,39 @@ export function CreateCollectionModalProfile({
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      const newCollection: UserCollection = {
-        id: `collection-${Date.now()}`,
+      // Call backend API to create collection
+      const result = await createCollection({
         title: title.trim(),
         description: description.trim(),
-        coverImage: "",
-        movieCount: 0,
         isPublic,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      })
+
+      const newCollection: UserCollection = {
+        id: result.id,
+        title: result.title,
+        description: result.description,
+        coverImage: "",
+        movieCount: result.movieCount || 0,
+        isPublic: result.isPublic,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt || result.createdAt,
         movies: [],
         tags: [],
       }
 
       onCreate(newCollection)
+      toast({
+        title: "Success",
+        description: "Collection created successfully",
+      })
+      onClose()
     } catch (error) {
       console.error("Failed to create collection:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create collection",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }

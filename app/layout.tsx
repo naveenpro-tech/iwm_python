@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TopNavigation } from "@/components/navigation/top-navigation"
 import { BottomNavigation } from "@/components/navigation/bottom-navigation"
+import { RoleProvider } from "@/context/RoleContext"
 // import { MotionLazyContainer } from "@/components/animate/motion-lazy-container" // Optional
 
 // PWA components - keep commented if not fully implemented or causing issues
@@ -51,20 +52,22 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${dmSans.variable} font-sans`} suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          {/* <MotionLazyContainer> */}
-          <TopNavigation />
-          {/* Adjust pt-16 if TopNavigation height changes from 4rem/64px */}
-          {/* Adjust pb-16 if BottomNavigation height changes from 4rem/64px or if it's not mobile-only */}
-          <main className="pt-16 pb-16 md:pb-4 bg-background text-foreground min-h-[calc(100vh-4rem)] md:min-h-[calc(100vh-4rem)]">
-            {/* md:pb-4 is a small padding for desktop if bottom nav is mobile only */}
-            {children}
-          </main>
-          <BottomNavigation />
-          <Toaster />
-          {/* <InstallPrompt /> */}
-          {/* <OfflineBanner /> */}
-          {/* <UpdateNotification /> */}
-          {/* </MotionLazyContainer> */}
+          <RoleProvider>
+            {/* <MotionLazyContainer> */}
+            <TopNavigation />
+            {/* Adjust pt-16 if TopNavigation height changes from 4rem/64px */}
+            {/* Adjust pb-16 if BottomNavigation height changes from 4rem/64px or if it's not mobile-only */}
+            <main className="pt-16 pb-16 md:pb-4 bg-background text-foreground min-h-[calc(100vh-4rem)] md:min-h-[calc(100vh-4rem)]">
+              {/* md:pb-4 is a small padding for desktop if bottom nav is mobile only */}
+              {children}
+            </main>
+            <BottomNavigation />
+            <Toaster />
+            {/* <InstallPrompt /> */}
+            {/* <OfflineBanner /> */}
+            {/* <UpdateNotification /> */}
+            {/* </MotionLazyContainer> */}
+          </RoleProvider>
         </ThemeProvider>
       </body>
     </html>

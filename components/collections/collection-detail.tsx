@@ -8,11 +8,11 @@ import { ChevronLeft, Heart, Share2, Plus, Grid3X3, List, Film, User, Calendar }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
 import { CollectionDetailSkeleton } from "./collection-detail-skeleton"
 import { MovieGrid } from "@/components/movies/movie-grid"
 import { MovieList } from "@/components/movies/movie-list"
-import { mockFeaturedCollections, mockPopularCollections, mockUserCollections } from "./mock-data"
-import { getMovieMockData } from "@/components/movies/mock-data"
+import { getCollection } from "@/lib/api/collections"
 import type { Collection } from "./types"
 
 interface CollectionDetailProps {
@@ -24,28 +24,45 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
   const [collection, setCollection] = useState<Collection | null>(null)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [isLiked, setIsLiked] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate API fetch with delay
-    const timer = setTimeout(() => {
-      // Find the collection from mock data based on id
-      const foundCollection = [...mockFeaturedCollections, ...mockPopularCollections, ...mockUserCollections].find(
-        (c) => c.id === id,
-      )
-
-      if (foundCollection) {
-        // Add mock movies data to the collection
-        const collectionWithMovies = {
-          ...foundCollection,
-          movies: getMovieMockData().slice(0, foundCollection.moviesCount),
+    const fetchCollection = async () => {
+      setIsLoading(true)
+      try {
+        const data = await getCollection(id)
+        // Transform backend data to frontend Collection type
+        const transformedCollection: Collection = {
+          id: data.id,
+          title: data.title,
+          description: data.description || "",
+          creator: data.creator,
+          movieCount: data.movieCount || 0,
+          followers: data.followers || 0,
+          posterImages: data.posterImages || [],
+          isPublic: data.isPublic,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          tags: data.tags || [],
+          movies: data.movies || [],
+          // Computed/display fields for component compatibility
+          curator: data.creator,
+          moviesCount: data.movieCount || 0,
+          likesCount: data.followers || 0,
+          lastUpdated: data.updatedAt || data.createdAt,
+          isOfficial: false,  // Not in backend yet
+          isPrivate: !data.isPublic,
         }
-        setCollection(collectionWithMovies)
+        setCollection(transformedCollection)
+      } catch (error) {
+        console.error("Failed to fetch collection:", error)
+        setCollection(null)
+      } finally {
+        setIsLoading(false)
       }
+    }
 
-      setIsLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
+    fetchCollection()
   }, [id])
 
   const handleLike = () => {
@@ -56,6 +73,31 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
         ...collection,
         likesCount: isLiked ? collection.likesCount - 1 : collection.likesCount + 1,
       })
+    }
+  }
+
+  const handleShare = async () => {
+    try {
+      // Generate public share URL
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
+      const shareUrl = `${baseUrl}/collections/${id}/public`
+
+      if (navigator.share) {
+        await navigator.share({ title: collection?.title || "Collection", url: shareUrl })
+      } else {
+        await navigator.clipboard.writeText(shareUrl)
+        toast({ title: "Link copied!", description: "Collection link copied to clipboard" })
+      }
+    } catch (err) {
+      // Fallback to clipboard on error
+      try {
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
+        const shareUrl = `${baseUrl}/collections/${id}/public`
+        await navigator.clipboard.writeText(shareUrl)
+        toast({ title: "Link copied!", description: "Collection link copied to clipboard" })
+      } catch {
+        toast({ title: "Share failed", description: "Unable to share right now", variant: "destructive" })
+      }
     }
   }
 
@@ -105,7 +147,7 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
                 transition={{ duration: 0.5 }}
               >
                 <Image
-                  src={collection.posterUrls[0] || "/placeholder.svg"}
+                  src={collection.posterImages?.[0] || "/placeholder.svg"}
                   alt={collection.title}
                   fill
                   className="object-cover"
@@ -175,7 +217,7 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
                   {isLiked ? "Liked" : "Like"}
                 </Button>
 
-                <Button variant="outline" className="border-[#333333] text-white hover:bg-[#333333]">
+                <Button variant="outline" className="border-[#333333] text-white hover:bg-[#333333]" onClick={handleShare}>
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </Button>

@@ -1,77 +1,80 @@
 "use client"
 
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { Star, Clock } from "lucide-react"
+import { Star, Clock, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { searchMovies, type SearchResult } from "@/lib/api/search"
 
 interface MovieResultsProps {
   query: string
   limit?: number
 }
 
-export function MovieResults({ query, limit }: MovieResultsProps) {
-  // Mock data - in a real app, this would come from an API
-  const movies = [
-    {
-      id: 1,
-      title: "Inception",
-      year: 2010,
-      poster: "/inception-movie-poster.png",
-      rating: 8.8,
-      genres: ["Sci-Fi", "Action", "Thriller"],
-      director: "Christopher Nolan",
-    },
-    {
-      id: 2,
-      title: "The Dark Knight",
-      year: 2008,
-      poster: "/dark-knight-poster.png",
-      rating: 9.0,
-      genres: ["Action", "Crime", "Drama"],
-      director: "Christopher Nolan",
-    },
-    {
-      id: 3,
-      title: "Interstellar",
-      year: 2014,
-      poster: "/interstellar-poster.png",
-      rating: 8.6,
-      genres: ["Sci-Fi", "Adventure", "Drama"],
-      director: "Christopher Nolan",
-    },
-    {
-      id: 4,
-      title: "Oppenheimer",
-      year: 2023,
-      poster: "/oppenheimer-inspired-poster.png",
-      rating: 8.5,
-      genres: ["Biography", "Drama", "History"],
-      director: "Christopher Nolan",
-    },
-    {
-      id: 5,
-      title: "Dunkirk",
-      year: 2017,
-      poster: "/dunkirk-poster.png",
-      rating: 7.8,
-      genres: ["Action", "Drama", "History"],
-      director: "Christopher Nolan",
-    },
-    {
-      id: 6,
-      title: "The Prestige",
-      year: 2006,
-      poster: "/prestige-poster.png",
-      rating: 8.5,
-      genres: ["Drama", "Mystery", "Sci-Fi"],
-      director: "Christopher Nolan",
-    },
-  ]
+export function MovieResults({ query, limit = 10 }: MovieResultsProps) {
+  const [movies, setMovies] = useState<SearchResult[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const lastFetchedRef = useRef<string>("")
 
-  // Limit results if specified
-  const displayedMovies = limit ? movies.slice(0, limit) : movies
+  useEffect(() => {
+    // Skip if we've already fetched this exact query
+    const fetchKey = `${query}-${limit}`
+    if (lastFetchedRef.current === fetchKey) {
+      return
+    }
+
+    // Cancel previous request if still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    const fetchMovies = async () => {
+      if (!query || query.trim().length === 0) {
+        setMovies([])
+        setIsLoading(false)
+        setError(null)
+        lastFetchedRef.current = fetchKey
+        return
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController()
+
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const response = await searchMovies(query, limit)
+        setMovies(response.results)
+        setError(null)
+        lastFetchedRef.current = fetchKey
+      } catch (err) {
+        // Ignore abort errors
+        if (err instanceof Error && err.name === 'AbortError') {
+          return
+        }
+        console.error("Failed to search movies:", err)
+        setError("Failed to load search results")
+        setMovies([])
+        lastFetchedRef.current = fetchKey
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMovies()
+
+    // Cleanup function
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [query, limit])
 
   // Animation variants
   const containerVariants = {
@@ -95,12 +98,40 @@ export function MovieResults({ query, limit }: MovieResultsProps) {
     },
   }
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 text-[#00BFFF] animate-spin mb-4" />
+        <p className="text-[#E0E0E0] font-dmsans">Searching movies...</p>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12">
+        <p className="text-red-400 font-dmsans">{error}</p>
+      </div>
+    )
+  }
+
+  // No results state
+  if (movies.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12">
+        <p className="text-[#A0A0A0] font-dmsans">No movies found for "{query}"</p>
+      </div>
+    )
+  }
+
   return (
     <motion.div
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
       variants={containerVariants}
     >
-      {displayedMovies.map((movie) => (
+      {movies.map((movie) => (
         <motion.div
           key={movie.id}
           variants={itemVariants}
@@ -110,36 +141,36 @@ export function MovieResults({ query, limit }: MovieResultsProps) {
           <Link href={`/movies/${movie.id}`}>
             <div className="relative aspect-[2/3] overflow-hidden">
               <Image
-                src={movie.poster || "/placeholder.svg"}
+                src={movie.posterUrl || "/placeholder.svg"}
                 alt={movie.title}
                 fill
                 className="object-cover transition-transform hover:scale-105"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end p-4">
-                <div>
-                  <p className="text-sm text-gray-300">Directed by</p>
-                  <p className="font-medium">{movie.director}</p>
-                </div>
-              </div>
             </div>
 
             <div className="p-4">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-semibold text-lg line-clamp-1">{movie.title}</h3>
-                <div className="flex items-center space-x-1 bg-[#1A1A1A] px-2 py-1 rounded text-[#00BFFF]">
-                  <Star size={14} className="fill-[#00BFFF]" />
-                  <span className="text-sm font-medium">{movie.rating}</span>
-                </div>
+                {movie.sidduScore > 0 && (
+                  <div className="flex items-center space-x-1 bg-[#1A1A1A] px-2 py-1 rounded text-[#00BFFF]">
+                    <Star size={14} className="fill-[#00BFFF]" />
+                    <span className="text-sm font-medium">{movie.sidduScore.toFixed(1)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center text-sm text-gray-400 mb-3">
                 <span>{movie.year}</span>
-                <span className="mx-2">•</span>
-                <div className="flex items-center">
-                  <Clock size={14} className="mr-1" />
-                  <span>152 min</span>
-                </div>
+                {movie.runtime > 0 && (
+                  <>
+                    <span className="mx-2">•</span>
+                    <div className="flex items-center">
+                      <Clock size={14} className="mr-1" />
+                      <span>{movie.runtime} min</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-2">

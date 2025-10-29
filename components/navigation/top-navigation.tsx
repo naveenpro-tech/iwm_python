@@ -5,11 +5,12 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Search, Menu, X } from "lucide-react"
 import { NavLogo } from "./nav-logo"
 import { ProfileDropdown } from "./profile-dropdown"
-import { SearchOverlay } from "../search/search-overlay"
+import { SearchOverlay } from "@/components/search/search-overlay"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useMobile } from "@/hooks/use-mobile"
 import { usePathname } from "next/navigation"
+import { useRoleContext } from "@/context/RoleContext"
 
 const mainNavLinks = [
   { href: "/movies", label: "Movies" },
@@ -28,6 +29,16 @@ export function TopNavigation() {
   const [hoveredHref, setHoveredHref] = useState<string | null>(null) // For GooeyNav
   const isMobile = useMobile()
   const pathname = usePathname()
+  const { activeRole, availableRoles } = useRoleContext()
+
+  const ROLE_ICONS: Record<string, string> = {
+    lover: "❤️",
+    critic: "⭐",
+    talent: "🎭",
+    industry: "💼",
+  }
+
+  const activeRoleInfo = availableRoles?.find((r) => r.is_active)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -146,6 +157,16 @@ export function TopNavigation() {
             >
               <Search className="h-5 w-5" />
             </Button>
+            {activeRoleInfo && (
+              <motion.div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#1A1A1A] border border-[#3A3A3A] text-xs font-medium text-[#E0E0E0]"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="text-sm">{ROLE_ICONS[activeRole || "lover"]}</span>
+                <span className="hidden md:inline">{activeRoleInfo.name}</span>
+              </motion.div>
+            )}
             <ProfileDropdown />
             {isMobile && (
               <Button

@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Loader2, Film, Star, Plus, Clock, Heart } from "lucide-react"
+import { Loader2, Film, Star, Plus, Clock, Heart, AlertCircle, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { getUserActivity } from "@/lib/api/profile"
 
 interface ActivityItem {
   id: string
@@ -27,77 +28,66 @@ interface ActivityFeedProps {
 export function ActivityFeed({ userId }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Simulate API call to fetch user activities
     const fetchActivities = async () => {
       setIsLoading(true)
+      setError(null)
 
-      // Mock data - in a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      try {
+        const data = await getUserActivity(userId)
 
-      const mockActivities: ActivityItem[] = [
-        {
-          id: "a1",
-          type: "review",
-          timestamp: "2 hours ago",
-          movie: {
-            id: "m1",
-            title: "Dune: Part Two",
-            posterUrl: "/dune-part-two-poster.png",
-            year: "2024",
-          },
-          rating: 9,
-          content:
-            "Denis Villeneuve has outdone himself with this epic conclusion. The visual effects are breathtaking, and the performances are stellar across the board. A masterclass in sci-fi filmmaking.",
-        },
-        {
-          id: "a2",
-          type: "watchlist",
-          timestamp: "Yesterday",
-          movie: {
-            id: "m2",
-            title: "Challengers",
-            posterUrl: "/challengers-poster.png",
-            year: "2024",
-          },
-        },
-        {
-          id: "a3",
-          type: "watched",
-          timestamp: "3 days ago",
-          movie: {
-            id: "m3",
-            title: "Oppenheimer",
-            posterUrl: "/oppenheimer-inspired-poster.png",
-            year: "2023",
-          },
-        },
-        {
-          id: "a4",
-          type: "favorite",
-          timestamp: "1 week ago",
-          movie: {
-            id: "m4",
-            title: "Poor Things",
-            posterUrl: "/poor-things-poster.png",
-            year: "2023",
-          },
-        },
-        {
-          id: "a5",
-          type: "pulse",
-          timestamp: "1 week ago",
-          content:
-            "Just watched Barbie and Oppenheimer back to back. What a contrast! Both excellent in completely different ways. #Barbenheimer",
-        },
-      ]
+        // Transform API response to ActivityItem format
+        const transformedActivities: ActivityItem[] = data.map((item: any) => {
+          // Handle review activities
+          if (item.type === "review" && item.data) {
+            return {
+              id: item.id,
+              type: "review",
+              timestamp: item.timestamp,
+              movie: {
+                id: item.data.movie?.id || "",
+                title: item.data.movie?.title || "Unknown Movie",
+                posterUrl: item.data.movie?.posterUrl || "/placeholder.svg",
+                year: String(item.data.movie?.year || ""),
+              },
+              rating: item.data.rating,
+              content: item.data.content,
+            }
+          }
 
-      setActivities(mockActivities)
-      setIsLoading(false)
+          // Handle watchlist activities
+          if (item.type === "watchlist" && item.data) {
+            return {
+              id: item.id,
+              type: "watchlist",
+              timestamp: item.timestamp,
+              movie: {
+                id: item.data.movieId || item.data.movie?.id || "",
+                title: item.data.movie?.title || "Unknown Movie",
+                posterUrl: item.data.movie?.posterUrl || "/placeholder.svg",
+                year: String(item.data.movie?.year || ""),
+              },
+            }
+          }
+
+          return item
+        })
+
+        setActivities(transformedActivities)
+      } catch (err) {
+        console.error("Failed to fetch user activity:", err)
+        setError(err instanceof Error ? err.message : "Failed to load activity feed")
+        setActivities([])
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    fetchActivities()
+    if (userId) {
+      fetchActivities()
+    }
   }, [userId])
 
   const getActivityIcon = (type: string) => {
@@ -156,6 +146,25 @@ export function ActivityFeed({ userId }: ActivityFeedProps) {
         <h2 className="text-xl font-inter font-medium text-[#E0E0E0] mb-4">Activity Feed</h2>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-[#00BFFF] animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-[#282828] rounded-lg p-6">
+        <h2 className="text-xl font-inter font-medium text-[#E0E0E0] mb-4">Activity Feed</h2>
+        <div className="flex flex-col items-center justify-center py-12">
+          <AlertCircle className="w-8 h-8 text-[#FF4D6D] mb-3" />
+          <p className="text-[#A0A0A0] font-dmsans text-center mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-2 px-4 py-2 bg-[#00BFFF] text-[#000] rounded-lg hover:bg-[#00A8D8] transition-colors font-dmsans text-sm"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Retry
+          </button>
         </div>
       </div>
     )

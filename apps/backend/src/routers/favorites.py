@@ -23,20 +23,21 @@ class FavoriteCreateBody(BaseModel):
 async def list_favorites(
     page: int = 1,
     limit: int = 20,
-    userId: str | None = None,
     type: str | None = None,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    List favorite items with optional filters.
-    
+    List favorite items for the current user with optional filters.
+
     - page: page number (1-based)
     - limit: results per page
-    - userId: filter by user external_id
     - type: filter by type (movie, person, scene, article, all)
+
+    Note: Always filters by current user for security
     """
     repo = FavoriteRepository(session)
-    return await repo.list(page=page, limit=limit, user_id=userId, type_filter=type)
+    return await repo.list(page=page, limit=limit, user_id=current_user.external_id, type_filter=type)
 
 
 @router.get("/{favorite_id}")

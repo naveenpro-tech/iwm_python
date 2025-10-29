@@ -7,8 +7,27 @@ export type User = {
   avatarUrl?: string | null
 }
 
-const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
+function getApiBase(): string | undefined {
+  // In browser, try to get from window first, then fallback to process.env
+  if (typeof window !== "undefined") {
+    // Try to get from window.__ENV__ if available
+    const windowEnv = (window as any).__ENV__
+    if (windowEnv?.NEXT_PUBLIC_API_BASE_URL) {
+      return windowEnv.NEXT_PUBLIC_API_BASE_URL
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL
+}
+
+function getUseBackend(): boolean {
+  if (typeof window !== "undefined") {
+    const windowEnv = (window as any).__ENV__
+    if (windowEnv?.NEXT_PUBLIC_ENABLE_BACKEND !== undefined) {
+      return windowEnv.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!getApiBase()
+    }
+  }
+  return process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!getApiBase()
+}
 
 function storage() {
   if (typeof window === "undefined") return null
@@ -47,6 +66,8 @@ export function getAuthHeaders(): Record<string, string> {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const apiBase = getApiBase()
+  const useBackend = getUseBackend()
   if (!useBackend || !apiBase) throw new Error("Backend not enabled")
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   const token = getAccessToken()

@@ -25,7 +25,6 @@ export function ProfileNavigation({ activeSection, onSectionChange, stats }: Pro
     { id: "watchlist", label: "Watchlist", count: stats.watchlist },
     { id: "favorites", label: "Favorites", count: stats.favorites },
     { id: "collections", label: "Collections", count: stats.collections },
-    { id: "playlists", label: "Playlists" },
     { id: "history", label: "History" },
     { id: "settings", label: "Settings" },
   ]

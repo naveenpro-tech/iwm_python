@@ -192,6 +192,127 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      },
+      "put": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Update Me",
+        "description": "Update current user profile",
+        "operationId": "update_me_api_v1_auth_me_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me/enhanced": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me Enhanced",
+        "description": "Get current authenticated user with roles and profile presence information.\n\nReturns:\n- User ID, email, name, avatar\n- Roles from AdminUserMeta.roles JSONB array\n- Profile presence flags (has_critic_profile, has_talent_profile, has_industry_profile)\n- Default role (from user_role_profiles when available)\n\nRequires: Valid JWT access token\nReturns: 401 Unauthorized if token is invalid or missing",
+        "operationId": "me_enhanced_api_v1_auth_me_enhanced_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Change Password",
+        "description": "Change user password",
+        "operationId": "change_password_api_v1_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Change Password Api V1 Auth Change Password Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/users/{username}": {
@@ -564,6 +685,66 @@
               "application/json": {
                 "schema": {
                   "title": "Response List Movies Api V1 Movies Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/movies/search": {
+      "get": {
+        "tags": [
+          "movies"
+        ],
+        "summary": "Search Movies",
+        "description": "Search movies by title, description, or genre name.\nReturns results ordered by relevance.",
+        "operationId": "search_movies_api_v1_movies_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Search query",
+              "title": "Q"
+            },
+            "description": "Search query"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Search Movies Api V1 Movies Search Get"
                 }
               }
             }
@@ -1067,391 +1248,6 @@
         }
       }
     },
-    "/api/v1/playlists": {
-      "get": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "List Playlists",
-        "description": "List playlists with optional filters.\n- page: page number (1-based)\n- limit: results per page\n- userId: filter by user external_id\n- isPublic: filter by public/private status",
-        "operationId": "list_playlists_api_v1_playlists_get",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Userid"
-            }
-          },
-          {
-            "name": "isPublic",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Ispublic"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response List Playlists Api V1 Playlists Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "Create Playlist",
-        "operationId": "create_playlist_api_v1_playlists_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlaylistCreateBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Create Playlist Api V1 Playlists Post"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/playlists/{playlist_id}": {
-      "get": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "Get Playlist",
-        "operationId": "get_playlist_api_v1_playlists__playlist_id__get",
-        "parameters": [
-          {
-            "name": "playlist_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Playlist Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Get Playlist Api V1 Playlists  Playlist Id  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "Update Playlist",
-        "operationId": "update_playlist_api_v1_playlists__playlist_id__patch",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "playlist_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Playlist Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlaylistUpdateBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Update Playlist Api V1 Playlists  Playlist Id  Patch"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "Delete Playlist",
-        "operationId": "delete_playlist_api_v1_playlists__playlist_id__delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "playlist_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Playlist Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Delete Playlist Api V1 Playlists  Playlist Id  Delete"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/playlists/{playlist_id}/movies": {
-      "post": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "Add Movie To Playlist",
-        "operationId": "add_movie_to_playlist_api_v1_playlists__playlist_id__movies_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "playlist_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Playlist Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/src__routers__collections__AddMovieBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Add Movie To Playlist Api V1 Playlists  Playlist Id  Movies Post"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/playlists/{playlist_id}/movies/{movie_id}": {
-      "delete": {
-        "tags": [
-          "playlists"
-        ],
-        "summary": "Remove Movie From Playlist",
-        "operationId": "remove_movie_from_playlist_api_v1_playlists__playlist_id__movies__movie_id__delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "playlist_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Playlist Id"
-            }
-          },
-          {
-            "name": "movie_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Movie Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Remove Movie From Playlist Api V1 Playlists  Playlist Id  Movies  Movie Id  Delete"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/collections": {
       "get": {
         "tags": [
@@ -1700,7 +1496,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/src__routers__collections__AddMovieBody"
+                "$ref": "#/components/schemas/AddMovieBody"
               }
             }
           }
@@ -1876,8 +1672,13 @@
           "watchlist"
         ],
         "summary": "Add To Watchlist",
-        "description": "Add a movie to user's watchlist",
+        "description": "Add a movie to user's watchlist (idempotent). Body.userId is ignored; we use the authenticated user.",
         "operationId": "add_to_watchlist_api_v1_watchlist_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1958,7 +1759,7 @@
           "watchlist"
         ],
         "summary": "Update Watchlist Item",
-        "description": "Update watchlist item status, progress, rating, or priority",
+        "description": "Update watchlist item status, progress, or priority",
         "operationId": "update_watchlist_item_api_v1_watchlist__watchlist_id__patch",
         "parameters": [
           {
@@ -2052,8 +1853,13 @@
           "favorites"
         ],
         "summary": "List Favorites",
-        "description": "List favorite items with optional filters.\n\n- page: page number (1-based)\n- limit: results per page\n- userId: filter by user external_id\n- type: filter by type (movie, person, scene, article, all)",
+        "description": "List favorite items for the current user with optional filters.\n\n- page: page number (1-based)\n- limit: results per page\n- type: filter by type (movie, person, scene, article, all)\n\nNote: Always filters by current user for security",
         "operationId": "list_favorites_api_v1_favorites_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "page",
@@ -2073,22 +1879,6 @@
               "type": "integer",
               "default": 20,
               "title": "Limit"
-            }
-          },
-          {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Userid"
             }
           },
           {
@@ -2272,43 +2062,25 @@
         ],
         "summary": "Get All Settings",
         "operationId": "get_all_settings_api_v1_settings__get",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "External user id",
-              "title": "Userid"
-            },
-            "description": "External user id"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Get All Settings Api V1 Settings  Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -2316,30 +2088,17 @@
         ],
         "summary": "Update All Settings",
         "operationId": "update_all_settings_api_v1_settings__put",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "External user id",
-              "title": "Userid"
-            },
-            "description": "External user id"
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2347,8 +2106,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Update All Settings Api V1 Settings  Put"
                 }
               }
@@ -2364,7 +2123,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/settings/account": {
@@ -2374,41 +2138,25 @@
         ],
         "summary": "Get Account Settings",
         "operationId": "get_account_settings_api_v1_settings_account_get",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Get Account Settings Api V1 Settings Account Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -2416,28 +2164,17 @@
         ],
         "summary": "Update Account Settings",
         "operationId": "update_account_settings_api_v1_settings_account_put",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2445,8 +2182,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Update Account Settings Api V1 Settings Account Put"
                 }
               }
@@ -2462,7 +2199,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/settings/profile": {
@@ -2472,41 +2214,25 @@
         ],
         "summary": "Get Profile Settings",
         "operationId": "get_profile_settings_api_v1_settings_profile_get",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Get Profile Settings Api V1 Settings Profile Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -2514,28 +2240,17 @@
         ],
         "summary": "Update Profile Settings",
         "operationId": "update_profile_settings_api_v1_settings_profile_put",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2543,8 +2258,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Update Profile Settings Api V1 Settings Profile Put"
                 }
               }
@@ -2560,7 +2275,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/settings/privacy": {
@@ -2570,41 +2290,25 @@
         ],
         "summary": "Get Privacy Settings",
         "operationId": "get_privacy_settings_api_v1_settings_privacy_get",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Get Privacy Settings Api V1 Settings Privacy Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -2612,28 +2316,17 @@
         ],
         "summary": "Update Privacy Settings",
         "operationId": "update_privacy_settings_api_v1_settings_privacy_put",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2641,8 +2334,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Update Privacy Settings Api V1 Settings Privacy Put"
                 }
               }
@@ -2658,7 +2351,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/settings/display": {
@@ -2668,41 +2366,25 @@
         ],
         "summary": "Get Display Settings",
         "operationId": "get_display_settings_api_v1_settings_display_get",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Get Display Settings Api V1 Settings Display Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -2710,28 +2392,17 @@
         ],
         "summary": "Update Display Settings",
         "operationId": "update_display_settings_api_v1_settings_display_put",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2739,8 +2410,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Update Display Settings Api V1 Settings Display Put"
                 }
               }
@@ -2756,7 +2427,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/settings/preferences": {
@@ -2766,41 +2442,25 @@
         ],
         "summary": "Get Preferences Settings",
         "operationId": "get_preferences_settings_api_v1_settings_preferences_get",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Get Preferences Settings Api V1 Settings Preferences Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -2808,28 +2468,17 @@
         ],
         "summary": "Update Preferences Settings",
         "operationId": "update_preferences_settings_api_v1_settings_preferences_put",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Userid"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2837,8 +2486,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Update Preferences Settings Api V1 Settings Preferences Put"
                 }
               }
@@ -2854,7 +2503,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/notifications": {
@@ -3004,85 +2658,46 @@
           "notifications"
         ],
         "summary": "Get Preferences",
+        "description": "Get notification preferences for the current user.\n\nReturns all notification channel settings and global notification settings.\n\nArgs:\n    current_user: The authenticated user (injected by dependency)\n    session: The database session (injected by dependency)\n\nReturns:\n    dict: Notification preferences with 'channels' and 'global' keys\n\nRaises:\n    HTTPException 401: If user is not authenticated\n    HTTPException 500: If database operation fails",
         "operationId": "get_preferences_api_v1_notifications_preferences_get",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Userid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Get Preferences Api V1 Notifications Preferences Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
           "notifications"
         ],
         "summary": "Update Preferences",
+        "description": "Update notification preferences for the current user.\n\nUpdates notification channel settings and/or global notification settings.\nValidates channel and global settings before persisting.\n\nArgs:\n    payload: dict with optional 'channels' and 'global' keys\n    current_user: The authenticated user (injected by dependency)\n    session: The database session (injected by dependency)\n\nReturns:\n    dict: Updated notification preferences with 'channels' and 'global' keys\n\nRaises:\n    HTTPException 400: If validation fails\n    HTTPException 401: If user is not authenticated\n    HTTPException 500: If database operation fails",
         "operationId": "update_preferences_api_v1_notifications_preferences_put",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Userid"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -3090,8 +2705,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
+                  "type": "object",
                   "title": "Response Update Preferences Api V1 Notifications Preferences Put"
                 }
               }
@@ -3107,7 +2722,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/notifications/mark-all-read": {
@@ -3405,6 +3025,398 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/roles": {
+      "get": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Get User Roles",
+        "description": "Get all role profiles for the current user.\n\nReturns all user_role_profiles with their enabled, visibility, is_default, and role_type.\n\nArgs:\n    current_user: The authenticated user (injected by dependency)\n    repo: The role management repository (injected by dependency)\n\nReturns:\n    RoleProfileListResponse: List of role profiles and total count\n\nRaises:\n    HTTPException 401: If user is not authenticated",
+        "operationId": "get_user_roles_api_v1_roles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleProfileListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/roles/{role_type}": {
+      "put": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Update Role Profile",
+        "description": "Update a role profile for the current user.\n\nUpdates enabled, visibility, is_default, and handle fields.\nValidates that only one role is marked as default per user.\n\nArgs:\n    role_type: The role type to update (e.g., 'lover', 'critic', 'talent', 'industry')\n    request: The update request data\n    current_user: The authenticated user (injected by dependency)\n    repo: The role management repository (injected by dependency)\n\nReturns:\n    RoleProfileResponse: The updated role profile\n\nRaises:\n    HTTPException 400: If validation fails or role profile doesn't exist\n    HTTPException 401: If user is not authenticated\n    HTTPException 500: If database operation fails",
+        "operationId": "update_role_profile_api_v1_roles__role_type__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Role Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Get Role Profile",
+        "description": "Get role profile details for a specific role type.\n\nReturns role profile details including role-specific fields.\nFor 'talent' role, returns TalentProfile data.\nFor 'industry' role, returns IndustryProfile data.\nFor 'critic' role, returns CriticProfile data.\n\nArgs:\n    role_type: The role type to fetch (e.g., 'lover', 'critic', 'talent', 'industry')\n    current_user: The authenticated user (injected by dependency)\n    repo: The role management repository (injected by dependency)\n\nReturns:\n    Role-specific profile response\n\nRaises:\n    HTTPException 404: If role profile doesn't exist\n    HTTPException 401: If user is not authenticated\n    HTTPException 500: If database operation fails",
+        "operationId": "get_role_profile_api_v1_roles__role_type__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Role Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Get Role Profile Api V1 Roles  Role Type  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/roles/{role_type}/activate": {
+      "post": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Activate Role",
+        "description": "Activate a role for the current user.\n\nActivates a role (enabled=true) and creates role-specific profile if needed.\nReturns onboarding wizard data for the frontend.\n\nArgs:\n    role_type: The role type to activate (e.g., 'talent', 'industry')\n    request: The activation request data\n    current_user: The authenticated user (injected by dependency)\n    repo: The role management repository (injected by dependency)\n\nReturns:\n    OnboardingWizardResponse: Onboarding wizard data\n\nRaises:\n    HTTPException 400: If role profile doesn't exist or invalid role type\n    HTTPException 401: If user is not authenticated\n    HTTPException 500: If database operation fails",
+        "operationId": "activate_role_api_v1_roles__role_type__activate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Role Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingWizardResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/roles/{role_type}/deactivate": {
+      "post": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Deactivate Role",
+        "description": "Deactivate a role for the current user.\n\nDeactivates a role (enabled=false, visibility=private).\nPreserves all data (no deletion).\nPrevents deactivating the last enabled role.\n\nArgs:\n    role_type: The role type to deactivate\n    current_user: The authenticated user (injected by dependency)\n    repo: The role management repository (injected by dependency)\n\nReturns:\n    RoleProfileResponse: The deactivated role profile\n\nRaises:\n    HTTPException 400: If role profile doesn't exist or is the last enabled role\n    HTTPException 401: If user is not authenticated\n    HTTPException 500: If database operation fails",
+        "operationId": "deactivate_role_api_v1_roles__role_type__deactivate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Role Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/roles/{role_type}/profile": {
+      "put": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Update Role Specific Profile",
+        "description": "Update role-specific profile fields.\n\nUpdates role-specific profile data (e.g., TalentProfile.headshot_url).\nValidates role-specific constraints.\n\nArgs:\n    role_type: The role type to update\n    request: The update request data (TalentProfileUpdateRequest or IndustryProfileUpdateRequest)\n    current_user: The authenticated user (injected by dependency)\n    repo: The role management repository (injected by dependency)\n\nReturns:\n    Updated role-specific profile response\n\nRaises:\n    HTTPException 400: If validation fails or profile doesn't exist\n    HTTPException 401: If user is not authenticated\n    HTTPException 500: If database operation fails",
+        "operationId": "update_role_specific_profile_api_v1_roles__role_type__profile_put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Role Type"
+            }
+          },
+          {
+            "name": "request",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "title": "Request"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Update Role Specific Profile Api V1 Roles  Role Type  Profile Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/roles": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get User Roles",
+        "description": "Get all available roles for the current user.\n\nReturns:\n- List of roles from AdminUserMeta.roles\n- Current active role\n- Role metadata (name, description, icon)\n\nRequires: Valid JWT access token\nReturns: 401 Unauthorized if token is invalid or missing",
+        "operationId": "get_user_roles_api_v1_users_me_roles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolesListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/active-role": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get Active Role",
+        "description": "Get current active role for the user.\n\nReturns:\n- Current active role\n- Role metadata (name, description, icon)\n\nRequires: Valid JWT access token\nReturns: 401 Unauthorized if token is invalid or missing",
+        "operationId": "get_active_role_api_v1_users_me_active_role_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveRoleResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Set Active Role",
+        "description": "Set the active role for the current user.\n\nRequest body:\n- role: The role to set as active (must be in user's available roles)\n\nReturns:\n- Updated active role\n- Role metadata (name, description, icon)\n\nRequires: Valid JWT access token\nReturns: \n- 401 Unauthorized if token is invalid or missing\n- 400 Bad Request if role is not in user's available roles",
+        "operationId": "set_active_role_api_v1_users_me_active_role_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActiveRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveRoleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/boxoffice/weekend": {
@@ -7234,6 +7246,73 @@
   },
   "components": {
     "schemas": {
+      "ActivateRoleRequest": {
+        "properties": {
+          "handle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handle"
+          }
+        },
+        "type": "object",
+        "title": "ActivateRoleRequest",
+        "description": "Request model for activating a role"
+      },
+      "ActiveRoleResponse": {
+        "properties": {
+          "active_role": {
+            "type": "string",
+            "title": "Active Role"
+          },
+          "role_name": {
+            "type": "string",
+            "title": "Role Name"
+          },
+          "role_description": {
+            "type": "string",
+            "title": "Role Description"
+          },
+          "role_icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Icon"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_role",
+          "role_name",
+          "role_description"
+        ],
+        "title": "ActiveRoleResponse",
+        "description": "Response for active role endpoint"
+      },
+      "AddMovieBody": {
+        "properties": {
+          "movieId": {
+            "type": "string",
+            "title": "Movieid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movieId"
+        ],
+        "title": "AddMovieBody"
+      },
       "AdminUserOut": {
         "properties": {
           "id": {
@@ -7624,6 +7703,86 @@
         ],
         "title": "ApplicationStatusUpdate"
       },
+      "AuthMeResponse": {
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles",
+            "default": []
+          },
+          "has_critic_profile": {
+            "type": "boolean",
+            "title": "Has Critic Profile",
+            "default": false
+          },
+          "has_talent_profile": {
+            "type": "boolean",
+            "title": "Has Talent Profile",
+            "default": false
+          },
+          "has_industry_profile": {
+            "type": "boolean",
+            "title": "Has Industry Profile",
+            "default": false
+          },
+          "default_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "external_id",
+          "email",
+          "username",
+          "name"
+        ],
+        "title": "AuthMeResponse",
+        "description": "Enhanced /me endpoint response with roles and profile presence information.\n\nFields:\n- user_id: Internal database user ID\n- external_id: External user identifier (email-based)\n- email: User's email address\n- username: Username derived from email prefix\n- name: User's full name\n- avatar_url: URL to user's avatar image\n- roles: List of roles assigned to this user (e.g., [\"User\", \"Critic\", \"Talent\"])\n- has_critic_profile: Whether user has an active CriticProfile\n- has_talent_profile: Whether user has an active TalentProfile (future)\n- has_industry_profile: Whether user has an active IndustryProfile (future)\n- default_role: User's default role for profile display (future, from user_role_profiles)"
+      },
       "AwardSimpleIn": {
         "properties": {
           "name": {
@@ -7651,6 +7810,24 @@
           "status"
         ],
         "title": "AwardSimpleIn"
+      },
+      "ChangePasswordBody": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordBody"
       },
       "CollectionCreateBody": {
         "properties": {
@@ -9338,6 +9515,46 @@
         ],
         "title": "NotificationOut"
       },
+      "OnboardingWizardResponse": {
+        "properties": {
+          "role_profile_id": {
+            "type": "integer",
+            "title": "Role Profile Id"
+          },
+          "role_type": {
+            "type": "string",
+            "title": "Role Type"
+          },
+          "profile_created": {
+            "type": "boolean",
+            "title": "Profile Created"
+          },
+          "profile_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Type"
+          },
+          "next_step": {
+            "type": "string",
+            "title": "Next Step"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_profile_id",
+          "role_type",
+          "profile_created",
+          "next_step"
+        ],
+        "title": "OnboardingWizardResponse",
+        "description": "Response model for onboarding wizard data"
+      },
       "PersonIn": {
         "properties": {
           "name": {
@@ -9403,74 +9620,6 @@
           "url"
         ],
         "title": "PlatformLink"
-      },
-      "PlaylistCreateBody": {
-        "properties": {
-          "title": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 3,
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500,
-            "title": "Description",
-            "default": ""
-          },
-          "isPublic": {
-            "type": "boolean",
-            "title": "Ispublic",
-            "default": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "title"
-        ],
-        "title": "PlaylistCreateBody"
-      },
-      "PlaylistUpdateBody": {
-        "properties": {
-          "title": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100,
-                "minLength": 3
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Title"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 500
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "isPublic": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ispublic"
-          }
-        },
-        "type": "object",
-        "title": "PlaylistUpdateBody"
       },
       "PulseCreateBody": {
         "properties": {
@@ -9631,6 +9780,170 @@
         },
         "type": "object",
         "title": "ReviewUpdateBody"
+      },
+      "RoleInfo": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "name",
+          "description"
+        ],
+        "title": "RoleInfo",
+        "description": "Role information with metadata"
+      },
+      "RoleProfileListResponse": {
+        "properties": {
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleProfileResponse"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roles",
+          "total"
+        ],
+        "title": "RoleProfileListResponse",
+        "description": "Response model for list of role profiles"
+      },
+      "RoleProfileResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "role_type": {
+            "type": "string",
+            "title": "Role Type"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "visibility": {
+            "type": "string",
+            "title": "Visibility"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default"
+          },
+          "handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handle"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "role_type",
+          "enabled",
+          "visibility",
+          "is_default",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RoleProfileResponse",
+        "description": "Response model for a user role profile"
+      },
+      "RolesListResponse": {
+        "properties": {
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleInfo"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "active_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roles"
+        ],
+        "title": "RolesListResponse",
+        "description": "Response for listing user roles"
+      },
+      "SetActiveRoleRequest": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "SetActiveRoleRequest",
+        "description": "Request to set active role"
       },
       "SettingsUpdateIn": {
         "properties": {
@@ -9926,6 +10239,120 @@
         ],
         "title": "TriviaIn"
       },
+      "UpdateProfileBody": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          }
+        },
+        "type": "object",
+        "title": "UpdateProfileBody"
+      },
+      "UpdateRoleProfileRequest": {
+        "properties": {
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(public|private|followers_only)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility"
+          },
+          "is_default": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Default"
+          },
+          "handle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handle"
+          }
+        },
+        "type": "object",
+        "title": "UpdateRoleProfileRequest",
+        "description": "Request model for updating a role profile"
+      },
       "UserProfileResponse": {
         "properties": {
           "id": {
@@ -10151,13 +10578,24 @@
           "rating": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Rating"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
           }
         },
         "type": "object",
@@ -10191,17 +10629,6 @@
             ],
             "title": "Progress"
           },
-          "rating": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rating"
-          },
           "priority": {
             "anyOf": [
               {
@@ -10216,19 +10643,6 @@
         },
         "type": "object",
         "title": "WatchlistItemUpdate"
-      },
-      "src__routers__collections__AddMovieBody": {
-        "properties": {
-          "movieId": {
-            "type": "string",
-            "title": "Movieid"
-          }
-        },
-        "type": "object",
-        "required": [
-          "movieId"
-        ],
-        "title": "AddMovieBody"
       }
     },
     "securitySchemes": {

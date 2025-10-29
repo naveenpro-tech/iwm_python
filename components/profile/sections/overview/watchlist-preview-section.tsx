@@ -86,7 +86,7 @@ export function WatchlistPreviewSection({ userId }: WatchlistPreviewSectionProps
         <motion.div className="grid grid-cols-3 gap-3" variants={containerVariants} initial="hidden" animate="visible">
           {movies.map((movie) => (
             <motion.div
-              key={movie.id}
+              key={`${movie.id}-${movie.addedDate}`}
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}

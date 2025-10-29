@@ -2,12 +2,31 @@ from __future__ import annotations
 
 from typing import List
 from datetime import datetime
-from sqlalchemy import String, ForeignKey, Integer, Table, Column, Text, Float, Boolean, DateTime
+from enum import Enum as PyEnum
+from sqlalchemy import String, ForeignKey, Integer, Table, Column, Text, Float, Boolean, DateTime, UniqueConstraint, TIMESTAMP, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
 
 from sqlalchemy.dialects.postgresql import JSONB
+
+
+# Enums for multi-role profile system
+class RoleType(str, PyEnum):
+    """Enum for user role types in multi-role profile system"""
+    LOVER = "lover"
+    CRITIC = "critic"
+    TALENT = "talent"
+    INDUSTRY = "industry"
+    MODERATOR = "moderator"
+    ADMIN = "admin"
+
+
+class ProfileVisibility(str, PyEnum):
+    """Enum for role profile visibility settings"""
+    PUBLIC = "public"
+    PRIVATE = "private"
+    FOLLOWERS_ONLY = "followers_only"
 
 
 movie_genres = Table(
@@ -34,13 +53,7 @@ collection_movies = Table(
 )
 
 
-# Association table for playlists
-playlist_movies = Table(
-    "playlist_movies",
-    Base.metadata,
-    Column("playlist_id", ForeignKey("playlists.id"), primary_key=True),
-    Column("movie_id", ForeignKey("movies.id"), primary_key=True),
-)
+
 
 
 
@@ -176,11 +189,97 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     name: Mapped[str] = mapped_column(String(100))
     avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    location: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    website: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    active_role: Mapped[str | None] = mapped_column(String(50), nullable=True, default="lover")  # Current active role for multi-role users
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, onupdate=datetime.utcnow, nullable=True)
 
     reviews: Mapped[List["Review"]] = relationship(back_populates="author", lazy="selectin")
     critic_profile: Mapped["CriticProfile | None"] = relationship(back_populates="user", uselist=False, lazy="selectin")
+    role_profiles: Mapped[List["UserRoleProfile"]] = relationship(back_populates="user", cascade="all, delete-orphan", lazy="selectin")
+    talent_profile: Mapped["TalentProfile | None"] = relationship(back_populates="user", uselist=False, lazy="selectin")
+    industry_profile: Mapped["IndustryProfile | None"] = relationship(back_populates="user", uselist=False, lazy="selectin")
+
+
+class UserRoleProfile(Base):
+    """
+    Multi-role profile system: allows users to have separate profiles for different roles.
+    Each user can have one profile per role_type (e.g., one 'lover' profile, one 'critic' profile).
+    Only one role profile per user can be marked as is_default=true.
+    """
+    __tablename__ = "user_role_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    visibility: Mapped[str] = mapped_column(String(20), nullable=False, default="public")
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    handle: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="role_profiles", lazy="selectin")
+
+
+class TalentProfile(Base):
+    """
+    Talent profile for users in the 'talent' role (actors, actresses, voice actors, stunt performers).
+    Stores professional information including headshots, demo reels, IMDb links, and agent contact info.
+    """
+    __tablename__ = "talent_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    role_profile_id: Mapped[int | None] = mapped_column(ForeignKey("user_role_profiles.id", ondelete="SET NULL"), nullable=True, index=True)
+    stage_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    headshot_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    demo_reel_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    imdb_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    agent_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    agent_contact: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    skills: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    experience_years: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    availability_status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="available")
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="talent_profile", lazy="selectin")
+    role_profile: Mapped["UserRoleProfile | None"] = relationship(lazy="selectin")
+
+
+class IndustryProfile(Base):
+    """
+    Industry profile for users in the 'industry' role (producers, directors, cinematographers, etc.).
+    Stores professional information including company details, notable works, and specializations.
+    """
+    __tablename__ = "industry_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    role_profile_id: Mapped[int | None] = mapped_column(ForeignKey("user_role_profiles.id", ondelete="SET NULL"), nullable=True, index=True)
+    company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    job_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    profile_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    website_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    imdb_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    notable_works: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    specializations: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    experience_years: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    accepting_projects: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="industry_profile", lazy="selectin")
+    role_profile: Mapped["UserRoleProfile | None"] = relationship(lazy="selectin")
 
 
 class Review(Base):
@@ -226,28 +325,11 @@ class Collection(Base):
     movies: Mapped[List["Movie"]] = relationship(secondary=collection_movies, lazy="selectin")
 
 
-class Playlist(Base):
-    __tablename__ = "playlists"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
-    title: Mapped[str] = mapped_column(String(200))
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    is_public: Mapped[bool] = mapped_column(Boolean, default=True)
-    followers: Mapped[int] = mapped_column(Integer, default=0)
-    tags: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array as text
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow)
-
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-
-    creator: Mapped["User"] = relationship(lazy="selectin")
-    movies: Mapped[List["Movie"]] = relationship(secondary=playlist_movies, lazy="selectin")
-
-
-
 class Watchlist(Base):
     __tablename__ = "watchlist"
+    __table_args__ = (
+        UniqueConstraint("user_id", "movie_id", name="uq_watchlist_user_movie"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
@@ -1007,6 +1089,7 @@ class CriticProfile(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+    role_profile_id: Mapped[int | None] = mapped_column(ForeignKey("user_role_profiles.id", ondelete="SET NULL"), nullable=True, index=True)
     username: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(200))
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -1029,6 +1112,7 @@ class CriticProfile(Base):
 
     # Relationships
     user: Mapped["User"] = relationship(back_populates="critic_profile", lazy="selectin")
+    role_profile: Mapped["UserRoleProfile | None"] = relationship(lazy="selectin")
     social_links: Mapped[List["CriticSocialLink"]] = relationship(back_populates="critic", cascade="all, delete-orphan", lazy="selectin")
     reviews: Mapped[List["CriticReview"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
     followers: Mapped[List["CriticFollower"]] = relationship(back_populates="critic", cascade="all, delete-orphan")

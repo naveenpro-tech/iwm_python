@@ -29,7 +29,9 @@ export function AddToCollectionModal({
     const loadCollections = async () => {
       setIsLoading(true)
       try {
-        const data = await getUserCollections()
+        const { getCurrentUser } = await import("@/lib/auth")
+        const current = await getCurrentUser()
+        const data = await getUserCollections(current.id)
         const collectionsArray = Array.isArray(data) ? data : []
         setCollections(collectionsArray)
 

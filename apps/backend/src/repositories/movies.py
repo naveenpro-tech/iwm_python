@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, List, Optional
-from sqlalchemy import select, desc, asc
+from sqlalchemy import select, desc, asc, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import Movie, Genre, Review, Scene, MovieStreamingOption, StreamingPlatform
@@ -199,4 +199,58 @@ class MovieRepository:
             "scenes": scenes_list,
             "streamingOptions": streaming_by_region,
         }
+
+    async def search(
+        self,
+        query: str,
+        limit: int = 10,
+    ) -> List[dict[str, Any]]:
+        """
+        Search movies by title or description.
+        Returns results ordered by relevance (exact title match first, then partial matches).
+        """
+        if not self.session or not query:
+            return []
+
+        # Normalize query for case-insensitive search
+        search_term = f"%{query}%"
+
+        # Build search query - search in title and overview only
+        # This avoids the DISTINCT issue with genre joins
+        q = (
+            select(Movie)
+            .where(
+                or_(
+                    func.lower(Movie.title).like(func.lower(search_term)),
+                    func.lower(Movie.overview).like(func.lower(search_term)),
+                )
+            )
+            .order_by(
+                # Exact match (case-insensitive)
+                desc(func.lower(Movie.title) == func.lower(query)),
+                # Starts with query
+                desc(func.lower(Movie.title).like(func.lower(f"{query}%"))),
+                # Then by popularity (siddu_score)
+                desc(Movie.siddu_score),
+                # Then by year (newest first)
+                desc(Movie.year),
+            )
+            .limit(limit)
+        )
+
+        res = await self.session.execute(q)
+        movies = res.scalars().all()
+
+        return [
+            {
+                "id": m.external_id,
+                "title": m.title,
+                "year": m.year,
+                "posterUrl": m.poster_url,
+                "genres": [g.name for g in m.genres],
+                "sidduScore": m.siddu_score,
+                "runtime": m.runtime,
+            }
+            for m in movies
+        ]
 

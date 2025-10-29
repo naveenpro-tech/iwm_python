@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
+from ..models import User
+from ..dependencies.auth import get_current_user
 from ..repositories.notifications import NotificationsRepository
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -60,25 +62,69 @@ class MarkAllRequest(BaseModel):
 
 @router.get("/preferences")
 async def get_preferences(
-    userId: str | None = Query(None),
+    current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    repo = NotificationsRepository(session)
-    user_external_id = userId or "user-1"
-    data = await repo.get_user_preferences(user_external_id)
-    return data
+    """
+    Get notification preferences for the current user.
+
+    Returns all notification channel settings and global notification settings.
+
+    Args:
+        current_user: The authenticated user (injected by dependency)
+        session: The database session (injected by dependency)
+
+    Returns:
+        dict: Notification preferences with 'channels' and 'global' keys
+
+    Raises:
+        HTTPException 401: If user is not authenticated
+        HTTPException 500: If database operation fails
+    """
+    try:
+        repo = NotificationsRepository(session)
+        data = await repo.get_user_preferences(current_user.external_id)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch notification preferences")
 
 
 @router.put("/preferences")
 async def update_preferences(
     payload: dict,
-    userId: str | None = Query(None),
+    current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    repo = NotificationsRepository(session)
-    user_external_id = userId or "user-1"
-    out = await repo.update_user_preferences(user_external_id, payload)
-    return out
+    """
+    Update notification preferences for the current user.
+
+    Updates notification channel settings and/or global notification settings.
+    Validates channel and global settings before persisting.
+
+    Args:
+        payload: dict with optional 'channels' and 'global' keys
+        current_user: The authenticated user (injected by dependency)
+        session: The database session (injected by dependency)
+
+    Returns:
+        dict: Updated notification preferences with 'channels' and 'global' keys
+
+    Raises:
+        HTTPException 400: If validation fails
+        HTTPException 401: If user is not authenticated
+        HTTPException 500: If database operation fails
+    """
+    try:
+        if not isinstance(payload, dict):
+            raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+
+        repo = NotificationsRepository(session)
+        out = await repo.update_user_preferences(current_user.external_id, payload)
+        return out
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to update notification preferences")
 
 
 @router.post("/mark-all-read")

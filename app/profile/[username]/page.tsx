@@ -10,14 +10,13 @@ import { ProfileReviews } from "@/components/profile/sections/profile-reviews"
 import { ProfileWatchlist } from "@/components/profile/sections/profile-watchlist"
 import { ProfileFavorites } from "@/components/profile/sections/profile-favorites"
 import { ProfileCollections } from "@/components/profile/sections/profile-collections"
-import { ProfilePlaylists } from "@/components/profile/sections/profile-playlists"
 import { ProfileHistory } from "@/components/profile/sections/profile-history"
 import { ProfileSettings } from "@/components/profile/sections/profile-settings"
 import { Loader2 } from "lucide-react"
 import { updateUserProfile } from "@/lib/api/profile"
 import { useToast } from "@/hooks/use-toast"
 
-type ProfileSection = "overview" | "reviews" | "watchlist" | "favorites" | "collections" | "playlists" | "history" | "settings"
+type ProfileSection = "overview" | "reviews" | "watchlist" | "favorites" | "collections" | "history" | "settings"
 
 interface UserData {
   id: string
@@ -163,8 +162,6 @@ export default function UserProfilePage() {
         return <ProfileFavorites userId={userData.id} />
       case "collections":
         return <ProfileCollections userId={userData.id} />
-      case "playlists":
-        return <ProfilePlaylists userId={userData.id} />
       case "history":
         return <ProfileHistory userId={userData.id} />
       case "settings":

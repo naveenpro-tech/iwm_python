@@ -1,0 +1,10 @@
+{
+  "bug_1_new_user_profile": {
+    "email": "testuser86763@iwm.com",
+    "username": "unknown",
+    "tab_results": {}
+  },
+  "bug_2_collection_sharing": {
+    "share_buttons_found": 0
+  }
+}

@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { addToWatchlist } from "@/lib/api/watchlist"
 import { getCurrentUser } from "@/lib/auth"
 import { AddToCollectionModal } from "@/components/profile/collections/add-to-collection-modal"
+import { addToFavorites, removeFromFavorites, getFavorites } from "@/lib/api/favorites"
 
 // Fallback mock movie data (used when backend is unavailable)
 const fallbackMovieData = {
@@ -458,6 +459,9 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
   const [error, setError] = useState<string | null>(null)
   const [isAddingToWatchlist, setIsAddingToWatchlist] = useState(false)
   const [showCollectionModal, setShowCollectionModal] = useState(false)
+  const [isFavorited, setIsFavorited] = useState(false)
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
+  const [favoriteId, setFavoriteId] = useState<string | null>(null)
   const { id: movieId } = usePromise(params)
   const { toast } = useToast()
 
@@ -491,6 +495,90 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
       setIsAddingToWatchlist(false)
     }
   }
+
+  // Handler for toggling favorites
+  const handleToggleFavorite = async () => {
+    setIsTogglingFavorite(true)
+    const previousState = isFavorited
+    const previousFavoriteId = favoriteId
+
+    // Optimistic update
+    setIsFavorited(!isFavorited)
+
+    try {
+      const user = await getCurrentUser()
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to add movies to your favorites.",
+          variant: "destructive",
+        })
+        // Rollback optimistic update
+        setIsFavorited(previousState)
+        return
+      }
+
+      if (isFavorited && favoriteId) {
+        // Remove from favorites
+        await removeFromFavorites(favoriteId)
+        setFavoriteId(null)
+        toast({
+          title: "Removed from Favorites",
+          description: `${movieData.title} has been removed from your favorites.`,
+        })
+      } else {
+        // Add to favorites
+        const result = await addToFavorites({
+          type: "movie",
+          movieId: movieId,
+        })
+        setFavoriteId(result.id)
+        toast({
+          title: "Added to Favorites",
+          description: `${movieData.title} has been added to your favorites.`,
+        })
+      }
+    } catch (error: any) {
+      console.error("Failed to toggle favorite:", error)
+      // Rollback optimistic update
+      setIsFavorited(previousState)
+      setFavoriteId(previousFavoriteId)
+
+      const errorMessage = error.message || "Failed to update favorites. Please try again."
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsTogglingFavorite(false)
+    }
+  }
+
+  // Check if movie is already favorited on mount
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        const user = await getCurrentUser()
+        if (!user) return
+
+        const favorites = await getFavorites(1, 100, "movie")
+        // Find if this movie is in favorites
+        const favorite = favorites.find((fav: any) => {
+          return fav.movieId === movieId || fav.movie?.id === movieId
+        })
+
+        if (favorite) {
+          setIsFavorited(true)
+          setFavoriteId(favorite.id)
+        }
+      } catch (error) {
+        console.error("Failed to check favorite status:", error)
+      }
+    }
+
+    checkFavoriteStatus()
+  }, [movieId])
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -607,6 +695,9 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
         onAddToWatchlist={handleAddToWatchlist}
         isAddingToWatchlist={isAddingToWatchlist}
         onAddToCollection={() => setShowCollectionModal(true)}
+        onToggleFavorite={handleToggleFavorite}
+        isFavorited={isFavorited}
+        isTogglingFavorite={isTogglingFavorite}
       />
 
       {/* Navigation */}

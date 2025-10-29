@@ -11,9 +11,12 @@ import Image from "next/image"
 import Link from "next/link"
 
 type ViewMode = "grid" | "list"
+import { getFavorites, removeFromFavorites } from "@/lib/api/favorites"
+import { useToast } from "@/hooks/use-toast"
 
 interface FavoriteMovie {
-  id: string
+  id: string // Favorite record ID (for deletion)
+  movieId: string // Movie ID (for linking)
   title: string
   posterUrl: string
   year: string
@@ -38,126 +41,103 @@ export function ProfileFavorites({ userId }: ProfileFavoritesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [addToCollectionMovie, setAddToCollectionMovie] = useState<{ id: string; title: string } | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate API call to fetch favorites
+    // Fetch favorites from backend API
     const fetchFavorites = async () => {
       setIsLoading(true)
 
-      // Mock data - in a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1200))
+      try {
+        // Fetch favorites from API
+        const favoritesData = await getFavorites(1, 100, "movie")
 
-      const mockFavorites: FavoriteMovie[] = [
-        {
-          id: "m1",
-          title: "Inception",
-          posterUrl: "/inception-movie-poster.png",
-          year: "2010",
-          genres: ["Action", "Adventure", "Sci-Fi", "Thriller"],
-          addedDate: "2 years ago",
-          sidduScore: 9.3,
-          userRating: 5,
-          reviewId: "r1",
-        },
-        {
-          id: "m3",
-          title: "Oppenheimer",
-          posterUrl: "/oppenheimer-inspired-poster.png",
-          year: "2023",
-          genres: ["Biography", "Drama", "History"],
-          addedDate: "3 months ago",
-          sidduScore: 9.4,
-          userRating: 5,
-          reviewId: "r2",
-        },
-        {
-          id: "m4",
-          title: "Interstellar",
-          posterUrl: "/interstellar-poster.png",
-          year: "2014",
-          genres: ["Adventure", "Drama", "Sci-Fi"],
-          addedDate: "1 year ago",
-          sidduScore: 9.1,
-          userRating: 5,
-          reviewId: "r3",
-        },
-        {
-          id: "m12",
-          title: "The Dark Knight",
-          posterUrl: "/dark-knight-poster.png",
-          year: "2008",
-          genres: ["Action", "Crime", "Drama", "Thriller"],
-          addedDate: "3 years ago",
-          sidduScore: 9.5,
-          userRating: 5,
-          reviewId: "r4",
-        },
-        {
-          id: "m13",
-          title: "Parasite",
-          posterUrl: "/parasite-movie-poster.png",
-          year: "2019",
-          genres: ["Comedy", "Drama", "Thriller"],
-          addedDate: "2 years ago",
-          sidduScore: 9.6,
-          userRating: 4,
-        },
-        {
-          id: "m14",
-          title: "The Shawshank Redemption",
-          posterUrl: "/shawshank-redemption-poster.png",
-          year: "1994",
-          genres: ["Drama"],
-          addedDate: "4 years ago",
-          sidduScore: 9.8,
-          userRating: 5,
-          reviewId: "r5",
-        },
-        {
-          id: "m15",
-          title: "Pulp Fiction",
-          posterUrl: "/pulp-fiction-poster.png",
-          year: "1994",
-          genres: ["Crime", "Drama"],
-          addedDate: "3 years ago",
-          sidduScore: 9.2,
-          userRating: 4,
-        },
-        {
-          id: "m16",
-          title: "The Godfather",
-          posterUrl: "/classic-mob-poster.png",
-          year: "1972",
-          genres: ["Crime", "Drama"],
-          addedDate: "5 years ago",
-          sidduScore: 9.7,
-          userRating: 5,
-          reviewId: "r6",
-        },
-      ]
+        // Transform API data to match FavoriteMovie interface
+        const transformedFavorites: FavoriteMovie[] = favoritesData.map((fav: any) => ({
+          id: fav.id, // Favorite record ID (for deletion)
+          movieId: fav.movieId, // Movie ID (for linking)
+          title: fav.title || "Unknown Title",
+          posterUrl: fav.imageUrl || fav.posterUrl || "/placeholder.svg",
+          year: fav.releaseYear?.toString() || fav.year || "N/A",
+          genres: fav.genres || [],
+          addedDate: formatDate(fav.addedDate),
+          sidduScore: fav.sidduScore,
+          userRating: fav.userRating || 0,
+          reviewId: fav.reviewId,
+        }))
 
-      // Extract all unique genres for filtering
-      const genres = new Set<string>()
-      mockFavorites.forEach((movie) => {
-        movie.genres.forEach((genre) => genres.add(genre))
-      })
+        // Extract all unique genres for filtering
+        const genres = new Set<string>()
+        transformedFavorites.forEach((movie) => {
+          movie.genres.forEach((genre) => genres.add(genre))
+        })
 
-      setAvailableGenres(Array.from(genres).sort())
-      setMovies(mockFavorites)
-      setIsLoading(false)
+        setAvailableGenres(Array.from(genres).sort())
+        setMovies(transformedFavorites)
+      } catch (error) {
+        console.error("Failed to fetch favorites:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load favorites. Please try again.",
+          variant: "destructive",
+        })
+        setMovies([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    // Helper function to format date
+    function formatDate(dateString: string): string {
+      try {
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffTime = Math.abs(now.getTime() - date.getTime())
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays < 7) {
+          return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`
+        } else if (diffDays < 30) {
+          const weeks = Math.floor(diffDays / 7)
+          return `${weeks} week${weeks > 1 ? "s" : ""} ago`
+        } else if (diffDays < 365) {
+          const months = Math.floor(diffDays / 30)
+          return `${months} month${months > 1 ? "s" : ""} ago`
+        } else {
+          const years = Math.floor(diffDays / 365)
+          return `${years} year${years > 1 ? "s" : ""} ago`
+        }
+      } catch {
+        return dateString
+      }
     }
 
     fetchFavorites()
   }, [userId])
 
   // Action handlers
-  const handleRemove = async (movieId: string) => {
-    setRemovingId(movieId)
+  const handleRemove = async (favoriteId: string) => {
+    setRemovingId(favoriteId)
+
+    // Optimistic update
+    const previousMovies = [...movies]
+    setMovies(prev => prev.filter(m => m.id !== favoriteId))
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setMovies(prev => prev.filter(m => m.id !== movieId))
+      await removeFromFavorites(favoriteId)
+      toast({
+        title: "Removed from Favorites",
+        description: "Movie has been removed from your favorites.",
+      })
     } catch (error) {
       console.error("Failed to remove from favorites:", error)
+      // Rollback on error
+      setMovies(previousMovies)
+      toast({
+        title: "Error",
+        description: "Failed to remove from favorites. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setRemovingId(null)
     }
@@ -356,7 +336,7 @@ export function ProfileFavorites({ userId }: ProfileFavoritesProps) {
                 exit={{ opacity: 0, scale: 0.8 }}
                 className="group relative"
               >
-                <Link href={`/movies/${movie.id}`} className="block">
+                <Link href={`/movies/${movie.movieId}`} className="block">
                   <div className="relative aspect-[2/3] rounded-lg overflow-hidden">
                     <Image
                       src={movie.posterUrl || "/placeholder.svg"}
@@ -397,7 +377,7 @@ export function ProfileFavorites({ userId }: ProfileFavoritesProps) {
                   <button
                     onClick={(e) => {
                       e.preventDefault()
-                      setAddToCollectionMovie({ id: movie.id, title: movie.title })
+                      setAddToCollectionMovie({ id: movie.movieId, title: movie.title })
                     }}
                     className="p-1.5 bg-[#00BFFF] hover:bg-[#00BFFF]/90 rounded-full transition-colors shadow-lg"
                     title="Add to collection"
@@ -438,7 +418,7 @@ export function ProfileFavorites({ userId }: ProfileFavoritesProps) {
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-[#282828] rounded-lg p-4 flex gap-4 group hover:bg-[#2A2A2A] transition-colors"
               >
-                <Link href={`/movies/${movie.id}`} className="flex-shrink-0">
+                <Link href={`/movies/${movie.movieId}`} className="flex-shrink-0">
                   <div className="relative w-24 h-36 rounded-lg overflow-hidden">
                     <Image
                       src={movie.posterUrl || "/placeholder.svg"}
@@ -450,7 +430,7 @@ export function ProfileFavorites({ userId }: ProfileFavoritesProps) {
                 </Link>
 
                 <div className="flex-1 min-w-0">
-                  <Link href={`/movies/${movie.id}`}>
+                  <Link href={`/movies/${movie.movieId}`}>
                     <h3 className="font-inter font-semibold text-[#E0E0E0] text-lg truncate hover:text-[#00BFFF] transition-colors">
                       {movie.title}
                     </h3>
@@ -493,7 +473,7 @@ export function ProfileFavorites({ userId }: ProfileFavoritesProps) {
                     </Link>
                   )}
                   <button
-                    onClick={() => setAddToCollectionMovie({ id: movie.id, title: movie.title })}
+                    onClick={() => setAddToCollectionMovie({ id: movie.movieId, title: movie.title })}
                     className="p-2 bg-[#00BFFF] hover:bg-[#00BFFF]/90 rounded-lg transition-colors shadow-lg"
                     title="Add to collection"
                   >

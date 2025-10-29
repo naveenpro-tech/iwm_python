@@ -10,13 +10,21 @@ export interface Collection {
   createdAt: string
   updatedAt?: string
   tags?: string[]
+  movies?: Movie[]  // Added movies array
+  // Computed/display fields
+  curator?: string  // Alias for creator
+  moviesCount?: number  // Alias for movieCount
+  likesCount?: number  // Alias for followers
+  lastUpdated?: string  // Alias for updatedAt
+  isOfficial?: boolean
+  isPrivate?: boolean
 }
 
 export interface Movie {
   id: string
   title: string
-  year: number
+  year: number | null
   poster: string
-  rating: number
+  rating: number | null
   genres: string[]
 }

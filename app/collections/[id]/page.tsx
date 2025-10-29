@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: "Explore curated movie collections",
 }
 
-export default function CollectionDetailPage({ params }: { params: { id: string } }) {
-  return <CollectionDetail id={params.id} />
+export default async function CollectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  return <CollectionDetail id={id} />
 }

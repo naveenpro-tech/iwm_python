@@ -39,12 +39,14 @@ class FavoriteRepository:
                 "addedDate": f.added_date.isoformat(),
             }
             if f.type == "movie" and f.movie:
+                item["movieId"] = f.movie.external_id  # Add movieId for frontend matching
                 item["title"] = f.movie.title
                 item["imageUrl"] = f.movie.poster_url
                 item["releaseYear"] = int(f.movie.year) if f.movie.year else None
                 item["userRating"] = f.movie.siddu_score
                 item["genres"] = [g.name for g in f.movie.genres]
             elif f.type == "person" and f.person:
+                item["personId"] = f.person.external_id  # Add personId for consistency
                 item["title"] = f.person.name
                 item["imageUrl"] = f.person.image_url
             result.append(item)
@@ -64,12 +66,14 @@ class FavoriteRepository:
             "addedDate": f.added_date.isoformat(),
         }
         if f.type == "movie" and f.movie:
+            item["movieId"] = f.movie.external_id  # Add movieId for frontend matching
             item["title"] = f.movie.title
             item["imageUrl"] = f.movie.poster_url
             item["releaseYear"] = int(f.movie.year) if f.movie.year else None
             item["userRating"] = f.movie.siddu_score
             item["genres"] = [g.name for g in f.movie.genres]
         elif f.type == "person" and f.person:
+            item["personId"] = f.person.external_id  # Add personId for consistency
             item["title"] = f.person.name
             item["imageUrl"] = f.person.image_url
         return item

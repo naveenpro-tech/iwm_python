@@ -9,7 +9,7 @@ export default function RatingDistributionChart({ distribution }: RatingDistribu
   return (
     <div className="space-y-2">
       {ratings.map((rating) => {
-        const data = distribution[rating]
+        const data = distribution?.[rating] || { count: 0, percentage: 0 }
         return (
           <div key={rating} className="flex items-center gap-2">
             <div className="flex items-center gap-1 w-12">

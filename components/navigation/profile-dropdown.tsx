@@ -15,22 +15,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { User, Settings, LogOut, LayoutDashboard, Bell, Heart, ListChecks } from "lucide-react"
+import { useRoleContext } from "@/context/RoleContext"
 
 export function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const { activeRole, availableRoles, switchRole } = useRoleContext()
 
   useEffect(() => {
-    // Fetch current user data
+    console.log("ProfileDropdown - availableRoles:", availableRoles)
+  }, [availableRoles])
+
+  useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { me } = await import("@/lib/auth")
+        const { me, isAuthenticated } = await import("@/lib/auth")
+        if (!isAuthenticated()) {
+          setUser(null)
+          return
+        }
         const userData = await me()
         setUser(userData)
       } catch (error) {
-        console.error("Failed to fetch user:", error)
+        // Silently handle unauthenticated state without noisy console errors
         setUser(null)
       } finally {
         setIsLoading(false)
@@ -91,6 +100,22 @@ export function ProfileDropdown() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#3A3A3A]" />
+        {availableRoles && availableRoles.length > 0 && (
+          <>
+            <div className="px-2 py-2 text-xs text-gray-400">Switch Role</div>
+            {availableRoles.map((role) => (
+              <DropdownMenuItem
+                key={role.role}
+                onClick={() => switchRole(role.role as any)}
+                className={`cursor-pointer ${role.is_active ? "bg-[#1A1A1A] text-[#00BFFF]" : ""}`}
+              >
+                <span className="mr-2">{role.is_active ? "✓" : "○"}</span>
+                {role.name}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator className="bg-[#3A3A3A]" />
+          </>
+        )}
         <Link href={`/profile/${username}`} passHref legacyBehavior>
           <DropdownMenuItem className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
             <User className="mr-2 h-4 w-4" />

@@ -9,13 +9,16 @@ import { EmptyState } from "@/components/profile/empty-state"
 import { AddToCollectionModal } from "@/components/profile/collections/add-to-collection-modal"
 import Image from "next/image"
 import Link from "next/link"
-import { getUserWatchlist } from "@/lib/api/watchlist"
+import { getUserWatchlist, updateWatchlistItem, removeFromWatchlist } from "@/lib/api/watchlist"
+import { useToast } from "@/hooks/use-toast"
 
 type ViewMode = "grid" | "list"
 type Priority = "high" | "medium" | "low"
+type WatchStatus = "want-to-watch" | "watching" | "watched"
 
 interface WatchlistMovie {
   id: string
+  watchlistId: string
   title: string
   posterUrl: string
   year: string
@@ -24,6 +27,7 @@ interface WatchlistMovie {
   releaseStatus: "released" | "upcoming"
   sidduScore?: number
   priority: Priority
+  status: WatchStatus
 }
 
 interface ProfileWatchlistProps {
@@ -31,6 +35,7 @@ interface ProfileWatchlistProps {
 }
 
 export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
+  const { toast } = useToast()
   const [movies, setMovies] = useState<WatchlistMovie[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -39,6 +44,7 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
   const [filterPriority, setFilterPriority] = useState("all")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [addToCollectionMovie, setAddToCollectionMovie] = useState<{ id: string; title: string } | null>(null)
 
   useEffect(() => {
@@ -52,6 +58,7 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
           const releaseStatus: "released" | "upcoming" = year && Number(year) <= new Date().getFullYear() ? "released" : "upcoming"
           return {
             id: w.movieId || w.movie?.id || w.id,
+            watchlistId: w.id || w.external_id,
             title: w.title || w.movie?.title || "",
             posterUrl: w.posterUrl || w.movie?.posterUrl || "",
             year: String(year || ""),
@@ -60,6 +67,7 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
             releaseStatus,
             sidduScore: typeof w.rating === "number" ? w.rating : undefined,
             priority: (w.priority as Priority) || "medium",
+            status: (w.status as WatchStatus) || "want-to-watch",
           }
         })
         setMovies(mapped)
@@ -74,25 +82,50 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
   }, [userId])
 
   // Action handlers
-  const handleRemove = async (movieId: string) => {
-    setRemovingId(movieId)
+  const handleRemove = async (watchlistId: string) => {
+    setRemovingId(watchlistId)
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setMovies(prev => prev.filter(m => m.id !== movieId))
+      await removeFromWatchlist(watchlistId)
+      setMovies(prev => prev.filter(m => m.watchlistId !== watchlistId))
+      toast({
+        title: "Removed",
+        description: "Movie removed from watchlist",
+      })
     } catch (error) {
       console.error("Failed to remove from watchlist:", error)
+      toast({
+        title: "Error",
+        description: "Failed to remove from watchlist",
+        variant: "destructive",
+      })
     } finally {
       setRemovingId(null)
     }
   }
 
-  const handleMarkWatched = async (movieId: string) => {
+  const handleStatusChange = async (watchlistId: string, newStatus: WatchStatus) => {
+    setUpdatingId(watchlistId)
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setMovies(prev => prev.filter(m => m.id !== movieId))
-      // In real app, this would move to history
+      await updateWatchlistItem(watchlistId, { status: newStatus })
+      setMovies(prev =>
+        prev.map(m =>
+          m.watchlistId === watchlistId ? { ...m, status: newStatus } : m
+        )
+      )
+      const statusLabel = newStatus === "want-to-watch" ? "Plan to Watch" : newStatus === "watching" ? "Watching" : "Watched"
+      toast({
+        title: "Updated",
+        description: `Status changed to ${statusLabel}`,
+      })
     } catch (error) {
-      console.error("Failed to mark as watched:", error)
+      console.error("Failed to update status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -293,7 +326,7 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
           <AnimatePresence mode="popLayout">
             {filteredMovies.map((movie) => (
               <motion.div
-                key={movie.id}
+                key={movie.watchlistId}
                 variants={itemVariants}
                 layout
                 exit={{ opacity: 0, scale: 0.8 }}
@@ -334,41 +367,45 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
                   <p className="text-[#A0A0A0] text-xs mt-1">Added {movie.addedDate}</p>
                 </Link>
 
-                {/* Quick Actions - Fixed hover bug by using transform instead of opacity */}
-                <div className="absolute top-2 right-2 translate-x-0 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all duration-200 flex gap-1 pointer-events-none group-hover:pointer-events-auto">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handleMarkWatched(movie.id)
-                    }}
-                    className="p-1.5 bg-[#10B981] hover:bg-[#10B981]/90 rounded-full transition-colors shadow-lg"
-                    title="Mark as watched"
-                  >
-                    <Check className="w-3.5 h-3.5 text-white" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setAddToCollectionMovie({ id: movie.id, title: movie.title })
-                    }}
-                    className="p-1.5 bg-[#00BFFF] hover:bg-[#00BFFF]/90 rounded-full transition-colors shadow-lg"
-                    title="Add to collection"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-white" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (confirm(`Remove "${movie.title}" from watchlist?`)) {
-                        handleRemove(movie.id)
-                      }
-                    }}
-                    className="p-1.5 bg-[#EF4444] hover:bg-[#EF4444]/90 rounded-full transition-colors shadow-lg"
-                    title="Remove from watchlist"
-                    disabled={removingId === movie.id}
-                  >
-                    <X className="w-3.5 h-3.5 text-white" />
-                  </button>
+                {/* Hover Overlay with Status Dropdown and Actions */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex flex-col justify-between p-3 pointer-events-none group-hover:pointer-events-auto">
+                  <div className="flex justify-end">
+                    <Select value={movie.status} onValueChange={(newStatus) => handleStatusChange(movie.watchlistId, newStatus as WatchStatus)}>
+                      <SelectTrigger className="w-auto h-8 bg-[#00BFFF] border-0 text-[#1A1A1A] text-xs font-medium pointer-events-auto">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#282828] border-[#3A3A3A] text-[#E0E0E0]">
+                        <SelectItem value="want-to-watch">Plan to Watch</SelectItem>
+                        <SelectItem value="watching">Watching</SelectItem>
+                        <SelectItem value="watched">Watched</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setAddToCollectionMovie({ id: movie.id, title: movie.title })
+                      }}
+                      className="p-1.5 bg-[#00BFFF] hover:bg-[#00BFFF]/90 rounded-full transition-colors shadow-lg pointer-events-auto"
+                      title="Add to collection"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-white" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (confirm(`Remove "${movie.title}" from watchlist?`)) {
+                          handleRemove(movie.watchlistId)
+                        }
+                      }}
+                      className="p-1.5 bg-[#EF4444] hover:bg-[#EF4444]/90 rounded-full transition-colors shadow-lg disabled:opacity-50 pointer-events-auto"
+                      title="Remove from watchlist"
+                      disabled={removingId === movie.watchlistId}
+                    >
+                      <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -384,7 +421,7 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
           <AnimatePresence mode="popLayout">
             {filteredMovies.map((movie) => (
               <motion.div
-                key={movie.id}
+                key={movie.watchlistId}
                 variants={itemVariants}
                 layout
                 exit={{ opacity: 0, x: -20 }}
@@ -426,18 +463,21 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
                   <p className="text-[#A0A0A0] text-xs mt-2">Added {movie.addedDate}</p>
                 </div>
 
-                {/* Quick Actions - Fixed hover bug */}
+                {/* Status and Quick Actions */}
                 <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto">
-                  <button
-                    onClick={() => handleMarkWatched(movie.id)}
-                    className="p-2 bg-[#10B981] hover:bg-[#10B981]/90 rounded-lg transition-colors shadow-lg"
-                    title="Mark as watched"
-                  >
-                    <Check className="w-4 h-4 text-white" />
-                  </button>
+                  <Select value={movie.status} onValueChange={(newStatus) => handleStatusChange(movie.watchlistId, newStatus as WatchStatus)}>
+                    <SelectTrigger className="h-8 bg-[#00BFFF] border-0 text-[#1A1A1A] text-xs font-medium pointer-events-auto">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#282828] border-[#3A3A3A] text-[#E0E0E0]">
+                      <SelectItem value="want-to-watch">Plan to Watch</SelectItem>
+                      <SelectItem value="watching">Watching</SelectItem>
+                      <SelectItem value="watched">Watched</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <button
                     onClick={() => setAddToCollectionMovie({ id: movie.id, title: movie.title })}
-                    className="p-2 bg-[#00BFFF] hover:bg-[#00BFFF]/90 rounded-lg transition-colors shadow-lg"
+                    className="p-2 bg-[#00BFFF] hover:bg-[#00BFFF]/90 rounded-lg transition-colors shadow-lg pointer-events-auto"
                     title="Add to collection"
                   >
                     <Plus className="w-4 h-4 text-white" />
@@ -445,12 +485,12 @@ export function ProfileWatchlist({ userId }: ProfileWatchlistProps) {
                   <button
                     onClick={() => {
                       if (confirm(`Remove "${movie.title}" from watchlist?`)) {
-                        handleRemove(movie.id)
+                        handleRemove(movie.watchlistId)
                       }
                     }}
-                    className="p-2 bg-[#EF4444] hover:bg-[#EF4444]/90 rounded-lg transition-colors shadow-lg"
+                    className="p-2 bg-[#EF4444] hover:bg-[#EF4444]/90 rounded-lg transition-colors shadow-lg disabled:opacity-50 pointer-events-auto"
                     title="Remove from watchlist"
-                    disabled={removingId === movie.id}
+                    disabled={removingId === movie.watchlistId}
                   >
                     <X className="w-4 h-4 text-white" />
                   </button>

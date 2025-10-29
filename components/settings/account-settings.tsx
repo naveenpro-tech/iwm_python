@@ -1,304 +1,325 @@
 "use client"
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import Image from "next/image"
-import { Camera, Edit, Save, X, Eye, EyeOff, Trash2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
+import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
+import { apiGet, apiPut, apiPost } from "@/lib/api-client"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+interface UserData {
+  id: string
+  email: string
+  name: string
+}
 
 export function AccountSettings() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [editMode, setEditMode] = useState(false)
-
-  // Mock user data
-  const [userData, setUserData] = useState({
-    name: "Alex Johnson",
-    username: "alexj",
-    email: "alex.johnson@example.com",
-    phone: "+1 (555) 123-4567",
-    bio: "Film enthusiast and critic. Love exploring cinema from around the world.",
-    avatar: "/user-avatar-1.png",
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
+  const [originalData, setOriginalData] = useState<UserData | null>(null)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+  })
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   })
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+  // Load user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setIsLoading(true)
+        const data = await apiGet<UserData>("/api/v1/auth/me")
+        setOriginalData(data)
+        setFormData({
+          name: data.name || "",
+          email: data.email || "",
+        })
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to load account data",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadUserData()
+  }, [toast])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.3,
-      },
-    },
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setPasswordData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      await apiPut("/api/v1/auth/me", {
+        name: formData.name,
+      })
+
+      setOriginalData((prev) => prev ? { ...prev, name: formData.name } : null)
+
+      toast({
+        title: "Success",
+        description: "Account settings updated successfully!",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update account settings",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    // Validate passwords match
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate password strength
+    if (passwordData.newPassword.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsChangingPassword(true)
+    try {
+      await apiPost("/api/v1/auth/change-password", {
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+      })
+
+      toast({
+        title: "Success",
+        description: "Password changed successfully!",
+      })
+
+      // Reset form and close dialog
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      })
+      setShowPasswordDialog(false)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to change password",
+        variant: "destructive",
+      })
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
+  const isDirty = originalData ? (
+    formData.name !== originalData.name ||
+    formData.email !== originalData.email
+  ) : false
+
+  if (isLoading) {
+    return (
+      <Card className="bg-gray-800 border-gray-700 text-gray-100">
+        <CardHeader>
+          <CardTitle>Account Settings</CardTitle>
+          <CardDescription className="text-gray-400">
+            Manage your account information and security settings.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible">
-      <motion.div variants={itemVariants}>
-        <h2 className="text-2xl font-bold mb-6">Account Settings</h2>
-      </motion.div>
-
-      <motion.div variants={itemVariants} className="flex flex-col md:flex-row gap-6 mb-8">
-        <div className="relative">
-          <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[#1A1A1A]">
-            <Image src={userData.avatar || "/placeholder.svg"} alt="Profile" fill className="object-cover" />
-          </div>
-          <button className="absolute bottom-0 right-0 bg-[#00BFFF] p-2 rounded-full text-white hover:bg-[#00BFFF]/90 transition-colors">
-            <Camera size={18} />
-          </button>
+    <Card className="bg-gray-800 border-gray-700 text-gray-100">
+      <CardHeader>
+        <CardTitle>Account Settings</CardTitle>
+        <CardDescription className="text-gray-400">
+          Manage your account information and security settings.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <Label htmlFor="name" className="text-gray-300">
+            Full Name
+          </Label>
+          <Input
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className="bg-gray-700 border-gray-600 text-white mt-1"
+          />
         </div>
 
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold">{userData.name}</h3>
-            <Button variant="outline" size="sm" onClick={() => setEditMode(!editMode)} className="border-gray-700">
-              {editMode ? (
-                <>
-                  <X size={16} className="mr-2" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Edit size={16} className="mr-2" />
-                  Edit Profile
-                </>
-              )}
-            </Button>
-          </div>
-
-          <p className="text-gray-400 mb-4">@{userData.username}</p>
-          <p className="text-sm text-gray-300">{userData.bio}</p>
-
-          {editMode && (
-            <div className="mt-4">
-              <Button className="bg-[#00BFFF] hover:bg-[#00BFFF]/90">
-                <Save size={16} className="mr-2" />
-                Save Changes
-              </Button>
-            </div>
-          )}
+        <div>
+          <Label htmlFor="email" className="text-gray-300">
+            Email Address
+          </Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            disabled
+            className="bg-gray-700 border-gray-600 text-gray-400 mt-1 cursor-not-allowed"
+            title="Email cannot be changed"
+          />
+          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
         </div>
-      </motion.div>
 
-      <Separator className="my-6 bg-gray-700" />
-
-      <motion.div variants={itemVariants}>
-        <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={userData.name}
-              onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-              disabled={!editMode}
-              className="bg-[#333333] border-gray-700"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              value={userData.username}
-              onChange={(e) => setUserData({ ...userData, username: e.target.value })}
-              disabled={!editMode}
-              className="bg-[#333333] border-gray-700"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={userData.email}
-              onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-              disabled={!editMode}
-              className="bg-[#333333] border-gray-700"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={userData.phone}
-              onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-              disabled={!editMode}
-              className="bg-[#333333] border-gray-700"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <Label htmlFor="bio">Bio</Label>
-            <textarea
-              id="bio"
-              value={userData.bio}
-              onChange={(e) => setUserData({ ...userData, bio: e.target.value })}
-              disabled={!editMode}
-              rows={3}
-              className="w-full rounded-md bg-[#333333] border border-gray-700 p-2 text-white focus:outline-none focus:ring-2 focus:ring-[#00BFFF] focus:border-transparent"
-            />
-          </div>
-        </div>
-      </motion.div>
-
-      <Separator className="my-6 bg-gray-700" />
-
-      <motion.div variants={itemVariants}>
-        <h3 className="text-lg font-semibold mb-4">Security</h3>
-
-        <div className="space-y-4 mb-6">
-          <div>
-            <Label htmlFor="current-password">Current Password</Label>
-            <div className="relative">
-              <Input
-                id="current-password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                className="bg-[#333333] border-gray-700 pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+        <div className="pt-4 border-t border-gray-700">
+          <h3 className="text-sm font-semibold mb-4">Security</h3>
+          <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="new-password">New Password</Label>
-            <Input
-              id="new-password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              className="bg-[#333333] border-gray-700"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="confirm-password">Confirm New Password</Label>
-            <Input
-              id="confirm-password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              className="bg-[#333333] border-gray-700"
-            />
-          </div>
-
-          <Button className="bg-[#00BFFF] hover:bg-[#00BFFF]/90 mt-2">Update Password</Button>
+                Change Password
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-gray-800 border-gray-700 text-gray-100">
+              <DialogHeader>
+                <DialogTitle>Change Password</DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  Enter your current password and choose a new one.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="currentPassword" className="text-gray-300">
+                    Current Password
+                  </Label>
+                  <Input
+                    id="currentPassword"
+                    name="currentPassword"
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    className="bg-gray-700 border-gray-600 text-white mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="newPassword" className="text-gray-300">
+                    New Password
+                  </Label>
+                  <Input
+                    id="newPassword"
+                    name="newPassword"
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    className="bg-gray-700 border-gray-600 text-white mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Must be at least 8 characters
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword" className="text-gray-300">
+                    Confirm New Password
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className="bg-gray-700 border-gray-600 text-white mt-1"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPasswordDialog(false)}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  className="bg-sky-600 hover:bg-sky-500 text-white gap-2"
+                >
+                  {isChangingPassword && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {isChangingPassword ? "Changing..." : "Change Password"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium">Two-Factor Authentication</h4>
-              <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
-            </div>
-            <Switch />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium">Login Notifications</h4>
-              <p className="text-sm text-gray-400">Receive alerts when someone logs into your account</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-        </div>
-      </motion.div>
-
-      <Separator className="my-6 bg-gray-700" />
-
-      <motion.div variants={itemVariants}>
-        <h3 className="text-lg font-semibold mb-4">Linked Accounts</h3>
-
-        <div className="space-y-4 mb-6">
-          <div className="flex items-center justify-between p-3 bg-[#333333] rounded-md">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center mr-3">
-                <span className="text-white font-bold">f</span>
-              </div>
-              <div>
-                <h4 className="font-medium">Facebook</h4>
-                <p className="text-xs text-gray-400">Not Connected</p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="border-gray-700">
-              Connect
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-[#333333] rounded-md">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-[#1DA1F2] flex items-center justify-center mr-3">
-                <span className="text-white font-bold">t</span>
-              </div>
-              <div>
-                <h4 className="font-medium">Twitter</h4>
-                <p className="text-xs text-gray-400">Connected as @alexj</p>
-              </div>
-            </div>
+        <div className="flex gap-3 pt-4 border-t border-gray-700">
+          <Button
+            onClick={handleSave}
+            disabled={isSaving || !isDirty}
+            className="bg-sky-600 hover:bg-sky-500 text-white gap-2 disabled:opacity-50"
+          >
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+          {isDirty && (
             <Button
               variant="outline"
-              size="sm"
-              className="border-gray-700 text-red-500 hover:text-red-400 hover:border-red-400"
+              onClick={() => setFormData({
+                name: originalData?.name || "",
+                email: originalData?.email || "",
+              })}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
             >
-              Disconnect
+              Cancel
             </Button>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-[#333333] rounded-md">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-[#E4405F] flex items-center justify-center mr-3">
-                <span className="text-white font-bold">i</span>
-              </div>
-              <div>
-                <h4 className="font-medium">Instagram</h4>
-                <p className="text-xs text-gray-400">Not Connected</p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="border-gray-700">
-              Connect
-            </Button>
-          </div>
+          )}
         </div>
-      </motion.div>
-
-      <Separator className="my-6 bg-gray-700" />
-
-      <motion.div variants={itemVariants}>
-        <h3 className="text-lg font-semibold mb-4 text-red-500">Danger Zone</h3>
-
-        <div className="p-4 border border-red-500/30 rounded-md bg-red-500/10">
-          <h4 className="font-medium mb-2">Delete Account</h4>
-          <p className="text-sm text-gray-400 mb-4">
-            Once you delete your account, there is no going back. Please be certain.
-          </p>
-          <Button variant="destructive" className="bg-red-600 hover:bg-red-700">
-            <Trash2 size={16} className="mr-2" />
-            Delete Account
-          </Button>
-        </div>
-      </motion.div>
-    </motion.div>
+      </CardContent>
+    </Card>
   )
 }
+

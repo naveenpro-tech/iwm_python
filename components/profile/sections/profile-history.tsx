@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Loader2, Search, Filter, Clock, Calendar, Star } from "lucide-react"
+import { Loader2, Search, Filter, Clock, Calendar, Star, AlertCircle, RotateCcw } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EmptyState } from "@/components/profile/empty-state"
 import Image from "next/image"
 import Link from "next/link"
+import { getUserHistory } from "@/lib/api/profile"
 
 interface HistoryItem {
   id: string
@@ -28,112 +29,54 @@ interface ProfileHistoryProps {
 export function ProfileHistory({ userId }: ProfileHistoryProps) {
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("recent")
   const [filterRated, setFilterRated] = useState("all")
 
   useEffect(() => {
-    // Simulate API call to fetch watch history
     const fetchHistory = async () => {
       setIsLoading(true)
+      setError(null)
 
-      // Mock data - in a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1200))
+      try {
+        const data = await getUserHistory(userId)
 
-      const mockHistory: HistoryItem[] = [
-        {
-          id: "h1",
-          movieId: "m1",
-          movieTitle: "Dune: Part Two",
-          moviePosterUrl: "/dune-part-two-poster.png",
-          movieYear: "2024",
-          watchedDate: "2024-03-15",
-          formattedDate: "Mar 15, 2024",
-          userRating: 9,
-          genres: ["Action", "Adventure", "Sci-Fi"],
-        },
-        {
-          id: "h2",
-          movieId: "m3",
-          movieTitle: "Oppenheimer",
-          moviePosterUrl: "/oppenheimer-inspired-poster.png",
-          movieYear: "2023",
-          watchedDate: "2024-03-10",
-          formattedDate: "Mar 10, 2024",
-          userRating: 10,
-          genres: ["Biography", "Drama", "History"],
-        },
-        {
-          id: "h3",
-          movieId: "m4",
-          movieTitle: "Poor Things",
-          moviePosterUrl: "/poor-things-poster.png",
-          movieYear: "2023",
-          watchedDate: "2024-02-28",
-          formattedDate: "Feb 28, 2024",
-          userRating: 8,
-          genres: ["Comedy", "Drama", "Romance", "Sci-Fi"],
-        },
-        {
-          id: "h4",
-          movieId: "m5",
-          movieTitle: "Killers of the Flower Moon",
-          moviePosterUrl: "/killers-of-the-flower-moon-poster.png",
-          movieYear: "2023",
-          watchedDate: "2024-02-15",
-          formattedDate: "Feb 15, 2024",
-          userRating: 9,
-          genres: ["Crime", "Drama", "Western"],
-        },
-        {
-          id: "h5",
-          movieId: "m6",
-          movieTitle: "Barbie",
-          moviePosterUrl: "/barbie-movie-poster.png",
-          movieYear: "2023",
-          watchedDate: "2024-01-20",
-          formattedDate: "Jan 20, 2024",
-          genres: ["Adventure", "Comedy", "Fantasy"],
-        },
-        {
-          id: "h6",
-          movieId: "m7",
-          movieTitle: "The Creator",
-          moviePosterUrl: "/the-creator-poster.png",
-          movieYear: "2023",
-          watchedDate: "2024-01-05",
-          formattedDate: "Jan 5, 2024",
-          userRating: 7,
-          genres: ["Action", "Adventure", "Drama", "Sci-Fi"],
-        },
-        {
-          id: "h7",
-          movieId: "m8",
-          movieTitle: "Asteroid City",
-          moviePosterUrl: "/asteroid-city-poster.png",
-          movieYear: "2023",
-          watchedDate: "2023-12-25",
-          formattedDate: "Dec 25, 2023",
-          genres: ["Comedy", "Drama", "Romance"],
-        },
-        {
-          id: "h8",
-          movieId: "m9",
-          movieTitle: "Inception",
-          moviePosterUrl: "/inception-movie-poster.png",
-          movieYear: "2010",
-          watchedDate: "2023-12-10",
-          formattedDate: "Dec 10, 2023",
-          userRating: 10,
-          genres: ["Action", "Adventure", "Sci-Fi", "Thriller"],
-        },
-      ]
+        // Transform API response to HistoryItem format
+        const transformedHistory: HistoryItem[] = data.map((item: any) => {
+          const watchedDate = item.dateAdded || new Date().toISOString()
+          const formattedDate = new Date(watchedDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })
 
-      setHistory(mockHistory)
-      setIsLoading(false)
+          return {
+            id: item.id,
+            movieId: item.movieId || item.movie?.id || "",
+            movieTitle: item.movie?.title || "Unknown Movie",
+            moviePosterUrl: item.movie?.posterUrl || "/placeholder.svg",
+            movieYear: String(item.movie?.year || ""),
+            watchedDate: watchedDate,
+            formattedDate: formattedDate,
+            userRating: item.rating,
+            genres: item.movie?.genres || [],
+          }
+        })
+
+        setHistory(transformedHistory)
+      } catch (err) {
+        console.error("Failed to fetch watch history:", err)
+        setError(err instanceof Error ? err.message : "Failed to load watch history")
+        setHistory([])
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    fetchHistory()
+    if (userId) {
+      fetchHistory()
+    }
   }, [userId])
 
   // Filter and sort history
@@ -251,6 +194,18 @@ export function ProfileHistory({ userId }: ProfileHistoryProps) {
         <div className="bg-[#282828] rounded-lg p-6 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-[#00BFFF] animate-spin mr-2" />
           <span className="text-[#E0E0E0] font-dmsans">Loading watch history...</span>
+        </div>
+      ) : error ? (
+        <div className="bg-[#282828] rounded-lg p-6 flex flex-col items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-[#FF4D6D] mb-3" />
+          <p className="text-[#A0A0A0] font-dmsans text-center mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-2 px-4 py-2 bg-[#00BFFF] text-[#000] rounded-lg hover:bg-[#00A8D8] transition-colors font-dmsans text-sm"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Retry
+          </button>
         </div>
       ) : filteredHistory.length === 0 ? (
         <EmptyState
