@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Dict, Any
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import UserRoleProfile, TalentProfile, IndustryProfile, CriticProfile
+from ..models import UserRoleProfile, TalentProfile, IndustryProfile, CriticProfile, AdminUserMeta
 
 
 class RoleManagementRepository:
@@ -131,6 +131,14 @@ class RoleManagementRepository:
             if handle:
                 role_profile.handle = handle
 
+            # Update AdminUserMeta.roles to include this role
+            admin_meta_query = select(AdminUserMeta).where(AdminUserMeta.user_id == user_id)
+            admin_meta_result = await self.session.execute(admin_meta_query)
+            admin_meta = admin_meta_result.scalar_one_or_none()
+
+            if admin_meta and role_type not in admin_meta.roles:
+                admin_meta.roles = list(set(admin_meta.roles + [role_type]))
+
             # Create role-specific profile if needed
             profile_created = False
             profile_type = None
@@ -209,6 +217,14 @@ class RoleManagementRepository:
             # Deactivate the role
             role_profile.enabled = False
             role_profile.visibility = "private"
+
+            # Update AdminUserMeta.roles to remove this role
+            admin_meta_query = select(AdminUserMeta).where(AdminUserMeta.user_id == user_id)
+            admin_meta_result = await self.session.execute(admin_meta_query)
+            admin_meta = admin_meta_result.scalar_one_or_none()
+
+            if admin_meta and role_type in admin_meta.roles:
+                admin_meta.roles = [r for r in admin_meta.roles if r != role_type]
 
             # If this was the default role, set another as default
             if role_profile.is_default:

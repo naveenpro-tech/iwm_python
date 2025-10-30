@@ -31,6 +31,19 @@ export function useRoles(): UseRolesReturn {
     try {
       setIsLoading(true)
       setError(null)
+
+      // Check if user is authenticated before making API call
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("access_token")
+        if (!token) {
+          // User not authenticated, skip API call
+          setRoles([])
+          setActiveRoleState(null)
+          setIsLoading(false)
+          return
+        }
+      }
+
       const data = await getUserRoles()
       console.log("useRoles - API response:", data)
       console.log("useRoles - roles array:", data.roles)

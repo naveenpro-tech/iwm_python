@@ -6,7 +6,8 @@ Endpoints for creating, updating, activating, and deactivating user roles.
 from __future__ import annotations
 
 from typing import Any, Optional, List
-from pydantic import BaseModel, Field
+from datetime import datetime
+from pydantic import BaseModel, Field, field_serializer
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,6 +42,13 @@ class RoleProfileResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @field_serializer('created_at', 'updated_at', mode='before')
+    def serialize_datetime(self, value: Any) -> str:
+        """Serialize datetime objects to ISO format strings"""
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return str(value) if value else None
 
 
 class RoleProfileListResponse(BaseModel):
@@ -102,21 +110,22 @@ class IndustryProfileUpdateRequest(BaseModel):
 
 class TalentProfileResponse(BaseModel):
     """Response model for talent profile"""
-    id: int
+    id: Optional[int] = None
     user_id: int
     role_profile_id: Optional[int]
-    stage_name: Optional[str]
-    bio: Optional[str]
-    headshot_url: Optional[str]
-    demo_reel_url: Optional[str]
-    imdb_url: Optional[str]
-    agent_name: Optional[str]
-    agent_contact: Optional[str]
-    skills: Optional[dict]
-    experience_years: Optional[int]
-    availability_status: str
-    created_at: str
-    updated_at: str
+    stage_name: Optional[str] = None
+    bio: Optional[str] = None
+    headshot_url: Optional[str] = None
+    demo_reel_url: Optional[str] = None
+    imdb_url: Optional[str] = None
+    agent_name: Optional[str] = None
+    agent_contact: Optional[str] = None
+    skills: Optional[dict] = None
+    experience_years: Optional[int] = None
+    availability_status: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    years_of_experience: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -124,22 +133,38 @@ class TalentProfileResponse(BaseModel):
 
 class IndustryProfileResponse(BaseModel):
     """Response model for industry profile"""
-    id: int
+    id: Optional[int] = None
     user_id: int
     role_profile_id: Optional[int]
-    company_name: Optional[str]
-    job_title: Optional[str]
-    bio: Optional[str]
-    profile_image_url: Optional[str]
-    website_url: Optional[str]
-    imdb_url: Optional[str]
-    linkedin_url: Optional[str]
-    notable_works: Optional[dict]
-    specializations: Optional[dict]
-    experience_years: Optional[int]
-    accepting_projects: bool
-    created_at: str
-    updated_at: str
+    company_name: Optional[str] = None
+    job_title: Optional[str] = None
+    bio: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    website_url: Optional[str] = None
+    imdb_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    notable_works: Optional[dict] = None
+    specializations: Optional[dict] = None
+    experience_years: Optional[int] = None
+    accepting_projects: bool = False
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CriticProfileResponse(BaseModel):
+    """Response model for critic profile"""
+    id: Optional[int] = None
+    user_id: int
+    role_profile_id: Optional[int]
+    bio: Optional[str] = None
+    twitter_url: Optional[str] = None
+    letterboxd_url: Optional[str] = None
+    website_url: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -225,7 +250,8 @@ async def update_role_profile(
         updates = request.dict(exclude_unset=True)
         role_profile = await repo.update_role_profile(role_profile, updates)
 
-        return RoleProfileResponse.from_orm(role_profile)
+        # Use model_validate with from_attributes to properly serialize datetime fields
+        return RoleProfileResponse.model_validate(role_profile, from_attributes=True)
     except HTTPException:
         raise
     except Exception as e:
@@ -321,7 +347,8 @@ async def deactivate_role(
         # Deactivate the role
         role_profile = await repo.deactivate_role(current_user.id, role_type)
 
-        return RoleProfileResponse.from_orm(role_profile)
+        # Use model_validate with from_attributes to properly serialize datetime fields
+        return RoleProfileResponse.model_validate(role_profile, from_attributes=True)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -365,10 +392,16 @@ async def get_role_profile(
         HTTPException 500: If database operation fails
     """
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Getting role profile for user {current_user.id}, role {role_type}")
+
         # Get the role profile
         role_profile = await repo.get_role_profile(current_user.id, role_type)
+        logger.info(f"Role profile found: {role_profile is not None}")
 
         if not role_profile:
+            logger.warning(f"Role profile not found for user {current_user.id}, role {role_type}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Role profile '{role_type}' not found"
@@ -376,16 +409,116 @@ async def get_role_profile(
 
         # Get role-specific profile
         if role_type == "talent":
+            logger.info(f"Fetching talent profile for user {current_user.id}")
             talent_profile = await repo.get_talent_profile(current_user.id)
-            return TalentProfileResponse.from_orm(talent_profile) if talent_profile else None
+            logger.info(f"Talent profile found: {talent_profile is not None}")
+            if talent_profile:
+                logger.info(f"Returning talent profile from ORM")
+                # Convert to dict and convert datetime to string
+                profile_dict = {
+                    "id": talent_profile.id,
+                    "user_id": talent_profile.user_id,
+                    "role_profile_id": talent_profile.role_profile_id,
+                    "stage_name": talent_profile.stage_name,
+                    "bio": talent_profile.bio,
+                    "headshot_url": talent_profile.headshot_url,
+                    "demo_reel_url": talent_profile.demo_reel_url,
+                    "imdb_url": talent_profile.imdb_url,
+                    "agent_name": talent_profile.agent_name,
+                    "agent_contact": talent_profile.agent_contact,
+                    "years_of_experience": talent_profile.experience_years,
+                    "availability_status": talent_profile.availability_status,
+                    "created_at": talent_profile.created_at.isoformat() if talent_profile.created_at else None,
+                    "updated_at": talent_profile.updated_at.isoformat() if talent_profile.updated_at else None,
+                }
+                return profile_dict
+            else:
+                # Return empty talent profile response
+                logger.info(f"Returning empty talent profile response")
+                return {
+                    "id": None,
+                    "user_id": current_user.id,
+                    "role_profile_id": role_profile.id,
+                    "stage_name": None,
+                    "bio": None,
+                    "headshot_url": None,
+                    "demo_reel_url": None,
+                    "imdb_url": None,
+                    "agent_name": None,
+                    "agent_contact": None,
+                    "years_of_experience": None,
+                    "availability_status": None,
+                    "created_at": None,
+                    "updated_at": None
+                }
 
         elif role_type == "industry":
             industry_profile = await repo.get_industry_profile(current_user.id)
-            return IndustryProfileResponse.from_orm(industry_profile) if industry_profile else None
+            if industry_profile:
+                # Convert to dict and convert datetime to string
+                profile_dict = {
+                    "id": industry_profile.id,
+                    "user_id": industry_profile.user_id,
+                    "role_profile_id": industry_profile.role_profile_id,
+                    "company_name": industry_profile.company_name,
+                    "job_title": industry_profile.job_title,
+                    "bio": industry_profile.bio,
+                    "website_url": industry_profile.website_url,
+                    "imdb_url": industry_profile.imdb_url,
+                    "linkedin_url": industry_profile.linkedin_url,
+                    "years_of_experience": industry_profile.experience_years,
+                    "accepting_projects": industry_profile.accepting_projects,
+                    "created_at": industry_profile.created_at.isoformat() if industry_profile.created_at else None,
+                    "updated_at": industry_profile.updated_at.isoformat() if industry_profile.updated_at else None,
+                }
+                return profile_dict
+            else:
+                # Return empty industry profile response
+                return {
+                    "id": None,
+                    "user_id": current_user.id,
+                    "role_profile_id": role_profile.id,
+                    "company_name": None,
+                    "job_title": None,
+                    "bio": None,
+                    "website_url": None,
+                    "imdb_url": None,
+                    "linkedin_url": None,
+                    "years_of_experience": None,
+                    "accepting_projects": False,
+                    "created_at": None,
+                    "updated_at": None
+                }
 
         elif role_type == "critic":
             critic_profile = await repo.get_critic_profile(current_user.id)
-            return critic_profile
+            if critic_profile:
+                # Convert to dict and convert datetime to string
+                profile_dict = {
+                    "id": critic_profile.id,
+                    "user_id": critic_profile.user_id,
+                    "role_profile_id": critic_profile.role_profile_id,
+                    "bio": critic_profile.bio,
+                    "twitter_url": critic_profile.twitter_url,
+                    "letterboxd_url": critic_profile.letterboxd_url,
+                    "website_url": critic_profile.website_url,
+                    "created_at": critic_profile.created_at.isoformat() if critic_profile.created_at else None,
+                    "updated_at": critic_profile.updated_at.isoformat() if critic_profile.updated_at else None,
+                }
+                return profile_dict
+            else:
+                # Return empty critic profile response
+                return {
+                    "id": None,
+                    "user_id": current_user.id,
+                    "role_profile_id": role_profile.id,
+                    "bio": None,
+                    "twitter_url": None,
+                    "letterboxd_url": None,
+                    "website_url": None,
+                    "created_at": None,
+                    "updated_at": None
+                }
 
         else:
             return RoleProfileResponse.from_orm(role_profile)
@@ -393,7 +526,10 @@ async def get_role_profile(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to fetch role profile")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting role profile: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch role profile: {str(e)}")
 
 
 # ============================================================================

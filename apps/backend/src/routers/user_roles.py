@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
-from ..models import User, AdminUserMeta
+from ..models import User, AdminUserMeta, UserRoleProfile
 from ..dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -38,6 +38,7 @@ class RoleInfo(BaseModel):
     description: str
     icon: str | None = None
     is_active: bool = False
+    enabled: bool = True  # Whether the role is enabled for the user
 
 
 class RolesListResponse(BaseModel):
@@ -122,11 +123,18 @@ async def get_user_roles(
         logger.info(f"AdminUserMeta roles: {admin_meta.roles}")
 
     roles_list = admin_meta.roles if admin_meta else ["lover"]  # Default to lover role
-    
+
+    # Fetch UserRoleProfile to get enabled status for each role
+    role_profiles_query = select(UserRoleProfile).where(UserRoleProfile.user_id == current_user.id)
+    role_profiles_result = await session.execute(role_profiles_query)
+    role_profiles = {rp.role_type: rp for rp in role_profiles_result.scalars().all()}
+
     # Build role info list
     role_infos = []
     for role in roles_list:
         metadata = ROLE_METADATA.get(role, {})
+        role_profile = role_profiles.get(role)
+
         role_infos.append(
             RoleInfo(
                 role=role,
@@ -134,9 +142,10 @@ async def get_user_roles(
                 description=metadata.get("description", ""),
                 icon=metadata.get("icon"),
                 is_active=(role == current_user.active_role),
+                enabled=role_profile.enabled if role_profile else True,  # Default to enabled if no profile
             )
         )
-    
+
     return RolesListResponse(
         roles=role_infos,
         active_role=current_user.active_role or "lover",

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { User, Settings, LogOut, LayoutDashboard, Bell, Heart, ListChecks } from "lucide-react"
 import { useRoleContext } from "@/context/RoleContext"
+import { getProfileRouteForRole } from "@/utils/routing/role-routing"
 
 export function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false)
@@ -56,6 +57,16 @@ export function ProfileDropdown() {
     } catch (error) {
       console.error("Logout failed:", error)
     }
+  }
+
+  const handleProfileClick = () => {
+    if (!username) {
+      console.error("Username is missing")
+      return
+    }
+    const profileRoute = getProfileRouteForRole(activeRole, username)
+    console.log("Navigating to profile:", profileRoute, "for role:", activeRole)
+    router.push(profileRoute)
   }
 
   if (isLoading) {
@@ -116,12 +127,10 @@ export function ProfileDropdown() {
             <DropdownMenuSeparator className="bg-[#3A3A3A]" />
           </>
         )}
-        <Link href={`/profile/${username}`} passHref legacyBehavior>
-          <DropdownMenuItem className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
-        </Link>
+        <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
+          <User className="mr-2 h-4 w-4" />
+          Profile
+        </DropdownMenuItem>
         <Link href="/watchlist" passHref legacyBehavior>
           <DropdownMenuItem className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
             <ListChecks className="mr-2 h-4 w-4" />

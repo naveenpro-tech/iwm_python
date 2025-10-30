@@ -84,21 +84,39 @@ async def signup(body: SignupBody, session: AsyncSession = Depends(get_session))
     session.add(user)
     await session.flush()
 
-    # Create AdminUserMeta with all available roles for testing
-    from ..models import AdminUserMeta
+    # Create AdminUserMeta with only "lover" role by default
+    # Users can enable additional roles (critic, talent, industry) from settings
+    from ..models import AdminUserMeta, UserRoleProfile
     import logging
     logger = logging.getLogger(__name__)
 
     admin_meta = AdminUserMeta(
         user_id=user.id,
         email=user.email,
-        roles=["lover", "critic", "talent", "industry"],  # All roles available for new users
+        roles=["lover"],  # Only lover role by default - users can enable others from settings
         status="Active",
     )
     logger.info(f"Creating AdminUserMeta for user {user.id} with roles: {admin_meta.roles}")
     session.add(admin_meta)
+    await session.flush()
+
+    # Create UserRoleProfile entries for all roles
+    # Only lover role is enabled by default, others are disabled
+    all_roles = ["lover", "critic", "talent", "industry"]
+    for role_type in all_roles:
+        is_enabled = role_type == "lover"  # Only lover is enabled by default
+        role_profile = UserRoleProfile(
+            user_id=user.id,
+            role_type=role_type,
+            enabled=is_enabled,
+            visibility="public" if is_enabled else "private",
+            is_default=is_enabled,  # Only lover is default
+        )
+        session.add(role_profile)
+        logger.info(f"Created UserRoleProfile for user {user.id}, role {role_type}, enabled={is_enabled}")
+
     await session.commit()
-    logger.info(f"AdminUserMeta created successfully for user {user.id}")
+    logger.info(f"AdminUserMeta and UserRoleProfiles created successfully for user {user.id}")
 
     sub = str(user.id)
     return TokenResponse(access_token=create_access_token(sub), refresh_token=create_refresh_token(sub))

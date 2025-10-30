@@ -9810,6 +9810,11 @@
             "type": "boolean",
             "title": "Is Active",
             "default": false
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
           }
         },
         "type": "object",

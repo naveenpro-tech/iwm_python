@@ -177,6 +177,7 @@ export interface RoleInfo {
   description: string
   icon?: string | null
   is_active: boolean
+  enabled: boolean  // Whether the role is enabled for the user
 }
 
 /**
