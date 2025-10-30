@@ -43,7 +43,7 @@ class RoleProfileResponse(BaseModel):
     class Config:
         from_attributes = True
 
-    @field_serializer('created_at', 'updated_at', mode='before')
+    @field_serializer('created_at', 'updated_at', mode='plain')
     def serialize_datetime(self, value: Any) -> str:
         """Serialize datetime objects to ISO format strings"""
         if isinstance(value, datetime):
@@ -250,8 +250,18 @@ async def update_role_profile(
         updates = request.dict(exclude_unset=True)
         role_profile = await repo.update_role_profile(role_profile, updates)
 
-        # Use model_validate with from_attributes to properly serialize datetime fields
-        return RoleProfileResponse.model_validate(role_profile, from_attributes=True)
+        # Manually serialize datetime fields to ISO format strings
+        return {
+            'id': role_profile.id,
+            'user_id': role_profile.user_id,
+            'role_type': role_profile.role_type,
+            'enabled': role_profile.enabled,
+            'visibility': role_profile.visibility,
+            'is_default': role_profile.is_default,
+            'handle': role_profile.handle,
+            'created_at': role_profile.created_at.isoformat(),
+            'updated_at': role_profile.updated_at.isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -347,8 +357,18 @@ async def deactivate_role(
         # Deactivate the role
         role_profile = await repo.deactivate_role(current_user.id, role_type)
 
-        # Use model_validate with from_attributes to properly serialize datetime fields
-        return RoleProfileResponse.model_validate(role_profile, from_attributes=True)
+        # Manually serialize datetime fields to ISO format strings
+        return {
+            'id': role_profile.id,
+            'user_id': role_profile.user_id,
+            'role_type': role_profile.role_type,
+            'enabled': role_profile.enabled,
+            'visibility': role_profile.visibility,
+            'is_default': role_profile.is_default,
+            'handle': role_profile.handle,
+            'created_at': role_profile.created_at.isoformat(),
+            'updated_at': role_profile.updated_at.isoformat(),
+        }
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
