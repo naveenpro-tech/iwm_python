@@ -45,9 +45,6 @@ export function useRoles(): UseRolesReturn {
       }
 
       const data = await getUserRoles()
-      console.log("useRoles - API response:", data)
-      console.log("useRoles - roles array:", data.roles)
-      console.log("useRoles - roles length:", data.roles?.length)
       setRoles(data.roles)
       setActiveRoleState(data.active_role)
     } catch (err) {

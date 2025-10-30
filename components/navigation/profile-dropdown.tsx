@@ -14,9 +14,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { User, Settings, LogOut, LayoutDashboard, Bell, Heart, ListChecks } from "lucide-react"
+import { User, Settings, LogOut, LayoutDashboard, Bell, Heart, ListChecks, ShieldCheck } from "lucide-react"
 import { useRoleContext } from "@/context/RoleContext"
 import { getProfileRouteForRole } from "@/utils/routing/role-routing"
+import { useAdminRole } from "@/hooks/useAdminRole"
 
 export function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false)
@@ -24,10 +25,9 @@ export function ProfileDropdown() {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const { activeRole, availableRoles, switchRole } = useRoleContext()
+  const { isAdmin } = useAdminRole()
 
-  useEffect(() => {
-    console.log("ProfileDropdown - availableRoles:", availableRoles)
-  }, [availableRoles])
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -150,12 +150,14 @@ export function ProfileDropdown() {
           </DropdownMenuItem>
         </Link>
         <DropdownMenuSeparator className="bg-[#3A3A3A]" />
-        <Link href="/admin" passHref legacyBehavior>
-          <DropdownMenuItem className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Admin Dashboard
-          </DropdownMenuItem>
-        </Link>
+        {isAdmin && (
+          <Link href="/admin" passHref legacyBehavior>
+            <DropdownMenuItem className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
+              <ShieldCheck className="mr-2 h-4 w-4 text-red-400" />
+              <span className="text-red-400">Admin Panel</span>
+            </DropdownMenuItem>
+          </Link>
+        )}
         <Link href="/settings" passHref legacyBehavior>
           <DropdownMenuItem className="cursor-pointer hover:bg-[#3A3A3A] focus:bg-[#3A3A3A]">
             <Settings className="mr-2 h-4 w-4" />

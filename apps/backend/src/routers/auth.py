@@ -37,6 +37,7 @@ class MeResponse(BaseModel):
     email: EmailStr
     name: str
     avatarUrl: str | None = None
+    is_admin: bool = False
 
 
 class AuthMeResponse(BaseModel):
@@ -119,7 +120,20 @@ async def signup(body: SignupBody, session: AsyncSession = Depends(get_session))
     logger.info(f"AdminUserMeta and UserRoleProfiles created successfully for user {user.id}")
 
     sub = str(user.id)
-    return TokenResponse(access_token=create_access_token(sub), refresh_token=create_refresh_token(sub))
+
+    # Include role_profiles in the access token for middleware admin role checking
+    role_profiles = [
+        {
+            "role_type": role_profile.role_type,
+            "enabled": role_profile.enabled
+        }
+        for role_profile in user.role_profiles
+    ]
+
+    return TokenResponse(
+        access_token=create_access_token(sub, role_profiles=role_profiles),
+        refresh_token=create_refresh_token(sub)
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -129,7 +143,20 @@ async def login(body: LoginBody, session: AsyncSession = Depends(get_session)) -
     if not user or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     sub = str(user.id)
-    return TokenResponse(access_token=create_access_token(sub), refresh_token=create_refresh_token(sub))
+
+    # Include role_profiles in the access token for middleware admin role checking
+    role_profiles = [
+        {
+            "role_type": role_profile.role_type,
+            "enabled": role_profile.enabled
+        }
+        for role_profile in user.role_profiles
+    ]
+
+    return TokenResponse(
+        access_token=create_access_token(sub, role_profiles=role_profiles),
+        refresh_token=create_refresh_token(sub)
+    )
 
 
 class RefreshBody(BaseModel):
@@ -158,7 +185,18 @@ async def logout() -> Any:
 
 @router.get("/me", response_model=MeResponse)
 async def me(user: User = Depends(get_current_user)) -> Any:
-    return MeResponse(id=user.external_id, email=user.email, name=user.name, avatarUrl=user.avatar_url)
+    # Check if user has admin role
+    is_admin = any(
+        role_profile.role_type == "admin" and role_profile.enabled
+        for role_profile in user.role_profiles
+    )
+    return MeResponse(
+        id=user.external_id,
+        email=user.email,
+        name=user.name,
+        avatarUrl=user.avatar_url,
+        is_admin=is_admin
+    )
 
 
 @router.get("/me/enhanced", response_model=AuthMeResponse)

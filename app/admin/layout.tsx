@@ -1,3 +1,5 @@
+"use client"
+
 import type { ReactNode } from "react"
 import { AdminSidebar } from "@/components/admin/navigation/admin-sidebar"
 import { AdminHeader } from "@/components/admin/navigation/admin-header"
@@ -10,7 +12,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <AdminSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <AdminHeader />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
     </ThemeProvider>

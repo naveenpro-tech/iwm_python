@@ -7,26 +7,16 @@ export type User = {
   avatarUrl?: string | null
 }
 
-function getApiBase(): string | undefined {
-  // In browser, try to get from window first, then fallback to process.env
-  if (typeof window !== "undefined") {
-    // Try to get from window.__ENV__ if available
-    const windowEnv = (window as any).__ENV__
-    if (windowEnv?.NEXT_PUBLIC_API_BASE_URL) {
-      return windowEnv.NEXT_PUBLIC_API_BASE_URL
-    }
-  }
-  return process.env.NEXT_PUBLIC_API_BASE_URL
+// Environment variables - Next.js replaces these at build time
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const ENABLE_BACKEND = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true"
+
+function getApiBase(): string {
+  return API_BASE_URL
 }
 
 function getUseBackend(): boolean {
-  if (typeof window !== "undefined") {
-    const windowEnv = (window as any).__ENV__
-    if (windowEnv?.NEXT_PUBLIC_ENABLE_BACKEND !== undefined) {
-      return windowEnv.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!getApiBase()
-    }
-  }
-  return process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!getApiBase()
+  return ENABLE_BACKEND && !!API_BASE_URL
 }
 
 function storage() {
@@ -135,5 +125,29 @@ export function logout() {
 
 export function isAuthenticated(): boolean {
   return !!getAccessToken()
+}
+
+/**
+ * Check if current user has admin role
+ * This checks the JWT token for admin role in role_profiles
+ */
+export function hasAdminRole(): boolean {
+  if (typeof window === "undefined") return false
+
+  const token = getAccessToken()
+  if (!token) return false
+
+  try {
+    // Import jwtDecode dynamically to avoid SSR issues
+    const { jwtDecode } = require("jwt-decode")
+    const decoded = jwtDecode<any>(token)
+
+    // Check if user has admin role in their role_profiles
+    return decoded?.role_profiles?.some(
+      (role: any) => role.role_type === "admin" && role.enabled
+    ) ?? false
+  } catch {
+    return false
+  }
 }
 

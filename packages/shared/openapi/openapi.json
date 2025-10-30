@@ -5519,6 +5519,11 @@
         ],
         "summary": "List Users",
         "operationId": "list_users_api_v1_admin_users_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "search",
@@ -5627,6 +5632,11 @@
         ],
         "summary": "List Moderation Items",
         "operationId": "list_moderation_items_api_v1_admin_moderation_items_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "status",
@@ -5735,6 +5745,11 @@
         ],
         "summary": "Approve Item",
         "operationId": "approve_item_api_v1_admin_moderation_items__itemId__approve_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "itemId",
@@ -5785,6 +5800,11 @@
         ],
         "summary": "Reject Item",
         "operationId": "reject_item_api_v1_admin_moderation_items__itemId__reject_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "itemId",
@@ -5844,7 +5864,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -5881,7 +5906,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/admin/analytics/overview": {
@@ -5902,7 +5932,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/admin/movies/enrich": {
@@ -5943,7 +5978,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/admin/movies/enrich/bulk": {
@@ -5988,7 +6028,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/admin/movies/enrich-existing": {
@@ -6029,7 +6074,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/admin/movies/import": {
@@ -6070,6 +6120,369 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/movies": {
+      "get": {
+        "tags": [
+          "admin",
+          "admin-curation"
+        ],
+        "summary": "Get paginated movies for curation",
+        "description": "Retrieve paginated list of movies with curation data, filters, and sorting",
+        "operationId": "get_movies_for_curation_api_v1_admin_movies_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-indexed)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-indexed)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Items per page",
+              "default": 25,
+              "title": "Page Size"
+            },
+            "description": "Items per page"
+          },
+          {
+            "name": "curation_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by curation status: draft, pending_review, approved, rejected",
+              "title": "Curation Status"
+            },
+            "description": "Filter by curation status: draft, pending_review, approved, rejected"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort field: quality_score, curated_at",
+              "default": "curated_at",
+              "title": "Sort By"
+            },
+            "description": "Sort field: quality_score, curated_at"
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort direction: asc, desc",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "Sort direction: asc, desc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieCurationListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{movie_id}/curation": {
+      "patch": {
+        "tags": [
+          "admin",
+          "admin-curation"
+        ],
+        "summary": "Update movie curation",
+        "description": "Update curation status, quality score, and notes for a movie",
+        "operationId": "update_movie_curation_api_v1_admin_movies__movie_id__curation_patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "movie_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Movie Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurationUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieCurationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/bulk-update": {
+      "post": {
+        "tags": [
+          "admin",
+          "admin-curation"
+        ],
+        "summary": "Bulk update movie curation",
+        "description": "Update curation fields for multiple movies at once",
+        "operationId": "bulk_update_movies_endpoint_api_v1_admin_movies_bulk_update_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/movies/bulk-publish": {
+      "post": {
+        "tags": [
+          "admin",
+          "admin-curation"
+        ],
+        "summary": "Bulk publish/unpublish movies",
+        "description": "Publish or unpublish multiple movies at once",
+        "operationId": "bulk_publish_movies_endpoint_api_v1_admin_movies_bulk_publish_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkPublishRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/movies/bulk-feature": {
+      "post": {
+        "tags": [
+          "admin",
+          "admin-curation"
+        ],
+        "summary": "Bulk feature/unfeature movies",
+        "description": "Feature or unfeature multiple movies at once",
+        "operationId": "bulk_feature_movies_endpoint_api_v1_admin_movies_bulk_feature_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkFeatureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/import/schema": {
+      "get": {
+        "tags": [
+          "admin",
+          "admin-import"
+        ],
+        "summary": "Get movie import schema",
+        "description": "Get the complete JSON schema for movie imports",
+        "operationId": "get_import_schema_api_v1_admin_import_schema_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSchemaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/import/template": {
+      "get": {
+        "tags": [
+          "admin",
+          "admin-import"
+        ],
+        "summary": "Get movie import template",
+        "description": "Get a sample JSON template for movie imports",
+        "operationId": "get_import_template_api_v1_admin_import_template_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTemplateResponse"
                 }
               }
             }
@@ -7811,6 +8224,115 @@
         ],
         "title": "AwardSimpleIn"
       },
+      "BulkFeatureRequest": {
+        "properties": {
+          "movie_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Movie Ids",
+            "description": "List of movie IDs to feature/unfeature"
+          },
+          "featured": {
+            "type": "boolean",
+            "title": "Featured",
+            "description": "True to feature movies, False to unfeature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movie_ids",
+          "featured"
+        ],
+        "title": "BulkFeatureRequest",
+        "description": "Schema for bulk feature/unfeature request"
+      },
+      "BulkPublishRequest": {
+        "properties": {
+          "movie_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Movie Ids",
+            "description": "List of movie IDs to publish/unpublish"
+          },
+          "publish": {
+            "type": "boolean",
+            "title": "Publish",
+            "description": "True to publish (set status to approved), False to unpublish (set to draft)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movie_ids",
+          "publish"
+        ],
+        "title": "BulkPublishRequest",
+        "description": "Schema for bulk publish/unpublish request"
+      },
+      "BulkUpdateRequest": {
+        "properties": {
+          "movie_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Movie Ids",
+            "description": "List of movie IDs to update"
+          },
+          "curation_data": {
+            "$ref": "#/components/schemas/CurationUpdate",
+            "description": "Curation data to apply to all movies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movie_ids",
+          "curation_data"
+        ],
+        "title": "BulkUpdateRequest",
+        "description": "Schema for bulk update request"
+      },
+      "BulkUpdateResponse": {
+        "properties": {
+          "success_count": {
+            "type": "integer",
+            "title": "Success Count",
+            "description": "Number of movies successfully updated"
+          },
+          "failure_count": {
+            "type": "integer",
+            "title": "Failure Count",
+            "description": "Number of movies that failed to update"
+          },
+          "failed_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Failed Ids",
+            "description": "List of movie IDs that failed to update"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Summary message of the bulk operation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success_count",
+          "failure_count",
+          "message"
+        ],
+        "title": "BulkUpdateResponse",
+        "description": "Schema for bulk update response"
+      },
       "ChangePasswordBody": {
         "properties": {
           "current_password": {
@@ -8648,6 +9170,170 @@
         "type": "object",
         "title": "CriticReviewUpdate"
       },
+      "CurationResponse": {
+        "properties": {
+          "curation_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curation Status",
+            "description": "Status of movie curation: draft, pending_review, approved, rejected",
+            "default": "draft"
+          },
+          "quality_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Score",
+            "description": "Quality score for the movie (0-100)"
+          },
+          "curator_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curator Notes",
+            "description": "Notes from the curator about the movie"
+          },
+          "curated_by_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curated By Id",
+            "description": "ID of the user who curated this movie"
+          },
+          "curated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curated At",
+            "description": "Timestamp when the movie was curated"
+          },
+          "last_reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Reviewed At",
+            "description": "Timestamp of the last review"
+          },
+          "curated_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CuratorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Information about the curator"
+          }
+        },
+        "type": "object",
+        "title": "CurationResponse",
+        "description": "Schema for curation response data"
+      },
+      "CurationUpdate": {
+        "properties": {
+          "curation_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curation Status",
+            "description": "Status of movie curation"
+          },
+          "quality_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Score",
+            "description": "Quality score for the movie (0-100)"
+          },
+          "curator_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curator Notes",
+            "description": "Notes from the curator about the movie"
+          }
+        },
+        "type": "object",
+        "title": "CurationUpdate",
+        "description": "Schema for updating curation data (all fields optional)"
+      },
+      "CuratorInfo": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email"
+        ],
+        "title": "CuratorInfo",
+        "description": "Schema for curator information"
+      },
       "EnrichBulkIn": {
         "properties": {
           "queries": {
@@ -8934,6 +9620,108 @@
         ],
         "title": "ImportReportOut"
       },
+      "ImportSchemaField": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "example": {
+            "title": "Example"
+          },
+          "enum_values": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "required",
+          "description"
+        ],
+        "title": "ImportSchemaField",
+        "description": "Schema field definition"
+      },
+      "ImportSchemaResponse": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/ImportSchemaField"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "example": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "description",
+          "fields",
+          "example"
+        ],
+        "title": "ImportSchemaResponse",
+        "description": "Complete import schema documentation"
+      },
+      "ImportTemplateResponse": {
+        "properties": {
+          "template": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Template"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template",
+          "description"
+        ],
+        "title": "ImportTemplateResponse",
+        "description": "Import template response"
+      },
       "LoginBody": {
         "properties": {
           "email": {
@@ -8989,6 +9777,11 @@
               }
             ],
             "title": "Avatarurl"
+          },
+          "is_admin": {
+            "type": "boolean",
+            "title": "Is Admin",
+            "default": false
           }
         },
         "type": "object",
@@ -9075,6 +9868,88 @@
           "reports"
         ],
         "title": "ModerationItemOut"
+      },
+      "MovieCurationListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MovieCurationResponse"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of movies with curation data"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total count of movies matching filters"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "Current page number"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size",
+            "description": "Items per page"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total number of pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "MovieCurationListResponse",
+        "description": "Response for paginated movie curation list"
+      },
+      "MovieCurationResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "curation": {
+            "$ref": "#/components/schemas/CurationResponse",
+            "description": "Curation information for the movie"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "title",
+          "curation"
+        ],
+        "title": "MovieCurationResponse",
+        "description": "Schema for movie with curation data"
       },
       "MovieImportIn": {
         "properties": {

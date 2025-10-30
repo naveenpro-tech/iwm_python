@@ -40,8 +40,9 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
         // Fallback to dashboard if user data fetch fails
         window.location.href = "/dashboard"
       }
-    } catch (err) {
-      setErrors({ email: "Invalid email or password" })
+    } catch (err: any) {
+      const errorMessage = err?.message || "Invalid email or password"
+      setErrors({ email: errorMessage })
     } finally {
       setIsLoading(false)
     }

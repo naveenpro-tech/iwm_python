@@ -29,6 +29,14 @@ class ProfileVisibility(str, PyEnum):
     FOLLOWERS_ONLY = "followers_only"
 
 
+class CurationStatus(str, PyEnum):
+    """Enum for movie curation status"""
+    DRAFT = "draft"
+    PENDING_REVIEW = "pending_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 movie_genres = Table(
     "movie_genres",
     Base.metadata,
@@ -109,6 +117,17 @@ class Movie(Base):
     # Rich content (admin-only authoring)
     trivia: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     timeline: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+
+    # Curation fields (Phase 2)
+    curation_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+    quality_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    curator_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    curated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    curated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    # Relationships
+    curated_by: Mapped["User | None"] = relationship(lazy="selectin")
 
     genres: Mapped[List[Genre]] = relationship(
         back_populates="movies",
