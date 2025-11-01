@@ -10,9 +10,10 @@ import { MovieStreamingForm } from "@/components/admin/movies/forms/movie-stream
 import { MovieAwardsForm } from "@/components/admin/movies/forms/movie-awards-form"
 import { MovieTriviaForm } from "@/components/admin/movies/forms/movie-trivia-form" // New import
 import { MovieTimelineForm } from "@/components/admin/movies/forms/movie-timeline-form" // New import
+import { JSONImportModal } from "@/components/admin/movies/json-import-modal"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Save, Loader2 } from "lucide-react"
+import { ArrowLeft, Save, Loader2, FileJson } from "lucide-react"
 import Link from "next/link"
 import type {
   Movie,
@@ -26,6 +27,7 @@ import type {
 import { addMockMovie, getMockMovieById, updateMockMovie } from "@/components/admin/movies/mock-movie-data"
 import { useToast } from "@/hooks/use-toast" // Corrected path
 import { Skeleton } from "@/components/ui/skeleton"
+import { getAuthHeaders } from "@/lib/auth"
 
 export default function MovieEditPage() {
   const params = useParams()
@@ -41,6 +43,9 @@ export default function MovieEditPage() {
   // Gemini enrichment state
   const [enrichQuery, setEnrichQuery] = useState("")
   const [isEnriching, setIsEnriching] = useState(false)
+
+  // JSON import state
+  const [showJSONImport, setShowJSONImport] = useState(false)
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
@@ -137,12 +142,29 @@ export default function MovieEditPage() {
     }
     try {
       setIsEnriching(true)
+      const authHeaders = getAuthHeaders()
       const res = await fetch(`${apiBase}/api/v1/admin/movies/enrich`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({ query: q, provider: "gemini" }),
       })
       if (!res.ok) {
+        if (res.status === 401) {
+          toast({
+            variant: "destructive",
+            title: "Not authenticated",
+            description: "Please log in again.",
+          })
+          return
+        }
+        if (res.status === 403) {
+          toast({
+            variant: "destructive",
+            title: "Access denied",
+            description: "Admin privileges required.",
+          })
+          return
+        }
         const err = await res.json().catch(() => ({}))
         const detail = err?.detail || err
         toast({
@@ -174,9 +196,37 @@ export default function MovieEditPage() {
     if (!movieData) return
     try {
       setIsSaving(true)
+
+      // Generate external_id
       const extId = movieData.id && !movieData.id.startsWith("mock-") && movieData.id !== "new"
         ? movieData.id
         : `manual-${slugify(movieData.title || "movie")}-${Date.now()}`
+
+      // Get auth headers once at the beginning
+      const authHeaders = getAuthHeaders()
+
+      // Check for duplicates by title
+      const checkRes = await fetch(`${apiBase}/api/v1/movies?limit=100`, {
+        headers: authHeaders,
+      })
+
+      if (checkRes.ok) {
+        const checkData = await checkRes.json()
+        const existingMovie = checkData.movies?.find(
+          (m: any) => m.title?.toLowerCase() === movieData.title?.toLowerCase()
+        )
+
+        if (existingMovie && existingMovie.id !== extId) {
+          const confirmDuplicate = window.confirm(
+            `A movie with the title "${movieData.title}" already exists (ID: ${existingMovie.id}).\n\n` +
+            `Do you want to continue and create a duplicate entry?`
+          )
+          if (!confirmDuplicate) {
+            setIsSaving(false)
+            return
+          }
+        }
+      }
 
       // Map admin state -> backend MovieImportIn
       const directors = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "director").map(c => ({ name: c.name, image: c.image }))
@@ -221,17 +271,48 @@ export default function MovieEditPage() {
 
       const res = await fetch(`${apiBase}/api/v1/admin/movies/import`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify(payload),
       })
-      const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(typeof json === "string" ? json : JSON.stringify(json))
+        if (res.status === 401) {
+          throw new Error("Not authenticated. Please log in again.")
+        }
+        if (res.status === 403) {
+          throw new Error("Access denied. Admin privileges required.")
+        }
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.detail || typeof json === "string" ? json : JSON.stringify(json))
       }
-      toast({ title: "Published", description: `Imported: ${json.imported}, Updated: ${json.updated}` })
+
+      const json = await res.json()
+
+      // Verify the movie was actually saved by fetching it
+      const verifyRes = await fetch(`${apiBase}/api/v1/movies/${extId}`, {
+        headers: authHeaders,
+      })
+
+      if (!verifyRes.ok) {
+        throw new Error(
+          `Movie was imported but cannot be fetched. ` +
+          `This might be a database issue. ` +
+          `Status: ${verifyRes.status}. ` +
+          `Try checking the backend logs.`
+        )
+      }
+
+      toast({
+        title: "Published Successfully",
+        description: `Imported: ${json.imported}, Updated: ${json.updated}. Redirecting to movie page...`
+      })
+
       // Redirect to public movie page (frontend)
       const idToVisit = extId
-      router.push(`/movies/${idToVisit}`)
+
+      // Small delay to ensure toast is visible
+      setTimeout(() => {
+        router.push(`/movies/${idToVisit}`)
+      }, 1000)
     } catch (e: any) {
       toast({ variant: "destructive", title: "Publish failed", description: e?.message || "Unknown error" })
     } finally {
@@ -397,6 +478,22 @@ export default function MovieEditPage() {
     setHasChanges(true)
   }
 
+  const handleJSONImport = (importedData: Partial<Movie>) => {
+    setMovieData((prev) => ({
+      ...prev!,
+      ...importedData,
+      // Preserve system fields
+      id: prev!.id,
+      createdAt: prev!.createdAt,
+      updatedAt: prev!.updatedAt,
+    }))
+    setHasChanges(true)
+    toast({
+      title: "Import successful!",
+      description: "Movie data has been imported. Review all tabs and save when ready.",
+    })
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6 p-4 md:p-6">
@@ -469,24 +566,41 @@ export default function MovieEditPage() {
         </div>
       </motion.div>
 
-      {/* Gemini Enrichment Bar */}
-      <div className="w-full -mt-2 grid grid-cols-1 sm:grid-cols-6 gap-2">
-        <input
-          type="text"
-          className="col-span-4 rounded-md border bg-background px-3 py-2 text-sm"
-          placeholder="Query to fetch from Gemini (default: current Title)"
-          value={enrichQuery || movieData?.title || ""}
-          onChange={(e) => setEnrichQuery(e.target.value)}
-        />
-        <Button
-          variant="outline"
-          className="col-span-2 gap-2"
-          onClick={handleEnrichFromGemini}
-          disabled={isEnriching}
-        >
-          {isEnriching ? <Loader2 size={16} className="animate-spin" /> : null}
-          Fetch from Gemini
-        </Button>
+      {/* Import Options Bar */}
+      <div className="w-full -mt-2 space-y-2">
+        {/* Gemini Enrichment */}
+        <div className="grid grid-cols-1 sm:grid-cols-6 gap-2">
+          <input
+            type="text"
+            className="col-span-4 rounded-md border bg-background px-3 py-2 text-sm"
+            placeholder="Query to fetch from Gemini (default: current Title)"
+            value={enrichQuery || movieData?.title || ""}
+            onChange={(e) => setEnrichQuery(e.target.value)}
+          />
+          <Button
+            variant="outline"
+            className="col-span-2 gap-2"
+            onClick={handleEnrichFromGemini}
+            disabled={isEnriching}
+          >
+            {isEnriching ? <Loader2 size={16} className="animate-spin" /> : null}
+            Fetch from Gemini
+          </Button>
+        </div>
+
+        {/* JSON Import Button - Only show for new movies */}
+        {params.id === "new" && (
+          <div className="flex justify-center">
+            <Button
+              variant="secondary"
+              className="gap-2"
+              onClick={() => setShowJSONImport(true)}
+            >
+              <FileJson size={16} />
+              Import via JSON
+            </Button>
+          </div>
+        )}
       </div>
   
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -554,6 +668,13 @@ export default function MovieEditPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* JSON Import Modal */}
+      <JSONImportModal
+        open={showJSONImport}
+        onOpenChange={setShowJSONImport}
+        onImport={handleJSONImport}
+      />
     </div>
   )
 }
