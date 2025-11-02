@@ -354,7 +354,7 @@ async def search_tmdb_movies(
         )
 
 
-@router.post("/import/{tmdb_id}", response_model=TMDBImportResponse)
+@router.post("/import/{tmdb_id}", response_model=TMDBImportResponse, status_code=status.HTTP_201_CREATED)
 async def import_tmdb_movie(
     tmdb_id: int,
     current_user: User = Depends(require_admin),
