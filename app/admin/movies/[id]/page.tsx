@@ -11,9 +11,12 @@ import { MovieAwardsForm } from "@/components/admin/movies/forms/movie-awards-fo
 import { MovieTriviaForm } from "@/components/admin/movies/forms/movie-trivia-form" // New import
 import { MovieTimelineForm } from "@/components/admin/movies/forms/movie-timeline-form" // New import
 import { JSONImportModal } from "@/components/admin/movies/json-import-modal"
+import { CategoryExportImportButtons } from "@/components/admin/movies/category-export-import-buttons"
+import { ImportCategoryModal } from "@/components/admin/movies/import-category-modal"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Save, Loader2, FileJson } from "lucide-react"
+import type { CategoryType } from "@/lib/api/movie-export-import"
 import Link from "next/link"
 import type {
   Movie,
@@ -45,6 +48,10 @@ export default function MovieEditPage() {
 
   // JSON import state
   const [showJSONImport, setShowJSONImport] = useState(false)
+
+  // Category import/export state
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [currentCategory, setCurrentCategory] = useState<CategoryType | null>(null)
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
@@ -562,6 +569,18 @@ export default function MovieEditPage() {
     })
   }
 
+  const handleOpenImportModal = (category: CategoryType) => {
+    setCurrentCategory(category)
+    setImportModalOpen(true)
+  }
+
+  const handleImportSuccess = () => {
+    // Refresh movie data after successful import
+    if (params.id && params.id !== "new") {
+      window.location.reload()
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6 p-4 md:p-6">
@@ -683,6 +702,14 @@ export default function MovieEditPage() {
         </TabsList>
 
         <TabsContent value="basic" className="mt-6">
+          {params.id !== "new" && (
+            <CategoryExportImportButtons
+              movieId={movieData.id}
+              category="basic-info"
+              onImportClick={() => handleOpenImportModal("basic-info")}
+              showBulkExport={true}
+            />
+          )}
           <MovieBasicInfoForm
             movie={movieData}
             onFieldChange={updateMovieField}
@@ -691,6 +718,13 @@ export default function MovieEditPage() {
         </TabsContent>
 
         <TabsContent value="media" className="mt-6">
+          {params.id !== "new" && (
+            <CategoryExportImportButtons
+              movieId={movieData.id}
+              category="media"
+              onImportClick={() => handleOpenImportModal("media")}
+            />
+          )}
           <MovieMediaForm
             initialValues={{
               poster: movieData.poster,
@@ -704,6 +738,13 @@ export default function MovieEditPage() {
         </TabsContent>
 
         <TabsContent value="cast-crew" className="mt-6">
+          {params.id !== "new" && (
+            <CategoryExportImportButtons
+              movieId={movieData.id}
+              category="cast-crew"
+              onImportClick={() => handleOpenImportModal("cast-crew")}
+            />
+          )}
           <MovieCastCrewForm
             initialCast={movieData.cast || []}
             initialCrew={movieData.crew || []}
@@ -714,6 +755,13 @@ export default function MovieEditPage() {
         </TabsContent>
 
         <TabsContent value="streaming" className="mt-6">
+          {params.id !== "new" && (
+            <CategoryExportImportButtons
+              movieId={movieData.id}
+              category="streaming"
+              onImportClick={() => handleOpenImportModal("streaming")}
+            />
+          )}
           <MovieStreamingForm
             initialLinks={movieData.streamingLinks || []}
             onStreamingLinksChange={onStreamingChange}
@@ -722,14 +770,35 @@ export default function MovieEditPage() {
         </TabsContent>
 
         <TabsContent value="awards" className="mt-6">
+          {params.id !== "new" && (
+            <CategoryExportImportButtons
+              movieId={movieData.id}
+              category="awards"
+              onImportClick={() => handleOpenImportModal("awards")}
+            />
+          )}
           <MovieAwardsForm initialAwards={movieData.awards || []} onAwardsChange={handleAwardsChange} />
         </TabsContent>
 
         <TabsContent value="trivia" className="mt-6">
+          {params.id !== "new" && (
+            <CategoryExportImportButtons
+              movieId={movieData.id}
+              category="trivia"
+              onImportClick={() => handleOpenImportModal("trivia")}
+            />
+          )}
           <MovieTriviaForm initialTrivia={movieData.trivia || []} onTriviaChange={handleTriviaChange} />
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-6">
+          {params.id !== "new" && (
+            <CategoryExportImportButtons
+              movieId={movieData.id}
+              category="timeline"
+              onImportClick={() => handleOpenImportModal("timeline")}
+            />
+          )}
           <MovieTimelineForm
             initialEvents={movieData.timelineEvents || []}
             onEventsChange={handleTimelineEventsChange}
@@ -743,6 +812,20 @@ export default function MovieEditPage() {
         onOpenChange={setShowJSONImport}
         onImport={handleJSONImport}
       />
+
+      {/* Category Import Modal */}
+      {currentCategory && (
+        <ImportCategoryModal
+          isOpen={importModalOpen}
+          onClose={() => {
+            setImportModalOpen(false)
+            setCurrentCategory(null)
+          }}
+          movieId={movieData.id}
+          category={currentCategory}
+          onImportSuccess={handleImportSuccess}
+        />
+      )}
     </div>
   )
 }
