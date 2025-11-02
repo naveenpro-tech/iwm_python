@@ -16,9 +16,9 @@ ADMIN_PASSWORD = "AdminPassword123!"
 
 # Test data
 TEST_MOVIES = [
-    {"tmdb_id": 550, "title": "Fight Club"},  # Well-known movie
-    {"tmdb_id": 278, "title": "The Shawshank Redemption"},  # Another well-known
+    {"tmdb_id": 278, "title": "The Shawshank Redemption"},  # Well-known movie
     {"tmdb_id": 238, "title": "The Godfather"},  # Classic
+    {"tmdb_id": 240, "title": "The Godfather Part II"},  # Another classic
 ]
 
 async def get_admin_token():
