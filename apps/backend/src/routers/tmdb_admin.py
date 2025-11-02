@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from ..db import get_session
 from ..models import Movie, Genre, Person, StreamingPlatform, MovieStreamingOption, movie_genres, movie_people, User
@@ -131,36 +132,34 @@ async def create_movie_from_tmdb_data(
     # Add cast and crew
     for director in tmdb_data.get("directors", []):
         person = await _get_or_create_person(session, director)
-        await session.execute(
-            insert(movie_people).values(
-                movie_id=movie.id,
-                person_id=person.id,
-                role="director",
-                character_name=None,
-            )
-        )
-    
+        # Use on_conflict_do_nothing to handle duplicates
+        stmt = pg_insert(movie_people).values(
+            movie_id=movie.id,
+            person_id=person.id,
+            role="director",
+            character_name=None,
+        ).on_conflict_do_nothing()
+        await session.execute(stmt)
+
     for writer in tmdb_data.get("writers", []):
         person = await _get_or_create_person(session, writer)
-        await session.execute(
-            insert(movie_people).values(
-                movie_id=movie.id,
-                person_id=person.id,
-                role="writer",
-                character_name=None,
-            )
-        )
-    
+        stmt = pg_insert(movie_people).values(
+            movie_id=movie.id,
+            person_id=person.id,
+            role="writer",
+            character_name=None,
+        ).on_conflict_do_nothing()
+        await session.execute(stmt)
+
     for actor in tmdb_data.get("cast", []):
         person = await _get_or_create_person(session, actor)
-        await session.execute(
-            insert(movie_people).values(
-                movie_id=movie.id,
-                person_id=person.id,
-                role="actor",
-                character_name=actor.get("character"),
-            )
-        )
+        stmt = pg_insert(movie_people).values(
+            movie_id=movie.id,
+            person_id=person.id,
+            role="actor",
+            character_name=actor.get("character"),
+        ).on_conflict_do_nothing()
+        await session.execute(stmt)
     
     await session.commit()
     return movie
