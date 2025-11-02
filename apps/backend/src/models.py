@@ -85,6 +85,7 @@ class Movie(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    tmdb_id: Mapped[int | None] = mapped_column(Integer, unique=True, nullable=True, index=True)
     title: Mapped[str] = mapped_column(String(200))
     tagline: Mapped[str | None] = mapped_column(String(500), nullable=True)
     year: Mapped[str | None] = mapped_column(String(4), nullable=True)
