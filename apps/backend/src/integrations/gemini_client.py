@@ -5,9 +5,10 @@ import json
 from typing import Any, Dict, Optional
 
 import httpx
+from ..config import settings
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = settings.gemini_model
+GEMINI_API_KEY = settings.gemini_api_key
 
 # Minimal client for Google Generative Language API (Gemini)
 # Returns Python dict (parsed JSON) or None if not available

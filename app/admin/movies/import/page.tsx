@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { getAuthHeaders } from "@/lib/auth"
 
 export default function AdminMoviesImportPage() {
   const [jsonText, setJsonText] = useState(`[
@@ -82,12 +83,23 @@ export default function AdminMoviesImportPage() {
       const payload = JSON.parse(jsonText)
       if (!Array.isArray(payload)) throw new Error("JSON must be an array of movies")
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const authHeaders = getAuthHeaders()
       const res = await fetch(`${apiBase}/api/v1/admin/movies/import`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify(payload),
       })
-      if (!res.ok) throw new Error(`Import failed: ${res.status} ${res.statusText}`)
+      if (!res.ok) {
+        // Handle authentication errors specifically
+        if (res.status === 401) {
+          throw new Error("Authentication required. Please login as admin.")
+        }
+        if (res.status === 403) {
+          throw new Error("Access denied. Admin privileges required.")
+        }
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.detail || `Import failed: ${res.status} ${res.statusText}`)
+      }
       const data = await res.json()
       setResult(data)
     } catch (e: any) {

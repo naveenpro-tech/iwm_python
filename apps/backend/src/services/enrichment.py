@@ -18,8 +18,9 @@ from ..models import (
     movie_genres,
 )
 from ..integrations.gemini_client import fetch_movie_enrichment_with_gemini
+from ..config import settings
 
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+TMDB_API_KEY = settings.tmdb_api_key
 
 # Helpers ---------------------------------------------------------
 async def _get_or_create_genre(session: AsyncSession, name: str) -> Genre:

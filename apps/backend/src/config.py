@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     access_token_exp_minutes: int = Field(default=int(os.getenv("ACCESS_TOKEN_EXP_MINUTES", "30")))
     refresh_token_exp_days: int = Field(default=int(os.getenv("REFRESH_TOKEN_EXP_DAYS", "7")))
 
+    # External API keys
+    tmdb_api_key: str | None = Field(default=None)
+    gemini_api_key: str | None = Field(default=None)
+    gemini_model: str = Field(default="gemini-2.5-flash")
+
     # Pydantic v2: load .env from backend app folder regardless of cwd
     model_config = SettingsConfigDict(
         env_file=str((Path(__file__).resolve().parents[1] / ".env")),

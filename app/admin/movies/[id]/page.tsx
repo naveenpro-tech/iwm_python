@@ -24,7 +24,6 @@ import type {
   TriviaItem,
   TimelineEvent,
 } from "@/components/admin/movies/types"
-import { addMockMovie, getMockMovieById, updateMockMovie } from "@/components/admin/movies/mock-movie-data"
 import { useToast } from "@/hooks/use-toast" // Corrected path
 import { Skeleton } from "@/components/ui/skeleton"
 import { getAuthHeaders } from "@/lib/auth"
@@ -371,18 +370,24 @@ export default function MovieEditPage() {
       }
 
       try {
-        const movie = await getMockMovieById(params.id as string)
-        if (!movie) {
-          setError("Movie not found")
+        // Fetch from backend API instead of mock data
+        const res = await fetch(`${apiBase}/api/v1/movies/${params.id as string}`)
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError("Movie not found")
+          } else {
+            setError(`Failed to fetch movie: ${res.status} ${res.statusText}`)
+          }
           setMovieData(null)
         } else {
-          // Ensure new fields have default empty arrays if not present in mock data
+          const backendMovie = await res.json()
+          const mapped = mapBackendToAdminMovie(backendMovie)
           setMovieData({
-            ...movie,
-            trivia: movie.trivia || [],
-            timelineEvents: movie.timelineEvents || [],
+            ...mapped,
+            trivia: mapped.trivia || [],
+            timelineEvents: mapped.timelineEvents || [],
           })
-          document.title = `Edit Movie: ${movie.title} | Siddu Admin`
+          document.title = `Edit Movie: ${mapped.title} | Siddu Admin`
         }
       } catch (e: any) {
         setError(e.message || "Failed to fetch movie")
@@ -392,27 +397,90 @@ export default function MovieEditPage() {
     }
 
     fetchData()
-  }, [params.id])
+  }, [params.id, apiBase])
 
   const handleSaveChanges = async () => {
     if (!movieData) return
     setIsSaving(true)
     try {
+      // For new movies, use "Publish to Backend" instead
       if (params.id === "new") {
-        const { id: _, ...movieDataWithoutId } = movieData
-        const newMovie = await addMockMovie(movieDataWithoutId)
         toast({
-          title: "Movie Added Successfully!",
-          description: `"${newMovie.title}" has been created.`,
+          variant: "destructive",
+          title: "Use 'Publish to Backend'",
+          description: "For new movies, click 'Publish to Backend' to save to the database.",
         })
-        router.push(`/admin/movies/${newMovie.id}`) // Redirect to edit page of new movie
-      } else {
-        await updateMockMovie(movieData)
-        toast({
-          title: "Movie Updated Successfully!",
-          description: `Changes to "${movieData.title}" have been saved.`,
-        })
+        setIsSaving(false)
+        return
       }
+
+      // For existing movies, update via the import endpoint (upsert by external_id)
+      const authHeaders = getAuthHeaders()
+
+      // Map admin state -> backend MovieImportIn
+      const directors = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "director").map(c => ({ name: c.name, image: c.image }))
+      const writers = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "writer").map(c => ({ name: c.name, image: c.image }))
+      const producers = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "producer").map(c => ({ name: c.name, image: c.image }))
+      const cast = (movieData.cast || []).map(c => ({ name: c.name, image: c.image, character: c.character }))
+
+      const payload = [{
+        external_id: movieData.id,
+        title: movieData.title,
+        tagline: movieData.tagline || undefined,
+        year: movieData.releaseDate ? movieData.releaseDate.slice(0, 4) : undefined,
+        release_date: movieData.releaseDate || undefined,
+        runtime: movieData.runtime || undefined,
+        rating: (movieData.certification as any) || undefined,
+        siddu_score: movieData.sidduScore || undefined,
+        critics_score: undefined,
+        imdb_rating: undefined,
+        rotten_tomatoes_score: undefined,
+        language: (movieData.languages && movieData.languages[0]) || undefined,
+        country: (movieData.countriesOfOrigin && movieData.countriesOfOrigin[0]) || undefined,
+        overview: movieData.synopsis || undefined,
+        poster_url: movieData.poster || undefined,
+        backdrop_url: movieData.backdrop || undefined,
+        budget: movieData.budget || undefined,
+        revenue: movieData.boxOffice || undefined,
+        status: (movieData.status as any) || undefined,
+        genres: movieData.genres || [],
+        directors,
+        writers,
+        producers,
+        cast,
+        streaming: (movieData.streamingLinks || []).map((s, i) => ({
+          platform: s.provider,
+          region: s.region,
+          type: s.type,
+          price: s.price,
+          quality: s.quality,
+          url: s.url,
+        })),
+      }]
+
+      const res = await fetch(`${apiBase}/api/v1/admin/movies/import`, {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Not authenticated. Please log in again.")
+        }
+        if (res.status === 403) {
+          throw new Error("Access denied. Admin privileges required.")
+        }
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.detail || typeof json === "string" ? json : JSON.stringify(json))
+      }
+
+      const json = await res.json()
+
+      toast({
+        title: "Movie Updated Successfully!",
+        description: `Changes to "${movieData.title}" have been saved.`,
+      })
       setHasChanges(false)
     } catch (e: any) {
       setError(e.message || "Failed to save changes")
