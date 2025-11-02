@@ -31,6 +31,15 @@ import { ApiImportModal } from "@/components/admin/movies/modals/api-import-moda
 import { JsonImportModal } from "@/components/admin/movies/modals/json-import-modal"
 import { JsonExportModal } from "@/components/admin/movies/modals/json-export-modal"
 import { Button } from "@/components/ui/button"
+import { BulkActionToolbar } from "@/components/admin/movies/bulk-action-toolbar"
+import { BulkUpdateModal } from "@/components/admin/movies/bulk-update-modal"
+import { toast as sonnerToast } from "sonner"
+import {
+  bulkUpdateMovies,
+  bulkPublishMovies,
+  bulkFeatureMovies
+} from "@/lib/api/admin-curation"
+import type { MovieListItem } from "@/components/admin/movies/bulk-update-modal"
 
 type SortConfig = {
   key: keyof Movie
@@ -61,6 +70,7 @@ export default function MovieManagementPage() {
   const [isApiImportModalOpen, setIsApiImportModalOpen] = useState(false)
   const [isJsonImportModalOpen, setIsJsonImportModalOpen] = useState(false)
   const [isJsonExportModalOpen, setIsJsonExportModalOpen] = useState(false)
+  const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false)
 
   const [currentMovieForModal, setCurrentMovieForModal] = useState<Movie | null>(null)
   const [confirmationAction, setConfirmationAction] = useState<{
@@ -547,6 +557,229 @@ export default function MovieManagementPage() {
     }
   }, [searchQuery, filters, totalPages, currentPage]) // Added totalPages to dependency array
 
+  // ============================================================================
+  // Bulk Operations Handlers (Phase 5)
+  // ============================================================================
+
+  const refreshMovieList = async () => {
+    setIsLoading(true)
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const res = await fetch(`${apiBase}/api/v1/movies`)
+      if (!res.ok) throw new Error("Failed to fetch movies")
+      const data = await res.json()
+
+      const mappedMovies = data.map((m: any) => ({
+        id: m.id,
+        title: m.title,
+        originalTitle: m.title,
+        poster: m.posterUrl || "/abstract-movie-poster.png",
+        backdrop: m.backdropUrl || "/movie-backdrop.png",
+        sidduScore: m.sidduScore || 0,
+        releaseDate: m.releaseDate ? m.releaseDate.split("T")[0] : new Date().toISOString().split("T")[0],
+        status: (m.status || "draft").toLowerCase() as MovieStatus,
+        genres: m.genres || [],
+        synopsis: m.synopsis || m.overview || "",
+        runtime: m.runtime || 120,
+        languages: [m.language || "English"],
+        certification: m.rating || "Unrated",
+        cast: m.cast || [],
+        crew: m.directors || [],
+        galleryImages: [],
+        trailerUrl: "",
+        trailerEmbed: "",
+        streamingLinks: m.streamingOptions ? Object.entries(m.streamingOptions).flatMap(([region, options]: any) =>
+          (Array.isArray(options) ? options : [options]).map((opt: any) => ({
+            platform: opt.provider,
+            region,
+            type: opt.type,
+            url: opt.url,
+          }))
+        ) : [],
+        releaseDates: [{ region: "US", date: m.releaseDate ? m.releaseDate.split("T")[0] : "", type: "Theatrical" }],
+        awards: [],
+        isPublished: m.status === "released",
+        isArchived: false,
+        importedFrom: "backend",
+        budget: m.budget,
+        boxOffice: m.revenue,
+        productionCompanies: [],
+        countriesOfOrigin: [m.country || ""],
+        tagline: m.tagline || "",
+        keywords: [],
+        aspectRatio: "",
+        soundMix: [],
+        camera: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }))
+
+      setMovies(mappedMovies)
+    } catch (error) {
+      console.error("Error refreshing movies:", error)
+      sonnerToast.error("Failed to refresh movie list")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBulkUpdate = () => {
+    setIsBulkUpdateModalOpen(true)
+  }
+
+  const handleBulkPublish = async () => {
+    if (selectedMovieIds.length === 0) return
+
+    try {
+      const numericIds = selectedMovieIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id))
+
+      const response = await bulkPublishMovies({
+        movie_ids: numericIds,
+        publish: true,
+      })
+
+      if (response.success_count > 0) {
+        sonnerToast.success(response.message, {
+          description: response.failure_count > 0
+            ? `${response.failure_count} movie(s) failed to publish`
+            : undefined,
+        })
+      }
+
+      if (response.failure_count > 0 && response.success_count === 0) {
+        sonnerToast.error("Failed to publish movies", {
+          description: `${response.failure_count} movie(s) could not be published`,
+        })
+      }
+
+      await refreshMovieList()
+      clearSelection()
+    } catch (error) {
+      sonnerToast.error("Failed to publish movies", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      })
+    }
+  }
+
+  const handleBulkUnpublish = async () => {
+    if (selectedMovieIds.length === 0) return
+
+    try {
+      const numericIds = selectedMovieIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id))
+
+      const response = await bulkPublishMovies({
+        movie_ids: numericIds,
+        publish: false,
+      })
+
+      if (response.success_count > 0) {
+        sonnerToast.success(response.message, {
+          description: response.failure_count > 0
+            ? `${response.failure_count} movie(s) failed to unpublish`
+            : undefined,
+        })
+      }
+
+      if (response.failure_count > 0 && response.success_count === 0) {
+        sonnerToast.error("Failed to unpublish movies", {
+          description: `${response.failure_count} movie(s) could not be unpublished`,
+        })
+      }
+
+      await refreshMovieList()
+      clearSelection()
+    } catch (error) {
+      sonnerToast.error("Failed to unpublish movies", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      })
+    }
+  }
+
+  const handleBulkFeature = async () => {
+    if (selectedMovieIds.length === 0) return
+
+    try {
+      const numericIds = selectedMovieIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id))
+
+      const response = await bulkFeatureMovies({
+        movie_ids: numericIds,
+        featured: true,
+      })
+
+      if (response.success_count > 0) {
+        sonnerToast.success(response.message, {
+          description: response.failure_count > 0
+            ? `${response.failure_count} movie(s) failed to feature`
+            : undefined,
+        })
+      }
+
+      if (response.failure_count > 0 && response.success_count === 0) {
+        sonnerToast.error("Failed to feature movies", {
+          description: `${response.failure_count} movie(s) could not be featured`,
+        })
+      }
+
+      await refreshMovieList()
+      clearSelection()
+    } catch (error) {
+      sonnerToast.error("Failed to feature movies", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      })
+    }
+  }
+
+  const handleBulkUnfeature = async () => {
+    if (selectedMovieIds.length === 0) return
+
+    try {
+      const numericIds = selectedMovieIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id))
+
+      const response = await bulkFeatureMovies({
+        movie_ids: numericIds,
+        featured: false,
+      })
+
+      if (response.success_count > 0) {
+        sonnerToast.success(response.message, {
+          description: response.failure_count > 0
+            ? `${response.failure_count} movie(s) failed to unfeature`
+            : undefined,
+        })
+      }
+
+      if (response.failure_count > 0 && response.success_count === 0) {
+        sonnerToast.error("Failed to unfeature movies", {
+          description: `${response.failure_count} movie(s) could not be unfeatured`,
+        })
+      }
+
+      await refreshMovieList()
+      clearSelection()
+    } catch (error) {
+      sonnerToast.error("Failed to unfeature movies", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      })
+    }
+  }
+
+  const handleBulkUpdateSuccess = async () => {
+    await refreshMovieList()
+    clearSelection()
+  }
+
+  // Convert selected movies to MovieListItem format for bulk update modal
+  const selectedMoviesForModal: MovieListItem[] = movies
+    .filter(m => selectedMovieIds.includes(m.id))
+    .map(m => ({
+      id: parseInt(m.id, 10),
+      title: m.title,
+      year: m.releaseDate ? parseInt(m.releaseDate.split("-")[0], 10) : null,
+      curation_status: m.status,
+      quality_score: m.sidduScore || null,
+      is_featured: false, // This would need to come from backend
+    }))
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
@@ -556,16 +789,16 @@ export default function MovieManagementPage() {
         </p>
       </motion.div>
 
-      {selectedMovieIds.length > 0 && (
-        <MovieBatchActionsToolbar
-          selectedCount={selectedMovieIds.length}
-          onPublish={handlePublishSelected}
-          onUnpublish={handleUnpublishSelected}
-          onArchive={handleArchiveSelected}
-          onDelete={handleDeleteSelected}
-          onClearSelection={clearSelection}
-        />
-      )}
+      {/* Phase 5: New Bulk Action Toolbar */}
+      <BulkActionToolbar
+        selectedCount={selectedMovieIds.length}
+        onBulkUpdate={handleBulkUpdate}
+        onBulkPublish={handleBulkPublish}
+        onBulkUnpublish={handleBulkUnpublish}
+        onBulkFeature={handleBulkFeature}
+        onBulkUnfeature={handleBulkUnfeature}
+        onClearSelection={clearSelection}
+      />
 
       <MovieListingHeader
         viewMode={viewMode}
@@ -679,6 +912,15 @@ export default function MovieManagementPage() {
         isOpen={isJsonExportModalOpen}
         onClose={() => setIsJsonExportModalOpen(false)}
         movieCount={movies.length}
+      />
+
+      {/* Phase 5: Bulk Update Modal */}
+      <BulkUpdateModal
+        isOpen={isBulkUpdateModalOpen}
+        onClose={() => setIsBulkUpdateModalOpen(false)}
+        selectedMovieIds={selectedMovieIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id))}
+        selectedMovies={selectedMoviesForModal}
+        onSuccess={handleBulkUpdateSuccess}
       />
     </div>
   )

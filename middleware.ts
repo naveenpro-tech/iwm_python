@@ -15,8 +15,8 @@ const protectedRoutes = [
   "/settings",
 ]
 
-// Routes that require admin role (currently disabled - admin routes are public for debugging)
-const adminRoutes: string[] = []
+// Routes that require admin role
+const adminRoutes: string[] = ["/admin"]
 
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ["/login", "/signup"]
@@ -24,7 +24,6 @@ const authRoutes = ["/login", "/signup"]
 // Routes that are public (don't require authentication)
 const publicRoutes = [
   /^\/collections\/[^/]+\/public$/,  // Public collection view: /collections/{id}/public
-  /^\/admin/,  // Admin dashboard (no auth required for debugging)
 ]
 
 // Helper function to check if user has admin role

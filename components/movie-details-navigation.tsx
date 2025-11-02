@@ -2,7 +2,7 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Info, Star, Users, Clock, Film, Lightbulb } from "lucide-react"
+import { Info, Star, Users, Clock, Film, Lightbulb, Trophy } from "lucide-react"
 
 interface MovieDetailsNavigationProps {
   movieId: string
@@ -49,6 +49,12 @@ export function MovieDetailsNavigation({ movieId, movieTitle }: MovieDetailsNavi
       icon: <Lightbulb className="w-4 h-4 mr-2" />,
       href: `/movies/${movieId}/trivia`,
     },
+    {
+      id: "awards",
+      label: "Awards",
+      icon: <Trophy className="w-4 h-4 mr-2" />,
+      href: `/movies/${movieId}/awards`,
+    },
   ]
 
   const getActiveTab = () => {
@@ -58,6 +64,7 @@ export function MovieDetailsNavigation({ movieId, movieTitle }: MovieDetailsNavi
     if (pathname.includes("/timeline")) return "timeline"
     if (pathname.includes("/scenes")) return "scenes"
     if (pathname.includes("/trivia")) return "trivia"
+    if (pathname.includes("/awards")) return "awards"
     return "overview"
   }
 

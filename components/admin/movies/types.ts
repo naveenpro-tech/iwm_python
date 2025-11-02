@@ -94,6 +94,15 @@ export interface TimelineEvent {
   mediaUrl?: string
 }
 
+export interface SceneItem {
+  id: string
+  title: string
+  description: string
+  timecode: string
+  thumbnail?: string
+  duration?: string
+}
+
 export interface Movie {
   id: string
   title: string
@@ -121,6 +130,7 @@ export interface Movie {
   awards?: AwardInfo[]
   trivia?: TriviaItem[]
   timelineEvents?: TimelineEvent[]
+  scenes?: SceneItem[]
 
   isPublished: boolean
   isArchived: boolean

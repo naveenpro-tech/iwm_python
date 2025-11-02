@@ -588,12 +588,16 @@ async def import_basic_info(
 
         updated_fields.append("genres")
 
+    # Save basic_info as DRAFT
+    movie.basic_info_draft = data
+    movie.basic_info_status = "draft"
+
     await session.commit()
 
     return ImportResponse(
         success=True,
-        message=f"Successfully imported basic info for movie '{external_id}'",
-        updated_fields=updated_fields
+        message=f"Successfully imported basic info as DRAFT for movie '{external_id}'. Click 'Publish' to make live.",
+        updated_fields=["basic_info_draft"]
     )
 
 
@@ -605,9 +609,9 @@ async def import_timeline(
     admin_user: User = Depends(require_admin),
 ) -> ImportResponse:
     """
-    Import production timeline events.
+    Import production timeline events as DRAFT.
 
-    Updates the timeline JSONB field.
+    Saves to timeline_draft field. Admin must click "Publish" to make live.
     """
     # Validate category
     if import_data.category != "timeline":
@@ -626,15 +630,16 @@ async def import_timeline(
     movie = await get_movie_by_external_id(session, external_id)
     data = import_data.data
 
-    # Update timeline
+    # Update timeline as DRAFT
     if "events" in data and isinstance(data["events"], list):
-        movie.timeline = data["events"]
+        movie.timeline_draft = data["events"]
+        movie.timeline_status = "draft"
         await session.commit()
 
         return ImportResponse(
             success=True,
-            message=f"Successfully imported timeline for movie '{external_id}'",
-            updated_fields=["timeline"]
+            message=f"Successfully imported timeline as DRAFT for movie '{external_id}'. Click 'Publish' to make live.",
+            updated_fields=["timeline_draft"]
         )
     else:
         raise HTTPException(
@@ -651,9 +656,9 @@ async def import_trivia(
     admin_user: User = Depends(require_admin),
 ) -> ImportResponse:
     """
-    Import trivia items.
+    Import trivia items as DRAFT.
 
-    Updates the trivia JSONB field.
+    Saves to trivia_draft field. Admin must click "Publish" to make live.
     """
     # Validate category
     if import_data.category != "trivia":
@@ -672,15 +677,16 @@ async def import_trivia(
     movie = await get_movie_by_external_id(session, external_id)
     data = import_data.data
 
-    # Update trivia
+    # Update trivia as DRAFT
     if "items" in data and isinstance(data["items"], list):
-        movie.trivia = data["items"]
+        movie.trivia_draft = data["items"]
+        movie.trivia_status = "draft"
         await session.commit()
 
         return ImportResponse(
             success=True,
-            message=f"Successfully imported trivia for movie '{external_id}'",
-            updated_fields=["trivia"]
+            message=f"Successfully imported trivia as DRAFT for movie '{external_id}'. Click 'Publish' to make live.",
+            updated_fields=["trivia_draft"]
         )
     else:
         raise HTTPException(
@@ -717,24 +723,16 @@ async def import_media(
 
     movie = await get_movie_by_external_id(session, external_id)
     data = import_data.data
-    updated_fields = []
 
-    if "poster_url" in data:
-        movie.poster_url = data["poster_url"]
-        updated_fields.append("poster_url")
-
-    if "backdrop_url" in data:
-        movie.backdrop_url = data["backdrop_url"]
-        updated_fields.append("backdrop_url")
-
-    # TODO: Add trailer_url and gallery_images when fields are added to Movie model
-
+    # Save media as DRAFT
+    movie.media_draft = data
+    movie.media_status = "draft"
     await session.commit()
 
     return ImportResponse(
         success=True,
-        message=f"Successfully imported media for movie '{external_id}'",
-        updated_fields=updated_fields
+        message=f"Successfully imported media as DRAFT for movie '{external_id}'. Click 'Publish' to make live.",
+        updated_fields=["media_draft"]
     )
 
 
@@ -777,15 +775,15 @@ async def import_awards(
             detail="Invalid awards data. Expected 'awards' array."
         )
 
-    # For MVP, we'll just log that awards import is not fully implemented
-    # Full implementation would require creating AwardNomination records
-    logger.warning(f"Awards import for movie {external_id} - Full implementation pending")
+    # Save awards as DRAFT
+    movie.awards_draft = data["awards"]
+    movie.awards_status = "draft"
+    await session.commit()
 
     return ImportResponse(
         success=True,
-        message=f"Awards import acknowledged for movie '{external_id}' (full implementation pending)",
-        updated_fields=["awards"],
-        errors=["Awards import is not fully implemented yet. Data received but not persisted."]
+        message=f"Successfully imported awards as DRAFT for movie '{external_id}'. Click 'Publish' to make live.",
+        updated_fields=["awards_draft"]
     )
 
 
@@ -828,15 +826,15 @@ async def import_streaming(
             detail="Invalid streaming data. Expected 'streaming_options' array."
         )
 
-    # For MVP, we'll just log that streaming import is not fully implemented
-    # Full implementation would require creating MovieStreamingOption records
-    logger.warning(f"Streaming import for movie {external_id} - Full implementation pending")
+    # Save streaming as DRAFT
+    movie.streaming_draft = data
+    movie.streaming_status = "draft"
+    await session.commit()
 
     return ImportResponse(
         success=True,
-        message=f"Streaming import acknowledged for movie '{external_id}' (full implementation pending)",
-        updated_fields=["streaming"],
-        errors=["Streaming import is not fully implemented yet. Data received but not persisted."]
+        message=f"Successfully imported streaming as DRAFT for movie '{external_id}'. Click 'Publish' to make live.",
+        updated_fields=["streaming_draft"]
     )
 
 
@@ -882,14 +880,152 @@ async def import_cast_crew(
                 detail=f"Invalid cast-crew data. Expected '{key}' array."
             )
 
-    # For MVP, we'll just log that cast-crew import is not fully implemented
-    # Full implementation would require creating Person and movie_people records
-    logger.warning(f"Cast-crew import for movie {external_id} - Full implementation pending")
+    # Save cast-crew as DRAFT
+    movie.cast_crew_draft = data
+    movie.cast_crew_status = "draft"
+    await session.commit()
 
     return ImportResponse(
         success=True,
-        message=f"Cast-crew import acknowledged for movie '{external_id}' (full implementation pending)",
-        updated_fields=["cast", "crew"],
-        errors=["Cast-crew import is not fully implemented yet. Data received but not persisted."]
+        message=f"Successfully imported cast & crew as DRAFT for movie '{external_id}'. Click 'Publish' to make live.",
+        updated_fields=["cast_crew_draft"]
     )
+
+
+# ============================================================================
+# Draft/Publish Workflow Endpoints
+# ============================================================================
+
+@router.post("/{external_id}/publish/{category}", response_model=ImportResponse)
+async def publish_draft(
+    external_id: str,
+    category: str,
+    session: AsyncSession = Depends(get_session),
+    admin_user: User = Depends(require_admin),
+) -> ImportResponse:
+    """
+    Publish draft data to make it live on the public website.
+
+    Copies data from {category}_draft to {category} field.
+    """
+    # Validate category
+    valid_categories = ["trivia", "timeline", "awards", "cast_crew", "media", "streaming", "basic_info"]
+    if category not in valid_categories:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid category. Must be one of: {', '.join(valid_categories)}"
+        )
+
+    movie = await get_movie_by_external_id(session, external_id)
+
+    # Get draft field name
+    draft_field = f"{category}_draft"
+    published_field = category
+    status_field = f"{category}_status"
+
+    # Check if draft exists
+    draft_data = getattr(movie, draft_field, None)
+    if not draft_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No draft data for {category} to publish"
+        )
+
+    # Copy draft to published
+    setattr(movie, published_field, draft_data)
+    setattr(movie, status_field, "published")
+    movie.curated_at = datetime.now(timezone.utc)
+    movie.curated_by_id = admin_user.id
+
+    await session.commit()
+
+    return ImportResponse(
+        success=True,
+        message=f"Successfully published {category} for movie '{external_id}'",
+        updated_fields=[published_field]
+    )
+
+
+@router.delete("/{external_id}/draft/{category}", response_model=ImportResponse)
+async def discard_draft(
+    external_id: str,
+    category: str,
+    session: AsyncSession = Depends(get_session),
+    admin_user: User = Depends(require_admin),
+) -> ImportResponse:
+    """
+    Discard draft data without publishing.
+
+    Deletes the {category}_draft field.
+    """
+    # Validate category
+    valid_categories = ["trivia", "timeline", "awards", "cast_crew", "media", "streaming", "basic_info"]
+    if category not in valid_categories:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid category. Must be one of: {', '.join(valid_categories)}"
+        )
+
+    movie = await get_movie_by_external_id(session, external_id)
+
+    # Get draft field name
+    draft_field = f"{category}_draft"
+    status_field = f"{category}_status"
+
+    # Check if draft exists
+    draft_data = getattr(movie, draft_field, None)
+    if not draft_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No draft data for {category} to discard"
+        )
+
+    # Clear draft
+    setattr(movie, draft_field, None)
+    setattr(movie, status_field, "draft")
+
+    await session.commit()
+
+    return ImportResponse(
+        success=True,
+        message=f"Successfully discarded draft {category} for movie '{external_id}'",
+        updated_fields=[draft_field]
+    )
+
+
+@router.get("/{external_id}/draft-status")
+async def get_draft_status(
+    external_id: str,
+    session: AsyncSession = Depends(get_session),
+    admin_user: User = Depends(require_admin),
+):
+    """
+    Get draft status for all categories.
+
+    Returns which categories have draft data and their status.
+    """
+    movie = await get_movie_by_external_id(session, external_id)
+
+    categories = ["trivia", "timeline", "awards", "cast_crew", "media", "streaming", "basic_info"]
+    draft_status = {}
+
+    for category in categories:
+        draft_field = f"{category}_draft"
+        published_field = category
+        status_field = f"{category}_status"
+
+        has_draft = getattr(movie, draft_field, None) is not None
+        has_published = getattr(movie, published_field, None) is not None
+        status = getattr(movie, status_field, "draft")
+
+        draft_status[category] = {
+            "status": status,
+            "has_draft": has_draft,
+            "has_published": has_published
+        }
+
+    return {
+        "movie_id": external_id,
+        "draft_status": draft_status
+    }
 

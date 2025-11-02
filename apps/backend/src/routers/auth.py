@@ -122,12 +122,18 @@ async def signup(body: SignupBody, session: AsyncSession = Depends(get_session))
     sub = str(user.id)
 
     # Include role_profiles in the access token for middleware admin role checking
+    # Query role_profiles explicitly to avoid lazy loading after commit
+    role_profiles_result = await session.execute(
+        select(UserRoleProfile).where(UserRoleProfile.user_id == user.id)
+    )
+    role_profiles_list = role_profiles_result.scalars().all()
+
     role_profiles = [
         {
-            "role_type": role_profile.role_type,
-            "enabled": role_profile.enabled
+            "role_type": rp.role_type,
+            "enabled": rp.enabled
         }
-        for role_profile in user.role_profiles
+        for rp in role_profiles_list
     ]
 
     return TokenResponse(
@@ -145,12 +151,19 @@ async def login(body: LoginBody, session: AsyncSession = Depends(get_session)) -
     sub = str(user.id)
 
     # Include role_profiles in the access token for middleware admin role checking
+    # Query role_profiles explicitly to avoid lazy loading issues
+    from ..models import UserRoleProfile
+    role_profiles_result = await session.execute(
+        select(UserRoleProfile).where(UserRoleProfile.user_id == user.id)
+    )
+    role_profiles_list = role_profiles_result.scalars().all()
+
     role_profiles = [
         {
-            "role_type": role_profile.role_type,
-            "enabled": role_profile.enabled
+            "role_type": rp.role_type,
+            "enabled": rp.enabled
         }
-        for role_profile in user.role_profiles
+        for rp in role_profiles_list
     ]
 
     return TokenResponse(

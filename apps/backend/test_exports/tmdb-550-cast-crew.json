@@ -1,0 +1,120 @@
+{
+  "category": "cast_crew",
+  "movie_id": "tmdb-550",
+  "version": "1.0",
+  "exported_at": "2025-11-02T05:15:25.788862+00:00",
+  "data": {
+    "directors": [
+      {
+        "id": "tmdb-person-david-fincher",
+        "name": "David Fincher",
+        "image": "https://image.tmdb.org/t/p/w185/tpEczFclQZeKAiCeKZZ0adRvtfz.jpg"
+      }
+    ],
+    "writers": [
+      {
+        "id": "tmdb-person-jim-uhls",
+        "name": "Jim Uhls",
+        "image": "https://image.tmdb.org/t/p/w185/uNkXdgsIdJF1xyj4BUSgHOfqjyb.jpg"
+      }
+    ],
+    "producers": [],
+    "cast": [
+      {
+        "id": "tmdb-person-edward-norton",
+        "name": "Edward Norton",
+        "image": "https://image.tmdb.org/t/p/w185/8nytsqL59SFJTVYVrN72k6qkGgJ.jpg",
+        "character": "Narrator"
+      },
+      {
+        "id": "tmdb-person-brad-pitt",
+        "name": "Brad Pitt",
+        "image": "https://image.tmdb.org/t/p/w185/9OfnD7lxgIj3BNQpJFnwxnwl6w5.jpg",
+        "character": "Tyler Durden"
+      },
+      {
+        "id": "tmdb-person-helena-bonham-carter",
+        "name": "Helena Bonham Carter",
+        "image": "https://image.tmdb.org/t/p/w185/hJMbNSPJ2PCahsP3rNEU39C8GWU.jpg",
+        "character": "Marla Singer"
+      },
+      {
+        "id": "tmdb-person-meat-loaf",
+        "name": "Meat Loaf",
+        "image": "https://image.tmdb.org/t/p/w185/7gKLR1u46OB8WJ6m06LemNBCMx6.jpg",
+        "character": "Robert Paulson"
+      },
+      {
+        "id": "tmdb-person-jared-leto",
+        "name": "Jared Leto",
+        "image": "https://image.tmdb.org/t/p/w185/ca3x0OfIKbJppZh8S1Alx3GfUZO.jpg",
+        "character": "Angel Face"
+      },
+      {
+        "id": "tmdb-person-zach-grenier",
+        "name": "Zach Grenier",
+        "image": "https://image.tmdb.org/t/p/w185/fSyQKZO39sUsqY283GXiScOg3Hi.jpg",
+        "character": "Richard Chesler (Regional Manager)"
+      },
+      {
+        "id": "tmdb-person-holt-mccallany",
+        "name": "Holt McCallany",
+        "image": "https://image.tmdb.org/t/p/w185/nHZgHsBc8P69LFTGsDSrZYt2PmS.jpg",
+        "character": "The Mechanic"
+      },
+      {
+        "id": "tmdb-person-eion-bailey",
+        "name": "Eion Bailey",
+        "image": "https://image.tmdb.org/t/p/w185/3DW13W47cKk4LQZwS4EvRaNBoVu.jpg",
+        "character": "Ricky"
+      },
+      {
+        "id": "tmdb-person-richmond-arquette",
+        "name": "Richmond Arquette",
+        "image": "https://image.tmdb.org/t/p/w185/7byGiVac0GjBSVD1h6ylZlVXZK6.jpg",
+        "character": "Intern at Hospital"
+      },
+      {
+        "id": "tmdb-person-david-andrews",
+        "name": "David Andrews",
+        "image": "https://image.tmdb.org/t/p/w185/36LEerIIN7gpG52mM3Ier7YWDbh.jpg",
+        "character": "Thomas at Remaining Men Together"
+      },
+      {
+        "id": "tmdb-person-george-maguire",
+        "name": "George Maguire",
+        "image": "https://image.tmdb.org/t/p/w185/pyKzJNkpjCA96ItVq93x1Y2YfYx.jpg",
+        "character": "Group Leader at Remaining Men Together"
+      },
+      {
+        "id": "tmdb-person-eugenie-bondurant",
+        "name": "Eugenie Bondurant",
+        "image": "https://image.tmdb.org/t/p/w185/9ULAELEKNha7VCJhRWoer58NcJe.jpg",
+        "character": "Weeping Woman - Onward and Upward"
+      },
+      {
+        "id": "tmdb-person-christina-cabot",
+        "name": "Christina Cabot",
+        "image": "https://image.tmdb.org/t/p/w185/h1vwbOfITSvDvDq8E9MVvWqMYSr.jpg",
+        "character": "Group Leader - Partners in Positivity"
+      },
+      {
+        "id": "tmdb-person-sydney-'big-dawg'-colston",
+        "name": "Sydney 'Big Dawg' Colston",
+        "image": "https://image.tmdb.org/t/p/w185/tdzVh7pstj6rcppqbBOX0KA7mX9.jpg",
+        "character": "Speaker - Free and Clear"
+      },
+      {
+        "id": "tmdb-person-rachel-singer",
+        "name": "Rachel Singer",
+        "image": "https://image.tmdb.org/t/p/w185/o4Hzvy1VRa3IILMrI45Ia08pstK.jpg",
+        "character": "Chloe"
+      }
+    ]
+  },
+  "metadata": {
+    "source": "manual",
+    "last_updated": "2025-11-02T05:15:25.788862+00:00",
+    "updated_by": "admin@iwm.com"
+  }
+}

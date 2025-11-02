@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Database,
 } from "lucide-react"
 
 const navItems = [
@@ -43,6 +44,11 @@ const navItems = [
     title: "Movie Management",
     href: "/admin/movies",
     icon: Film,
+  },
+  {
+    title: "TMDB Dashboard",
+    href: "/admin/tmdb-dashboard",
+    icon: Database,
   },
   {
     title: "Talent Hub Management",

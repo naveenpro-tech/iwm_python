@@ -6490,6 +6490,1187 @@
         }
       }
     },
+    "/api/v1/admin/tmdb/new-releases": {
+      "get": {
+        "tags": [
+          "TMDB Admin"
+        ],
+        "summary": "Get New Releases",
+        "description": "Fetch latest movies from TMDB by category.\n\nCategories:\n- now_playing: Currently in theaters\n- upcoming: Coming soon\n- popular: Most popular movies\n- top_rated: Highest rated movies",
+        "operationId": "get_new_releases_api_v1_admin_tmdb_new_releases_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(now_playing|upcoming|popular|top_rated)$",
+              "default": "now_playing",
+              "title": "Category"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TMDBSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tmdb/search": {
+      "get": {
+        "tags": [
+          "TMDB Admin"
+        ],
+        "summary": "Search Tmdb Movies",
+        "description": "Search for movies on TMDB by title",
+        "operationId": "search_tmdb_movies_api_v1_admin_tmdb_search_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Query"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TMDBSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tmdb/import/{tmdb_id}": {
+      "post": {
+        "tags": [
+          "TMDB Admin"
+        ],
+        "summary": "Import Tmdb Movie",
+        "description": "Import a movie from TMDB by its TMDB ID",
+        "operationId": "import_tmdb_movie_api_v1_admin_tmdb_import__tmdb_id__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tmdb_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Tmdb Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TMDBImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tmdb/check-exists/{tmdb_id}": {
+      "get": {
+        "tags": [
+          "TMDB Admin"
+        ],
+        "summary": "Check Movie Exists",
+        "description": "Check if a movie with given TMDB ID already exists in our database",
+        "operationId": "check_movie_exists_api_v1_admin_tmdb_check_exists__tmdb_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tmdb_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Tmdb Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TMDBExistsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/basic-info": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export Basic Info",
+        "description": "Export basic movie information.\n\nIncludes: title, tagline, year, release_date, runtime, rating, language,\ncountry, overview, budget, revenue, status, genres, scores",
+        "operationId": "export_basic_info_api_v1_admin_movies__external_id__export_basic_info_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/cast-crew": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export Cast Crew",
+        "description": "Export cast and crew information.\n\nIncludes: directors, writers, producers, actors with character names",
+        "operationId": "export_cast_crew_api_v1_admin_movies__external_id__export_cast_crew_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/timeline": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export Timeline",
+        "description": "Export production timeline events.\n\nTimeline is stored as JSONB array in the database.",
+        "operationId": "export_timeline_api_v1_admin_movies__external_id__export_timeline_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/trivia": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export Trivia",
+        "description": "Export trivia items.\n\nTrivia is stored as JSONB array in the database.",
+        "operationId": "export_trivia_api_v1_admin_movies__external_id__export_trivia_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/awards": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export Awards",
+        "description": "Export award nominations and wins.\n\nFetches from award_nominations table.",
+        "operationId": "export_awards_api_v1_admin_movies__external_id__export_awards_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/media": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export Media",
+        "description": "Export media assets.\n\nIncludes: poster, backdrop, trailer URL, gallery images",
+        "operationId": "export_media_api_v1_admin_movies__external_id__export_media_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/streaming": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export Streaming",
+        "description": "Export streaming platform links.\n\nFetches from movie_streaming_options table.",
+        "operationId": "export_streaming_api_v1_admin_movies__external_id__export_streaming_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/export/all": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Export All Categories",
+        "description": "Export all categories as a ZIP file.\n\nCreates a ZIP file containing 7 JSON files (one per category).",
+        "operationId": "export_all_categories_api_v1_admin_movies__external_id__export_all_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/import/basic-info": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Import Basic Info",
+        "description": "Import basic movie information.\n\nUpdates: title, tagline, year, release_date, runtime, rating, language,\ncountry, overview, budget, revenue, status, genres, scores",
+        "operationId": "import_basic_info_api_v1_admin_movies__external_id__import_basic_info_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/import/timeline": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Import Timeline",
+        "description": "Import production timeline events as DRAFT.\n\nSaves to timeline_draft field. Admin must click \"Publish\" to make live.",
+        "operationId": "import_timeline_api_v1_admin_movies__external_id__import_timeline_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/import/trivia": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Import Trivia",
+        "description": "Import trivia items as DRAFT.\n\nSaves to trivia_draft field. Admin must click \"Publish\" to make live.",
+        "operationId": "import_trivia_api_v1_admin_movies__external_id__import_trivia_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/import/media": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Import Media",
+        "description": "Import media assets.\n\nUpdates: poster_url, backdrop_url",
+        "operationId": "import_media_api_v1_admin_movies__external_id__import_media_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/import/awards": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Import Awards",
+        "description": "Import award nominations and wins.\n\nCreates/updates records in award_nominations table.\nNote: This is a simplified implementation. For production, consider:\n- Matching existing awards by ceremony/year/category\n- Handling updates vs creates\n- Validating award data",
+        "operationId": "import_awards_api_v1_admin_movies__external_id__import_awards_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/import/streaming": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Import Streaming",
+        "description": "Import streaming platform links.\n\nCreates/updates records in movie_streaming_options table.\nNote: This is a simplified implementation. For production, consider:\n- Matching existing streaming options\n- Handling updates vs creates\n- Validating platform names",
+        "operationId": "import_streaming_api_v1_admin_movies__external_id__import_streaming_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/import/cast-crew": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Import Cast Crew",
+        "description": "Import cast and crew information.\n\nCreates/updates records in people and movie_people tables.\nNote: This is a simplified implementation. For production, consider:\n- Matching existing people by name or external_id\n- Handling updates vs creates\n- Validating person data",
+        "operationId": "import_cast_crew_api_v1_admin_movies__external_id__import_cast_crew_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/publish/{category}": {
+      "post": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Publish Draft",
+        "description": "Publish draft data to make it live on the public website.\n\nCopies data from {category}_draft to {category} field.",
+        "operationId": "publish_draft_api_v1_admin_movies__external_id__publish__category__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/draft/{category}": {
+      "delete": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Discard Draft",
+        "description": "Discard draft data without publishing.\n\nDeletes the {category}_draft field.",
+        "operationId": "discard_draft_api_v1_admin_movies__external_id__draft__category__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/movies/{external_id}/draft-status": {
+      "get": {
+        "tags": [
+          "Movie Export/Import"
+        ],
+        "summary": "Get Draft Status",
+        "description": "Get draft status for all categories.\n\nReturns which categories have draft data and their status.",
+        "operationId": "get_draft_status_api_v1_admin_movies__external_id__draft_status_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/critics": {
       "get": {
         "tags": [
@@ -9421,6 +10602,84 @@
         ],
         "title": "EnrichResultOut"
       },
+      "ExportMetadata": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Data source: tmdb, manual, or llm-generated"
+          },
+          "last_updated": {
+            "type": "string",
+            "title": "Last Updated",
+            "description": "ISO timestamp of last update"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By",
+            "description": "Email of user who last updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "last_updated"
+        ],
+        "title": "ExportMetadata",
+        "description": "Metadata for exported data"
+      },
+      "ExportResponse": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Category name"
+          },
+          "movie_id": {
+            "type": "string",
+            "title": "Movie Id",
+            "description": "Movie external ID"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Schema version",
+            "default": "1.0"
+          },
+          "exported_at": {
+            "type": "string",
+            "title": "Exported At",
+            "description": "ISO timestamp of export"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "description": "Category-specific data"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ExportMetadata",
+            "description": "Export metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "movie_id",
+          "exported_at",
+          "data",
+          "metadata"
+        ],
+        "title": "ExportResponse",
+        "description": "Standard export response format"
+      },
       "FavoriteCreateBody": {
         "properties": {
           "type": {
@@ -9619,6 +10878,99 @@
           "errors"
         ],
         "title": "ImportReportOut"
+      },
+      "ImportRequest": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Category name"
+          },
+          "movie_id": {
+            "type": "string",
+            "title": "Movie Id",
+            "description": "Movie external ID"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version",
+            "description": "Schema version",
+            "default": "1.0"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "description": "Category-specific data"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExportMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Import metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "movie_id",
+          "data"
+        ],
+        "title": "ImportRequest",
+        "description": "Standard import request format"
+      },
+      "ImportResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "updated_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Updated Fields"
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "updated_fields"
+        ],
+        "title": "ImportResponse",
+        "description": "Standard import response"
       },
       "ImportSchemaField": {
         "properties": {
@@ -11033,6 +12385,198 @@
           "answers"
         ],
         "title": "SubmitAttemptBody"
+      },
+      "TMDBExistsResponse": {
+        "properties": {
+          "exists": {
+            "type": "boolean",
+            "title": "Exists"
+          },
+          "movie_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Movie Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "exists"
+        ],
+        "title": "TMDBExistsResponse",
+        "description": "Response for checking if a movie exists"
+      },
+      "TMDBImportResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tmdb_id": {
+            "type": "integer",
+            "title": "Tmdb Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "tmdb_id",
+          "external_id",
+          "message"
+        ],
+        "title": "TMDBImportResponse",
+        "description": "Response after importing a movie from TMDB"
+      },
+      "TMDBMoviePreview": {
+        "properties": {
+          "tmdb_id": {
+            "type": "integer",
+            "title": "Tmdb Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Url"
+          },
+          "backdrop_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backdrop Url"
+          },
+          "overview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overview"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vote Average"
+          },
+          "already_imported": {
+            "type": "boolean",
+            "title": "Already Imported",
+            "default": false
+          },
+          "our_movie_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Our Movie Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "TMDBMoviePreview",
+        "description": "Preview of a TMDB movie for browsing/searching"
+      },
+      "TMDBSearchResponse": {
+        "properties": {
+          "movies": {
+            "items": {
+              "$ref": "#/components/schemas/TMDBMoviePreview"
+            },
+            "type": "array",
+            "title": "Movies"
+          },
+          "total_results": {
+            "type": "integer",
+            "title": "Total Results"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          },
+          "current_page": {
+            "type": "integer",
+            "title": "Current Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movies",
+          "total_results",
+          "total_pages",
+          "current_page"
+        ],
+        "title": "TMDBSearchResponse",
+        "description": "Response for TMDB search/browse endpoints"
       },
       "TimelineIn": {
         "properties": {

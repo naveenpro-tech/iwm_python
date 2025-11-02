@@ -1,0 +1,14 @@
+{
+  "category": "trivia",
+  "movie_id": "tmdb-550",
+  "version": "1.0",
+  "exported_at": "2025-11-02T05:15:25.835774+00:00",
+  "data": {
+    "items": []
+  },
+  "metadata": {
+    "source": "manual",
+    "last_updated": "2025-11-02T05:15:25.835774+00:00",
+    "updated_by": "admin@iwm.com"
+  }
+}

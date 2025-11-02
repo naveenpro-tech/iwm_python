@@ -10,9 +10,11 @@ import { MovieStreamingForm } from "@/components/admin/movies/forms/movie-stream
 import { MovieAwardsForm } from "@/components/admin/movies/forms/movie-awards-form"
 import { MovieTriviaForm } from "@/components/admin/movies/forms/movie-trivia-form" // New import
 import { MovieTimelineForm } from "@/components/admin/movies/forms/movie-timeline-form" // New import
+import { MovieScenesForm } from "@/components/admin/movies/forms/movie-scenes-form" // New import
 import { JSONImportModal } from "@/components/admin/movies/json-import-modal"
 import { CategoryExportImportButtons } from "@/components/admin/movies/category-export-import-buttons"
 import { ImportCategoryModal } from "@/components/admin/movies/import-category-modal"
+import { DraftPublishControls } from "@/components/admin/movies/draft-publish-controls"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Save, Loader2, FileJson } from "lucide-react"
@@ -26,6 +28,7 @@ import type {
   AwardInfo,
   TriviaItem,
   TimelineEvent,
+  SceneItem,
 } from "@/components/admin/movies/types"
 import { useToast } from "@/hooks/use-toast" // Corrected path
 import { Skeleton } from "@/components/ui/skeleton"
@@ -97,6 +100,14 @@ export default function MovieEditPage() {
 
     const languages = data.language ? [data.language] : []
 
+    const awards = (data.awards || []).map((a: any, i: number) => ({
+      id: a.id || `${i}`,
+      name: a.name,
+      year: a.year,
+      category: a.category,
+      status: a.status || "Nominee",
+    }))
+
     const m: Movie = {
       id: data.id || "",
       title: data.title || "",
@@ -118,7 +129,7 @@ export default function MovieEditPage() {
       trailerEmbed: "",
       streamingLinks,
       releaseDates: [],
-      awards: [],
+      awards,
       trivia: (data.trivia || []).map((t: any, i: number) => ({ id: `${i}`, question: t.question, category: t.category, answer: t.answer, explanation: t.explanation })),
       timelineEvents: (data.timeline || []).map((tl: any, i: number) => ({ id: `${i}`, date: tl.date, title: tl.title, description: tl.description, category: tl.type })),
       isPublished: true,
@@ -553,6 +564,11 @@ export default function MovieEditPage() {
     setHasChanges(true)
   }
 
+  const handleScenesChange = (scenes: SceneItem[]) => {
+    setMovieData((prev) => ({ ...prev!, scenes: scenes }))
+    setHasChanges(true)
+  }
+
   const handleJSONImport = (importedData: Partial<Movie>) => {
     setMovieData((prev) => ({
       ...prev!,
@@ -574,10 +590,38 @@ export default function MovieEditPage() {
     setImportModalOpen(true)
   }
 
-  const handleImportSuccess = () => {
+  const handleImportSuccess = async () => {
     // Refresh movie data after successful import
     if (params.id && params.id !== "new") {
-      window.location.reload()
+      try {
+        // Wait a bit for backend to process the import
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        // Fetch fresh data from backend
+        const res = await fetch(`${apiBase}/api/v1/movies/${params.id as string}`)
+        if (res.ok) {
+          const backendMovie = await res.json()
+          const mapped = mapBackendToAdminMovie(backendMovie)
+          setMovieData({
+            ...mapped,
+            trivia: mapped.trivia || [],
+            timelineEvents: mapped.timelineEvents || [],
+            awards: mapped.awards || [],
+          })
+
+          toast({
+            title: "Data Refreshed",
+            description: "Imported data is now visible in the form",
+          })
+        } else {
+          // Fallback to page reload if fetch fails
+          window.location.reload()
+        }
+      } catch (error) {
+        console.error("Failed to refresh movie data:", error)
+        // Fallback to page reload on error
+        window.location.reload()
+      }
     }
   }
 
@@ -691,7 +735,7 @@ export default function MovieEditPage() {
       </div>
   
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 w-full max-w-full overflow-x-auto">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 w-full max-w-full overflow-x-auto">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="cast-crew">Cast & Crew</TabsTrigger>
@@ -699,6 +743,7 @@ export default function MovieEditPage() {
           <TabsTrigger value="awards">Awards</TabsTrigger>
           <TabsTrigger value="trivia">Trivia</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="scenes">Scenes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="mt-6">
@@ -782,26 +827,51 @@ export default function MovieEditPage() {
 
         <TabsContent value="trivia" className="mt-6">
           {params.id !== "new" && (
-            <CategoryExportImportButtons
-              movieId={movieData.id}
-              category="trivia"
-              onImportClick={() => handleOpenImportModal("trivia")}
-            />
+            <div className="space-y-4">
+              <CategoryExportImportButtons
+                movieId={movieData.id}
+                category="trivia"
+                onImportClick={() => handleOpenImportModal("trivia")}
+              />
+              <div className="border-t pt-4">
+                <DraftPublishControls
+                  movieId={movieData.id}
+                  category="trivia"
+                  onPublishSuccess={handleImportSuccess}
+                />
+              </div>
+            </div>
           )}
           <MovieTriviaForm initialTrivia={movieData.trivia || []} onTriviaChange={handleTriviaChange} />
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-6">
           {params.id !== "new" && (
-            <CategoryExportImportButtons
-              movieId={movieData.id}
-              category="timeline"
-              onImportClick={() => handleOpenImportModal("timeline")}
-            />
+            <div className="space-y-4">
+              <CategoryExportImportButtons
+                movieId={movieData.id}
+                category="timeline"
+                onImportClick={() => handleOpenImportModal("timeline")}
+              />
+              <div className="border-t pt-4">
+                <DraftPublishControls
+                  movieId={movieData.id}
+                  category="timeline"
+                  onPublishSuccess={handleImportSuccess}
+                />
+              </div>
+            </div>
           )}
           <MovieTimelineForm
             initialEvents={movieData.timelineEvents || []}
             onEventsChange={handleTimelineEventsChange}
+          />
+        </TabsContent>
+
+        <TabsContent value="scenes" className="mt-6">
+          <MovieScenesForm
+            initialScenes={movieData.scenes || []}
+            onScenesChange={handleScenesChange}
           />
         </TabsContent>
       </Tabs>
@@ -824,6 +894,12 @@ export default function MovieEditPage() {
           movieId={movieData.id}
           category={currentCategory}
           onImportSuccess={handleImportSuccess}
+          movieData={{
+            title: movieData.title,
+            year: movieData.releaseDate ? new Date(movieData.releaseDate).getFullYear() : undefined,
+            tmdb_id: movieData.tmdbId,
+            id: movieData.id,
+          }}
         />
       )}
     </div>

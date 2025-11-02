@@ -1,0 +1,17 @@
+{
+  "category": "media",
+  "movie_id": "tmdb-550",
+  "version": "1.0",
+  "exported_at": "2025-11-02T05:15:25.891491+00:00",
+  "data": {
+    "poster_url": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+    "backdrop_url": "https://image.tmdb.org/t/p/original/5TiwfWEaPSwD20uwXjCTUqpQX70.jpg",
+    "trailer_url": null,
+    "gallery_images": []
+  },
+  "metadata": {
+    "source": "tmdb",
+    "last_updated": "2025-11-02T05:15:25.891491+00:00",
+    "updated_by": "admin@iwm.com"
+  }
+}

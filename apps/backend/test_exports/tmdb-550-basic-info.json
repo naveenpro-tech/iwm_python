@@ -1,0 +1,33 @@
+{
+  "category": "basic_info",
+  "movie_id": "tmdb-550",
+  "version": "1.0",
+  "exported_at": "2025-11-02T05:15:25.752280+00:00",
+  "data": {
+    "title": "Fight Club",
+    "tagline": "Mischief. Mayhem. Soap.",
+    "year": "1999",
+    "release_date": "1999-10-15T00:00:00",
+    "runtime": 139,
+    "rating": null,
+    "language": "EN",
+    "country": null,
+    "overview": "A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground \"fight clubs\" forming in every town, until an eccentric gets in the way and ignites an out-of-control spiral toward oblivion.",
+    "budget": 63000000,
+    "revenue": 100853753,
+    "status": "Released",
+    "genres": [
+      "Drama",
+      "Thriller"
+    ],
+    "siddu_score": null,
+    "critics_score": null,
+    "imdb_rating": null,
+    "rotten_tomatoes_score": null
+  },
+  "metadata": {
+    "source": "tmdb",
+    "last_updated": "2025-11-02T05:15:25.752280+00:00",
+    "updated_by": "admin@iwm.com"
+  }
+}

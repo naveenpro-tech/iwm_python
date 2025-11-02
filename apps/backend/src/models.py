@@ -115,9 +115,32 @@ class Movie(Base):
     # Status
     status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="released")  # released, upcoming, in-production
 
-    # Rich content (admin-only authoring)
+    # Rich content (admin-only authoring) - Published
     trivia: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     timeline: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    awards: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+
+    # Rich content - Draft versions for draft/publish workflow
+    trivia_draft: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    trivia_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+
+    timeline_draft: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    timeline_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+
+    awards_draft: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    awards_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+
+    cast_crew_draft: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    cast_crew_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+
+    media_draft: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    media_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+
+    streaming_draft: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    streaming_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
+
+    basic_info_draft: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    basic_info_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")
 
     # Curation fields (Phase 2)
     curation_status: Mapped[str | None] = mapped_column(String(20), nullable=True, default="draft")

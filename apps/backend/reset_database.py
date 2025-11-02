@@ -16,11 +16,11 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres
 
 
 async def drop_all_tables():
-    """Drop all tables in the database"""
-    print("🔹 Dropping all tables...")
-    
+    """Drop all tables and enum types in the database"""
+    print("🔹 Dropping all tables and enum types...")
+
     engine = create_async_engine(DATABASE_URL, echo=False)
-    
+
     async with engine.begin() as conn:
         # Drop all tables
         await conn.execute(text("""
@@ -32,12 +32,23 @@ async def drop_all_tables():
                 END LOOP;
             END $$;
         """))
-        
+
+        # Drop all enum types
+        await conn.execute(text("""
+            DO $$ DECLARE
+                r RECORD;
+            BEGIN
+                FOR r IN (SELECT typname FROM pg_type WHERE typtype = 'e' AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')) LOOP
+                    EXECUTE 'DROP TYPE IF EXISTS ' || quote_ident(r.typname) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """))
+
         # Drop alembic version table
         await conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
-    
+
     await engine.dispose()
-    print("✅ All tables dropped")
+    print("✅ All tables and enum types dropped")
 
 
 async def run_migrations():

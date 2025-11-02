@@ -28,8 +28,10 @@ import {
   validateImportJSON,
   getCategoryDisplayName,
   getCategoryDescription,
+  getCategoryTemplate,
   type CategoryType,
   type ImportRequest,
+  type MovieContext,
 } from "@/lib/api/movie-export-import"
 
 interface ImportCategoryModalProps {
@@ -38,6 +40,7 @@ interface ImportCategoryModalProps {
   movieId: string
   category: CategoryType
   onImportSuccess?: () => void
+  movieData?: MovieContext
 }
 
 export function ImportCategoryModal({
@@ -46,6 +49,7 @@ export function ImportCategoryModal({
   movieId,
   category,
   onImportSuccess,
+  movieData,
 }: ImportCategoryModalProps) {
   const [jsonInput, setJsonInput] = useState("")
   const [validationResult, setValidationResult] = useState<{
@@ -140,21 +144,22 @@ export function ImportCategoryModal({
       })
 
       toast({
-        title: "Import Successful",
+        title: "Import Successful - Saved as Draft",
         description: response.message,
       })
 
-      if (onImportSuccess) {
-        onImportSuccess()
-      }
-
-      // Close modal after 2 seconds
+      // Close modal after 1 second to show success message
       setTimeout(() => {
         onClose()
         setJsonInput("")
         setValidationResult(null)
         setImportResult(null)
-      }, 2000)
+
+        // Refresh data after modal closes
+        if (onImportSuccess) {
+          onImportSuccess()
+        }
+      }, 1000)
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to import category"
@@ -175,23 +180,22 @@ export function ImportCategoryModal({
   }
 
   const handleCopyTemplate = () => {
-    const template = {
-      category: category,
-      movie_id: movieId,
-      version: "1.0",
-      data: {},
-      metadata: {
-        source: "llm-generated",
-        last_updated: new Date().toISOString(),
-      },
+    if (!movieData) {
+      toast({
+        title: "Error",
+        description: "Movie data not available for template generation",
+        variant: "destructive",
+      })
+      return
     }
 
+    const template = getCategoryTemplate(category, movieData)
     const templateString = JSON.stringify(template, null, 2)
     navigator.clipboard.writeText(templateString)
 
     toast({
       title: "Template Copied",
-      description: "JSON template copied to clipboard",
+      description: `Intelligent ${getCategoryDisplayName(category)} template copied to clipboard with movie context and instructions`,
     })
   }
 

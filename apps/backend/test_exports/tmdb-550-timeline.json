@@ -1,0 +1,14 @@
+{
+  "category": "timeline",
+  "movie_id": "tmdb-550",
+  "version": "1.0",
+  "exported_at": "2025-11-02T05:15:25.813298+00:00",
+  "data": {
+    "events": []
+  },
+  "metadata": {
+    "source": "manual",
+    "last_updated": "2025-11-02T05:15:25.813298+00:00",
+    "updated_by": "admin@iwm.com"
+  }
+}

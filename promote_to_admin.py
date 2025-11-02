@@ -4,7 +4,11 @@ This creates a UserRoleProfile with role_type='admin' and enabled=True.
 """
 import asyncio
 import sys
-sys.path.insert(0, 'apps/backend')
+import os
+
+# Add backend to path
+backend_path = os.path.join(os.path.dirname(__file__), 'apps', 'backend')
+sys.path.insert(0, backend_path)
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
