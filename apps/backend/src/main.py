@@ -70,6 +70,7 @@ from .routers import critic_verification as critic_verification_router  # Critic
 from .routers import users as users_router  # User profiles
 from .routers import roles as roles_router  # Role management (multi-role profiles)
 from .routers import user_roles as user_roles_router  # User roles switcher
+from .routers import tmdb_admin as tmdb_admin_router  # TMDB Admin - Browse and import movies
 
 
 """
@@ -295,6 +296,7 @@ api.include_router(talent_hub_router.router)  # GET /api/v1/talent-hub - Casting
 
 # Admin Features
 api.include_router(admin_router.router)  # POST /api/v1/admin/import - Admin panel
+api.include_router(tmdb_admin_router.router, prefix="/admin")  # GET /api/v1/admin/tmdb/* - TMDB browsing and import
 
 # Critic Hub Features
 api.include_router(critics_router.router)  # GET /api/v1/critics - Critic profiles
