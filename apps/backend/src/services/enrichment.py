@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import os
+import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -18,9 +17,10 @@ from ..models import (
     movie_genres,
 )
 from ..integrations.gemini_client import fetch_movie_enrichment_with_gemini
+from ..integrations.tmdb_client import search_movie as tmdb_search, TMDBError
 from ..config import settings
 
-TMDB_API_KEY = settings.tmdb_api_key
+logger = logging.getLogger(__name__)
 
 # Helpers ---------------------------------------------------------
 async def _get_or_create_genre(session: AsyncSession, name: str) -> Genre:
@@ -57,92 +57,27 @@ async def _get_or_create_platform(session: AsyncSession, key: str) -> StreamingP
 
 # TMDB fallback ---------------------------------------------------
 async def fetch_tmdb_enrichment(query: str) -> Optional[Dict[str, Any]]:
-    if not TMDB_API_KEY:
-        return None
-    async with httpx.AsyncClient(timeout=20) as client:
-        sr = await client.get(
-            "https://api.themoviedb.org/3/search/movie",
-            params={"api_key": TMDB_API_KEY, "query": query, "include_adult": "false"},
-        )
-        if sr.status_code != 200:
-            return None
-        res = sr.json()
-        results = res.get("results") or []
-        if not results:
-            return None
-        movie_id = results[0]["id"]
-        dr = await client.get(
-            f"https://api.themoviedb.org/3/movie/{movie_id}",
-            params={
-                "api_key": TMDB_API_KEY,
-                "append_to_response": "credits,keywords,release_dates,watch/providers,videos,reviews,similar",
-            },
-        )
-        if dr.status_code != 200:
-            return None
-        data = dr.json()
-        # Basic transform to our import schema
-        year = None
-        rel = data.get("release_date")
-        if rel:
-            try:
-                year = rel.split("-")[0]
-            except Exception:
-                year = None
-        genres = [g["name"] for g in (data.get("genres") or [])]
-        directors, writers, producers, cast = [], [], [], []
-        for crew in (data.get("credits", {}).get("crew") or []):
-            job = (crew.get("job") or "").lower()
-            person = {"name": crew.get("name"), "image": None}
-            if job == "director":
-                directors.append(person)
-            elif job in ("writer", "screenplay"): 
-                writers.append(person)
-            elif job == "producer":
-                producers.append(person)
-        for actor in (data.get("credits", {}).get("cast") or [])[:15]:
-            cast.append({"name": actor.get("name"), "character": actor.get("character"), "image": None})
-        # watch/providers
-        streaming = []
-        providers = (data.get("watch/providers", {}).get("results") or {}).get("US") or {}
-        for t in ("flatrate", "buy", "rent", "ads"):
-            for p in providers.get(t, []) or []:
-                streaming.append({
-                    "platform": p.get("provider_name") or "unknown",
-                    "region": "US",
-                    "type": "subscription" if t == "flatrate" else ("free" if t == "ads" else t),
-                    "price": None,
-                    "quality": None,
-                    "url": providers.get("link"),
-                })
-        enriched = {
-            "external_id": f"tmdb-{data.get('id')}",
-            "title": data.get("title") or data.get("name"),
-            "tagline": data.get("tagline"),
-            "year": year,
-            "release_date": data.get("release_date"),
-            "runtime": data.get("runtime"),
-            "rating": None,
-            "siddu_score": None,
-            "critics_score": None,
-            "imdb_rating": None,
-            "rotten_tomatoes_score": None,
-            "language": (data.get("original_language") or "").upper() or None,
-            "country": None,
-            "overview": data.get("overview"),
-            "poster_url": (f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get("poster_path") else None),
-            "backdrop_url": (f"https://image.tmdb.org/t/p/original{data.get('backdrop_path')}" if data.get("backdrop_path") else None),
-            "budget": data.get("budget"),
-            "revenue": data.get("revenue"),
-            "status": data.get("status"),
-            "genres": genres,
-            "directors": directors,
-            "writers": writers,
-            "producers": producers,
-            "cast": cast,
-            "streaming": streaming,
-        }
+    """
+    Fetch movie enrichment data from TMDB API.
+
+    Args:
+        query: Movie title to search for
+
+    Returns:
+        Enriched movie data dict or None if not found
+    """
+    try:
+        logger.debug(f"Fetching TMDB enrichment for: {query}")
+        enriched = await tmdb_search(query)
+        if enriched:
+            logger.debug(f"Successfully enriched from TMDB: {enriched.get('title')}")
         return enriched
+    except TMDBError as e:
+        logger.warning(f"TMDB enrichment failed: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error during TMDB enrichment: {str(e)}")
+        return None
 
 # Public API ------------------------------------------------------
 class EnrichmentProviderError(Exception):
