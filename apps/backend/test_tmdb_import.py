@@ -7,7 +7,12 @@ Tests importing well-known movies and verifies all fields are correctly populate
 
 import asyncio
 import sys
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv("apps/backend/.env")
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))

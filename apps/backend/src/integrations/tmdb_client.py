@@ -8,11 +8,16 @@ Supports both search-based and direct ID-based movie fetching.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, Optional
 
 import httpx
 
-from ..config import settings
+try:
+    from ..config import settings
+except ImportError:
+    # Fallback for direct script execution
+    from config import settings
 
 logger = logging.getLogger(__name__)
 
