@@ -165,19 +165,24 @@ async def fetch_movie_by_id(movie_id: int) -> Optional[Dict[str, Any]]:
 def _transform_tmdb_response(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Transform TMDB API response to our internal schema.
-    
+
     Args:
         data: Raw TMDB API response
-        
+
     Returns:
         Transformed movie data dict
     """
+    from datetime import datetime
+
     # Extract year from release_date
     year = None
     release_date = data.get("release_date")
+    release_date_obj = None
     if release_date:
         try:
             year = release_date.split("-")[0]
+            # Convert string date to datetime object
+            release_date_obj = datetime.strptime(release_date, "%Y-%m-%d").date()
         except Exception:
             pass
     
@@ -241,7 +246,7 @@ def _transform_tmdb_response(data: Dict[str, Any]) -> Dict[str, Any]:
         "title": data.get("title") or data.get("name"),
         "tagline": data.get("tagline"),
         "year": year,
-        "release_date": release_date,
+        "release_date": release_date_obj,
         "runtime": data.get("runtime"),
         "rating": None,
         "siddu_score": None,
