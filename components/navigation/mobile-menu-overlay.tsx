@@ -14,6 +14,8 @@ import {
 } from "./mobile-menu-items"
 import { layoutPatterns, type LayoutPattern } from "./mobile-menu-layout-patterns"
 import { cn } from "@/lib/utils"
+import { useFeatureFlags } from "@/hooks/use-feature-flags"
+import { filterMenuItemsByFlags } from "@/lib/feature-flags"
 
 interface MobileMenuOverlayProps {
   isOpen: boolean
@@ -87,6 +89,7 @@ export const MobileMenuOverlay: React.FC<MobileMenuOverlayProps> = ({ isOpen, on
   const [dynamicDataCache, setDynamicDataCache] = useState<Record<string, any>>({})
   const [currentPatternIndex, setCurrentPatternIndex] = useState(0)
   const [currentBgImageUrl, setCurrentBgImageUrl] = useState<string>("")
+  const { flags } = useFeatureFlags()
 
   const generateNewTileLayout = useCallback(
     (items: MobileMenuItem[], pattern: LayoutPattern, dataCache: Record<string, any>): CurrentLayoutItem[] => {
@@ -127,13 +130,16 @@ export const MobileMenuOverlay: React.FC<MobileMenuOverlayProps> = ({ isOpen, on
 
       const nextPatternIndex = (currentPatternIndex + 1) % layoutPatterns.length
       setCurrentPatternIndex(nextPatternIndex)
-      const newGeneratedLayout = generateNewTileLayout(mobileMenuItems, layoutPatterns[nextPatternIndex], newCache)
+
+      // Filter menu items based on feature flags
+      const filteredItems = filterMenuItemsByFlags(mobileMenuItems, flags)
+      const newGeneratedLayout = generateNewTileLayout(filteredItems, layoutPatterns[nextPatternIndex], newCache)
       setCurrentLayout(newGeneratedLayout)
 
       const nextBgIndex = Math.floor(Math.random() * backgroundImages.length)
       setCurrentBgImageUrl(backgroundImages[nextBgIndex])
     }
-  }, [isOpen, generateNewTileLayout]) // currentPatternIndex removed from deps
+  }, [isOpen, generateNewTileLayout, flags]) // Added flags to deps
 
   const categorizedLayout = useMemo(() => {
     const categories: Record<string, CurrentLayoutItem[]> = {}

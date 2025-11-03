@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Menu, X } from "lucide-react"
 import { NavLogo } from "./nav-logo"
@@ -11,6 +11,8 @@ import Link from "next/link"
 import { useMobile } from "@/hooks/use-mobile"
 import { usePathname } from "next/navigation"
 import { useRoleContext } from "@/context/RoleContext"
+import { useFeatureFlags } from "@/hooks/use-feature-flags"
+import { filterNavLinksByFlags } from "@/lib/feature-flags"
 
 const mainNavLinks = [
   { href: "/movies", label: "Movies" },
@@ -30,6 +32,12 @@ export function TopNavigation() {
   const isMobile = useMobile()
   const pathname = usePathname()
   const { activeRole, availableRoles } = useRoleContext()
+  const { flags } = useFeatureFlags()
+
+  // Filter nav links based on feature flags
+  const filteredNavLinks = useMemo(() => {
+    return filterNavLinksByFlags(mainNavLinks, flags)
+  }, [flags])
 
   const ROLE_ICONS: Record<string, string> = {
     lover: "❤️",
@@ -93,7 +101,7 @@ export function TopNavigation() {
               <div className="hidden md:flex items-center space-x-1 lg:space-x-2 relative">
                 {" "}
                 {/* Added position: relative */}
-                {mainNavLinks.map((link) => {
+                {filteredNavLinks.map((link) => {
                   // More precise active check, especially for home "/"
                   const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href))
 
@@ -193,7 +201,7 @@ export function TopNavigation() {
             className="fixed inset-0 z-30 bg-[#101010] pt-16 md:hidden overflow-y-auto"
           >
             <div className="flex flex-col p-4 space-y-2">
-              {mainNavLinks.map((link) => (
+              {filteredNavLinks.map((link) => (
                 <Link key={link.href} href={link.href} passHref legacyBehavior>
                   <a
                     onClick={() => setIsMobileMenuOpen(false)}

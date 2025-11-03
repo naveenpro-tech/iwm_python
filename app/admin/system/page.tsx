@@ -37,6 +37,10 @@ const ScheduledTasksManager = dynamic(
   () => import("@/components/admin/system/scheduled-tasks-manager").then((mod) => mod.ScheduledTasksManager),
   { ssr: false },
 )
+const FeatureManagement = dynamic(
+  () => import("@/components/admin/system/feature-management").then((mod) => mod.FeatureManagement),
+  { ssr: false },
+)
 
 export default function SystemPage() {
   return (
@@ -44,6 +48,7 @@ export default function SystemPage() {
       <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">System Management</h1>
 
       <div className="space-y-6 md:space-y-8">
+        <FeatureManagement />
         <div className="hidden md:block">
           <PlatformHealthDashboard />
         </div>

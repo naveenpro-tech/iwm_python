@@ -1308,3 +1308,41 @@ class CriticAnalytics(Base):
 
     # Relationships
     critic: Mapped["CriticProfile"] = relationship(back_populates="analytics", lazy="selectin")
+
+
+class FeatureFlag(Base):
+    """Feature flag for controlling application features"""
+    __tablename__ = "feature_flags"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    feature_key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    feature_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    category: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    display_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0, index=True)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_by: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary with all fields"""
+        return {
+            "id": self.id,
+            "feature_key": self.feature_key,
+            "feature_name": self.feature_name,
+            "is_enabled": self.is_enabled,
+            "category": self.category,
+            "description": self.description,
+            "display_order": self.display_order,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "updated_by": self.updated_by,
+        }
+
+    def to_public_dict(self) -> dict:
+        """Convert to public dictionary (minimal info)"""
+        return {
+            "feature_key": self.feature_key,
+            "is_enabled": self.is_enabled,
+        }

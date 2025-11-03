@@ -73,6 +73,7 @@ from .routers import user_roles as user_roles_router  # User roles switcher
 from .routers import tmdb_admin as tmdb_admin_router  # TMDB Admin - Browse and import movies
 from .routers import movie_export_import as movie_export_import_router  # Movie Export/Import - Categorized data enrichment
 from .routers import award_ceremonies as award_ceremonies_router  # Award Ceremonies - Indian and international awards
+from .routers import feature_flags as feature_flags_router  # Feature Flags - Admin feature toggle system
 
 
 """
@@ -301,6 +302,7 @@ api.include_router(talent_hub_router.router)  # GET /api/v1/talent-hub - Casting
 api.include_router(admin_router.router)  # POST /api/v1/admin/import - Admin panel
 api.include_router(tmdb_admin_router.router, prefix="/admin")  # GET /api/v1/admin/tmdb/* - TMDB browsing and import
 api.include_router(movie_export_import_router.router)  # GET/POST /api/v1/admin/movies/{id}/export/* - Movie export/import
+api.include_router(feature_flags_router.router)  # GET/PUT /api/v1/feature-flags - Feature toggle system
 
 # Critic Hub Features
 api.include_router(critics_router.router)  # GET /api/v1/critics - Critic profiles

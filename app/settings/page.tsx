@@ -14,6 +14,7 @@ import { TalentSettings } from "@/components/settings/TalentSettings"
 import { IndustryProSettings } from "@/components/settings/IndustryProSettings"
 import { RoleManagement } from "@/components/settings/RoleManagement"
 import { useRoleContext } from "@/context/RoleContext"
+import { useFeatureFlags } from "@/hooks/use-feature-flags"
 import { User, Lock, Eye, Palette, Sliders, Bell, Star, Sparkles, Briefcase, Shield } from "lucide-react"
 
 /**
@@ -24,9 +25,12 @@ import { User, Lock, Eye, Palette, Sliders, Bell, Star, Sparkles, Briefcase, Shi
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
   const { availableRoles } = useRoleContext()
+  const { flags, isFeatureEnabled } = useFeatureFlags()
 
   // Determine how many tabs we'll have
-  const baseTabCount = 7 // Profile, Account, Privacy, Display, Preferences, Notifications, Roles
+  let baseTabCount = 6 // Profile, Account, Privacy, Display, Preferences, Notifications
+  if (isFeatureEnabled("settings_roles")) baseTabCount++ // Add Roles tab if enabled
+
   const roleTabCount = availableRoles?.filter(r => ["critic", "talent", "industry"].includes(r.role) && r.enabled).length || 0
   const totalTabCount = baseTabCount + roleTabCount
   const gridCols = totalTabCount <= 7 ? "grid-cols-7" : totalTabCount <= 9 ? "grid-cols-9" : "grid-cols-10"
@@ -86,16 +90,19 @@ export default function SettingsPage() {
               <span className="hidden sm:inline">Notify</span>
             </TabsTrigger>
 
-            <TabsTrigger
-              value="roles"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700"
-            >
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Roles</span>
-            </TabsTrigger>
+            {/* Roles Tab - Only show if feature is enabled */}
+            {isFeatureEnabled("settings_roles") && (
+              <TabsTrigger
+                value="roles"
+                className="flex items-center gap-2 data-[state=active]:bg-gray-700"
+              >
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Roles</span>
+              </TabsTrigger>
+            )}
 
-            {/* Role-Specific Tabs - Only show if role is enabled */}
-            {availableRoles?.some(r => r.role === "critic" && r.enabled) && (
+            {/* Role-Specific Tabs - Only show if role is enabled AND feature is enabled */}
+            {isFeatureEnabled("settings_critic") && availableRoles?.some(r => r.role === "critic" && r.enabled) && (
               <TabsTrigger
                 value="critic"
                 className="flex items-center gap-2 data-[state=active]:bg-gray-700"
@@ -105,7 +112,7 @@ export default function SettingsPage() {
               </TabsTrigger>
             )}
 
-            {availableRoles?.some(r => r.role === "talent" && r.enabled) && (
+            {isFeatureEnabled("settings_talent") && availableRoles?.some(r => r.role === "talent" && r.enabled) && (
               <TabsTrigger
                 value="talent"
                 className="flex items-center gap-2 data-[state=active]:bg-gray-700"
@@ -115,7 +122,7 @@ export default function SettingsPage() {
               </TabsTrigger>
             )}
 
-            {availableRoles?.some(r => r.role === "industry" && r.enabled) && (
+            {isFeatureEnabled("settings_industry") && availableRoles?.some(r => r.role === "industry" && r.enabled) && (
               <TabsTrigger
                 value="industry"
                 className="flex items-center gap-2 data-[state=active]:bg-gray-700"
