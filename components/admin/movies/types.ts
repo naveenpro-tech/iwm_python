@@ -75,6 +75,12 @@ export interface AwardInfo {
   year: number
   category: string
   status: "Winner" | "Nominee"
+  // New fields for Indian awards support
+  ceremony_id?: string // external_id from award_ceremonies table
+  country?: string // India, USA, UK, International
+  language?: string // Hindi, Tamil, Telugu, Malayalam, etc.
+  organization?: string // The Times Group, Government of India, etc.
+  prestige_level?: string // national, state, industry, international
 }
 
 export interface TriviaItem {

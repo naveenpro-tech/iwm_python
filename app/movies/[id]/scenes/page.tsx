@@ -8,6 +8,8 @@ import { Loader2, Play, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
+import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
+import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
 
 interface Scene {
   id: string
@@ -36,14 +38,24 @@ export default function ScenesPage() {
   const [total, setTotal] = useState(0)
   const [limit] = useState(12)
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null)
+  const [movieTitle, setMovieTitle] = useState("Movie")
 
   const totalPages = Math.ceil(total / limit)
 
   useEffect(() => {
-    const fetchScenes = async () => {
+    const fetchMovieAndScenes = async () => {
       setLoading(true)
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+
+        // Fetch movie data for title
+        const movieResponse = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
+        if (movieResponse.ok) {
+          const movieData = await movieResponse.json()
+          setMovieTitle(movieData.title || "Movie")
+        }
+
+        // Fetch scenes
         const response = await fetch(`${apiBase}/api/v1/scene-explorer/by-movie/${movieId}?page=${page}&limit=${limit}`)
 
         if (!response.ok) {
@@ -71,32 +83,43 @@ export default function ScenesPage() {
       }
     }
 
-    fetchScenes()
+    fetchMovieAndScenes()
   }, [movieId, page, limit, toast])
 
   if (loading && scenes.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-[#141414]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#00BFFF]" />
       </div>
     )
   }
 
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Movie Scenes</h1>
-        <p className="text-muted-foreground">Explore key scenes from this movie</p>
-      </div>
+  const breadcrumbItems = [
+    { label: "Movies", href: "/movies" },
+    { label: movieTitle, href: `/movies/${movieId}` },
+    { label: "Scenes", href: `/movies/${movieId}/scenes` },
+  ]
 
-      {/* Scenes Grid */}
-      {scenes.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">No scenes available for this movie</p>
-          </CardContent>
-        </Card>
-      ) : (
+  return (
+    <div className="min-h-screen bg-[#141414] text-gray-100">
+      <MovieDetailsNavigation movieId={movieId} movieTitle={movieTitle} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BreadcrumbNavigation items={breadcrumbItems} />
+
+        <div className="my-8">
+          <h1 className="text-4xl font-bold text-white mb-2">{movieTitle}: Scenes</h1>
+          <p className="text-gray-400 text-lg">Explore key scenes from this movie</p>
+        </div>
+
+        {/* Scenes Grid */}
+        {scenes.length === 0 ? (
+          <Card className="bg-[#1C1C1C] border-gray-700">
+            <CardContent className="pt-6">
+              <p className="text-center text-gray-400">No scenes available for this movie</p>
+            </CardContent>
+          </Card>
+        ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
             <AnimatePresence>
@@ -216,6 +239,7 @@ export default function ScenesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   )
 }

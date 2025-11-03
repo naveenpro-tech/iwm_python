@@ -3776,6 +3776,376 @@
         }
       }
     },
+    "/api/v1/award-ceremonies": {
+      "get": {
+        "tags": [
+          "award-ceremonies"
+        ],
+        "summary": "List Award Ceremonies",
+        "description": "List all award ceremonies with optional filtering.\n\nSupports filtering by:\n- Country (India, USA, UK, International)\n- Language (Hindi, Tamil, Telugu, Malayalam, English, etc.)\n- Category Type (Film, Television, Music, OTT)\n- Prestige Level (national, state, industry, international)\n- Active Status (true/false)\n\nResults are paginated using limit and offset parameters.",
+        "operationId": "list_award_ceremonies_api_v1_award_ceremonies_get",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by country (e.g., 'India', 'USA')",
+              "title": "Country"
+            },
+            "description": "Filter by country (e.g., 'India', 'USA')"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by language (e.g., 'Hindi', 'Tamil')",
+              "title": "Language"
+            },
+            "description": "Filter by language (e.g., 'Hindi', 'Tamil')"
+          },
+          {
+            "name": "category_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by category type (e.g., 'Film', 'Television')",
+              "title": "Category Type"
+            },
+            "description": "Filter by category type (e.g., 'Film', 'Television')"
+          },
+          {
+            "name": "prestige_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by prestige level (e.g., 'national', 'industry')",
+              "title": "Prestige Level"
+            },
+            "description": "Filter by prestige level (e.g., 'national', 'industry')"
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by active status",
+              "title": "Is Active"
+            },
+            "description": "Filter by active status"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of results to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of results to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardCeremoniesListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/award-ceremonies/stats": {
+      "get": {
+        "tags": [
+          "award-ceremonies"
+        ],
+        "summary": "Get Award Ceremonies Stats",
+        "description": "Get statistics about award ceremonies.\n\nReturns counts grouped by:\n- Country\n- Language\n- Category Type\n- Prestige Level",
+        "operationId": "get_award_ceremonies_stats_api_v1_award_ceremonies_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardCeremoniesStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/award-ceremonies/{external_id}": {
+      "get": {
+        "tags": [
+          "award-ceremonies"
+        ],
+        "summary": "Get Award Ceremony",
+        "description": "Get a single award ceremony by its external_id.\n\nArgs:\n    external_id: Unique identifier (e.g., 'filmfare-awards-hindi', 'national-film-awards')\n\nReturns:\n    Award ceremony details\n\nRaises:\n    404: Award ceremony not found",
+        "operationId": "get_award_ceremony_api_v1_award_ceremonies__external_id__get",
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardCeremonyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/award-ceremonies/admin": {
+      "post": {
+        "tags": [
+          "award-ceremonies",
+          "award-ceremonies-admin"
+        ],
+        "summary": "Create Award Ceremony",
+        "description": "Create a new award ceremony.\n\n**Requires admin role.**\n\nArgs:\n    ceremony_data: Award ceremony data\n\nReturns:\n    Created award ceremony\n\nRaises:\n    403: User is not an admin\n    400: Invalid data or external_id already exists",
+        "operationId": "create_award_ceremony_api_v1_award_ceremonies_admin_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AwardCeremonyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardCeremonyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/award-ceremonies/admin/{external_id}": {
+      "put": {
+        "tags": [
+          "award-ceremonies",
+          "award-ceremonies-admin"
+        ],
+        "summary": "Update Award Ceremony",
+        "description": "Update an existing award ceremony.\n\n**Requires admin role.**\n\nArgs:\n    external_id: Unique identifier of the ceremony to update\n    ceremony_data: Updated ceremony data (only provided fields will be updated)\n\nReturns:\n    Updated award ceremony\n\nRaises:\n    403: User is not an admin\n    404: Award ceremony not found\n    400: Invalid data",
+        "operationId": "update_award_ceremony_api_v1_award_ceremonies_admin__external_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AwardCeremonyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardCeremonyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "award-ceremonies",
+          "award-ceremonies-admin"
+        ],
+        "summary": "Delete Award Ceremony",
+        "description": "Delete an award ceremony.\n\n**Requires admin role.**\n\nArgs:\n    external_id: Unique identifier of the ceremony to delete\n\nReturns:\n    Success message\n\nRaises:\n    403: User is not an admin\n    404: Award ceremony not found",
+        "operationId": "delete_award_ceremony_api_v1_award_ceremonies_admin__external_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/festivals": {
       "get": {
         "tags": [
@@ -9377,6 +9747,592 @@
         "title": "AuthMeResponse",
         "description": "Enhanced /me endpoint response with roles and profile presence information.\n\nFields:\n- user_id: Internal database user ID\n- external_id: External user identifier (email-based)\n- email: User's email address\n- username: Username derived from email prefix\n- name: User's full name\n- avatar_url: URL to user's avatar image\n- roles: List of roles assigned to this user (e.g., [\"User\", \"Critic\", \"Talent\"])\n- has_critic_profile: Whether user has an active CriticProfile\n- has_talent_profile: Whether user has an active TalentProfile (future)\n- has_industry_profile: Whether user has an active IndustryProfile (future)\n- default_role: User's default role for profile display (future, from user_role_profiles)"
       },
+      "AwardCeremoniesListResponse": {
+        "properties": {
+          "ceremonies": {
+            "items": {
+              "$ref": "#/components/schemas/AwardCeremonyResponse"
+            },
+            "type": "array",
+            "title": "Ceremonies"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ceremonies",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AwardCeremoniesListResponse",
+        "description": "Model for paginated list of award ceremonies."
+      },
+      "AwardCeremoniesStatsResponse": {
+        "properties": {
+          "total_ceremonies": {
+            "type": "integer",
+            "title": "Total Ceremonies"
+          },
+          "by_country": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Country"
+          },
+          "by_language": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Language"
+          },
+          "by_category_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Category Type"
+          },
+          "by_prestige_level": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Prestige Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_ceremonies",
+          "by_country",
+          "by_language",
+          "by_category_type",
+          "by_prestige_level"
+        ],
+        "title": "AwardCeremoniesStatsResponse",
+        "description": "Model for award ceremonies statistics."
+      },
+      "AwardCeremonyCreate": {
+        "properties": {
+          "external_id": {
+            "type": "string",
+            "title": "External Id",
+            "description": "Unique identifier (e.g., 'filmfare-awards-hindi')"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Full name of the award"
+          },
+          "short_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Name",
+            "description": "Short name or abbreviation"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Description of the award"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url",
+            "description": "URL to the award logo"
+          },
+          "background_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Image Url",
+            "description": "URL to background image"
+          },
+          "current_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Year",
+            "description": "Current year of the award"
+          },
+          "next_ceremony_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Ceremony Date",
+            "description": "Date of next ceremony"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country",
+            "description": "Country (e.g., 'India', 'USA', 'International')"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language",
+            "description": "Language (e.g., 'Hindi', 'Tamil', 'English')"
+          },
+          "category_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Type",
+            "description": "Category type (e.g., 'Film', 'Television', 'Music', 'OTT')"
+          },
+          "prestige_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prestige Level",
+            "description": "Prestige level (e.g., 'national', 'state', 'industry', 'international')"
+          },
+          "established_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Established Year",
+            "description": "Year the award was established"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "description": "Whether the award is currently active",
+            "default": true
+          },
+          "display_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Order",
+            "description": "Display order for sorting"
+          }
+        },
+        "type": "object",
+        "required": [
+          "external_id",
+          "name"
+        ],
+        "title": "AwardCeremonyCreate",
+        "description": "Model for creating a new award ceremony."
+      },
+      "AwardCeremonyResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "short_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "background_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Image Url"
+          },
+          "current_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Year"
+          },
+          "next_ceremony_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Ceremony Date"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "category_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Type"
+          },
+          "prestige_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prestige Level"
+          },
+          "established_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Established Year"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "display_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "name"
+        ],
+        "title": "AwardCeremonyResponse",
+        "description": "Model for award ceremony response."
+      },
+      "AwardCeremonyUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "short_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "background_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Image Url"
+          },
+          "current_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Year"
+          },
+          "next_ceremony_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Ceremony Date"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "category_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Type"
+          },
+          "prestige_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prestige Level"
+          },
+          "established_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Established Year"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "display_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Order"
+          }
+        },
+        "type": "object",
+        "title": "AwardCeremonyUpdate",
+        "description": "Model for updating an award ceremony (all fields optional)."
+      },
       "AwardSimpleIn": {
         "properties": {
           "name": {
@@ -12385,6 +13341,25 @@
           "answers"
         ],
         "title": "SubmitAttemptBody"
+      },
+      "SuccessResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "SuccessResponse",
+        "description": "Generic success response."
       },
       "TMDBExistsResponse": {
         "properties": {

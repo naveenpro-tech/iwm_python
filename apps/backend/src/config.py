@@ -12,7 +12,12 @@ class Settings(BaseSettings):
     # Example: postgresql+asyncpg://user:pass@localhost:5432/iwm
     database_url: str | None = Field(default=None)
     export_openapi_on_startup: bool = Field(default=True)
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"])  # bun dev ports
+    cors_origins: list[str] = Field(default_factory=lambda: [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://192.168.0.194:3000",  # Mobile access on local network
+        "http://192.168.0.194:5173",  # Alternative port for mobile
+    ])  # Frontend ports (desktop + mobile network access)
 
     # JWT/Auth settings
     jwt_secret_key: str = Field(default=os.getenv("JWT_SECRET_KEY", "dev-secret-change-me"))

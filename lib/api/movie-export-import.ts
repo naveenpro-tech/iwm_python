@@ -382,27 +382,90 @@ Provide 5-10 trivia items with questions, answers, and explanations.`,
         awards: [
           {
             id: "award-1",
-            ceremony: "Academy Awards",
+            name: "Academy Awards",
+            ceremony_id: "academy-awards",
             year: 2024,
             category: "Best Picture",
-            nominee: "Movie Title",
-            result: "Nominee",
-            notes: "Additional notes about the nomination",
+            status: "Nominee",
+            country: "USA",
+            language: "English",
+            prestige_level: "international",
           },
           {
             id: "award-2",
-            ceremony: "Golden Globe Awards",
+            name: "Golden Globe Awards",
+            ceremony_id: "golden-globe-awards",
             year: 2024,
             category: "Best Motion Picture - Drama",
-            nominee: "Movie Title",
-            result: "Winner",
-            notes: "Won the award",
+            status: "Winner",
+            country: "USA",
+            language: "English",
+            prestige_level: "international",
+          },
+          {
+            id: "award-3",
+            name: "National Film Awards",
+            ceremony_id: "national-film-awards",
+            year: 2024,
+            category: "Best Feature Film",
+            status: "Winner",
+            country: "India",
+            language: "Multi-language",
+            prestige_level: "national",
+          },
+          {
+            id: "award-4",
+            name: "Filmfare Awards",
+            ceremony_id: "filmfare-awards-hindi",
+            year: 2024,
+            category: "Best Film",
+            status: "Nominee",
+            country: "India",
+            language: "Hindi",
+            prestige_level: "industry",
+          },
+          {
+            id: "award-5",
+            name: "IIFA Awards",
+            ceremony_id: "iifa-awards",
+            year: 2024,
+            category: "Best Picture",
+            status: "Winner",
+            country: "India",
+            language: "Hindi",
+            prestige_level: "international",
+          },
+          {
+            id: "award-6",
+            name: "Filmfare Awards South",
+            ceremony_id: "filmfare-awards-tamil",
+            year: 2024,
+            category: "Best Film - Tamil",
+            status: "Nominee",
+            country: "India",
+            language: "Tamil",
+            prestige_level: "industry",
           },
         ],
       },
       instructions: `Research award nominations and wins for "${movieData.title}" (${movieData.year}).
-Include major ceremonies: Academy Awards, Golden Globes, BAFTA, Cannes, Filmfare, etc.
-Result should be "Winner" or "Nominee". Include all major nominations and wins.`,
+Include major ceremonies from both international and Indian awards:
+- International: Academy Awards, Golden Globes, BAFTA, Cannes Film Festival
+- Indian National: National Film Awards
+- Indian Industry: Filmfare Awards (Hindi/Tamil/Telugu/Malayalam/Kannada), IIFA Awards, Screen Awards, Zee Cine Awards
+- Regional: State Film Awards (Kerala, Tamil Nadu, Karnataka, etc.)
+
+For each award, provide:
+- name: Full award ceremony name (e.g., "Filmfare Awards", "National Film Awards")
+- ceremony_id: External ID from award ceremonies database (e.g., "filmfare-awards-hindi", "national-film-awards")
+- year: Year of the award ceremony
+- category: Specific category (e.g., "Best Film", "Best Actor", "Best Director")
+- status: "Winner" or "Nominee"
+- country: Country of the award (e.g., "India", "USA", "UK", "International")
+- language: Language category if applicable (e.g., "Hindi", "Tamil", "Telugu", "Multi-language", "English")
+- prestige_level: "national", "state", "industry", or "international"
+
+Include all major nominations and wins. For Indian films, prioritize Indian awards.`,
     },
 
     media: {

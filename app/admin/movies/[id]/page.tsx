@@ -7,7 +7,7 @@ import { MovieBasicInfoForm } from "@/components/admin/movies/forms/movie-basic-
 import { MovieMediaForm } from "@/components/admin/movies/forms/movie-media-form"
 import { MovieCastCrewForm } from "@/components/admin/movies/forms/movie-cast-crew-form"
 import { MovieStreamingForm } from "@/components/admin/movies/forms/movie-streaming-form"
-import { MovieAwardsForm } from "@/components/admin/movies/forms/movie-awards-form"
+import { MovieAwardsFormEnhanced } from "@/components/admin/movies/forms/movie-awards-form-enhanced"
 import { MovieTriviaForm } from "@/components/admin/movies/forms/movie-trivia-form" // New import
 import { MovieTimelineForm } from "@/components/admin/movies/forms/movie-timeline-form" // New import
 import { MovieScenesForm } from "@/components/admin/movies/forms/movie-scenes-form" // New import
@@ -106,6 +106,12 @@ export default function MovieEditPage() {
       year: a.year,
       category: a.category,
       status: a.status || "Nominee",
+      // New fields for Indian awards support
+      ceremony_id: a.ceremony_id,
+      country: a.country,
+      language: a.language,
+      organization: a.organization,
+      prestige_level: a.prestige_level,
     }))
 
     const m: Movie = {
@@ -822,7 +828,7 @@ export default function MovieEditPage() {
               onImportClick={() => handleOpenImportModal("awards")}
             />
           )}
-          <MovieAwardsForm initialAwards={movieData.awards || []} onAwardsChange={handleAwardsChange} />
+          <MovieAwardsFormEnhanced initialAwards={movieData.awards || []} onAwardsChange={handleAwardsChange} />
         </TabsContent>
 
         <TabsContent value="trivia" className="mt-6">

@@ -1,0 +1,300 @@
+/**
+ * Profile API Client
+ * Fetches user profile data from the FastAPI backend
+ */
+
+import { getAccessToken } from "@/lib/auth"
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  }
+  const token = getAccessToken()
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+  return headers
+}
+
+/**
+ * Get user profile data by username
+ */
+export async function getUserProfile(username: string) {
+  const response = await fetch(`${API_BASE}/api/v1/users/${username}`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user profile: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Update user profile
+ */
+export async function updateUserProfile(userId: string, data: {
+  name?: string
+  bio?: string
+  location?: string
+  website?: string
+}) {
+  const response = await fetch(`${API_BASE}/api/v1/users/${userId}`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to update profile: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's watchlist
+ */
+export async function getUserWatchlist(userId: string, page: number = 1, limit: number = 100) {
+  const response = await fetch(
+    `${API_BASE}/api/v1/watchlist?userId=${userId}&page=${page}&limit=${limit}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch watchlist: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's favorites
+ */
+export async function getUserFavorites(userId: string, page: number = 1, limit: number = 100) {
+  const response = await fetch(
+    `${API_BASE}/api/v1/favorites?userId=${userId}&type=movie&page=${page}&limit=${limit}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch favorites: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's collections
+ */
+export async function getUserCollections(userId: string, page: number = 1, limit: number = 100) {
+  const response = await fetch(
+    `${API_BASE}/api/v1/collections?userId=${userId}&page=${page}&limit=${limit}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch collections: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's reviews
+ */
+export async function getUserReviews(userId: string, page: number = 1, limit: number = 100) {
+  const response = await fetch(
+    `${API_BASE}/api/v1/reviews?userId=${userId}&page=${page}&limit=${limit}&sortBy=date_desc`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch reviews: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's viewing history
+ * Note: This endpoint may need to be created in the backend
+ */
+export async function getUserHistory(userId: string, page: number = 1, limit: number = 100) {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/v1/watchlist?userId=${userId}&status=watched&page=${page}&limit=${limit}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch history: ${response.statusText}`)
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error("Error fetching user history:", error)
+    return []
+  }
+}
+
+/**
+ * Get user's activity feed
+ * Note: This endpoint may need to be created in the backend
+ */
+export async function getUserActivity(userId: string, page: number = 1, limit: number = 20) {
+  try {
+    // For now, we'll combine recent reviews and watchlist additions
+    const [reviews, watchlist] = await Promise.all([
+      getUserReviews(userId, 1, 10),
+      getUserWatchlist(userId, 1, 10),
+    ])
+
+    // Transform into activity feed format
+    const activities = [
+      ...reviews.map((review: any) => ({
+        id: `review-${review.id}`,
+        type: "review",
+        timestamp: review.createdAt || review.date,
+        data: review,
+      })),
+      ...watchlist.map((item: any) => ({
+        id: `watchlist-${item.id}`,
+        type: "watchlist",
+        timestamp: item.dateAdded,
+        data: item,
+      })),
+    ]
+
+    // Sort by timestamp descending
+    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+    return activities.slice(0, limit)
+  } catch (error) {
+    console.error("Error fetching user activity:", error)
+    return []
+  }
+}
+
+/**
+ * Get user stats (counts for reviews, watchlist, favorites, collections)
+ */
+export async function getUserStats(userId: string) {
+  try {
+    const [reviews, watchlist, favorites, collections] = await Promise.all([
+      getUserReviews(userId, 1, 1),
+      getUserWatchlist(userId, 1, 1),
+      getUserFavorites(userId, 1, 1),
+      getUserCollections(userId, 1, 1),
+    ])
+
+    return {
+      reviews: reviews.length || 0,
+      watchlist: watchlist.length || 0,
+      favorites: favorites.length || 0,
+      collections: collections.length || 0,
+      following: 0, // TODO: Implement following/followers
+      followers: 0,
+    }
+  } catch (error) {
+    console.error("Error fetching user stats:", error)
+    return {
+      reviews: 0,
+      watchlist: 0,
+      favorites: 0,
+      collections: 0,
+      following: 0,
+      followers: 0,
+    }
+  }
+}
+
+/**
+ * Add movie to watchlist
+ */
+export async function addToWatchlist(movieId: string, userId: string, priority: string = "medium") {
+  const response = await fetch(`${API_BASE}/api/v1/watchlist`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      movieId,
+      userId,
+      status: "want-to-watch",
+      priority,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to add to watchlist: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Remove movie from watchlist
+ */
+export async function removeFromWatchlist(watchlistId: string) {
+  const response = await fetch(`${API_BASE}/api/v1/watchlist/${watchlistId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to remove from watchlist: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Mark watchlist item as watched
+ */
+export async function markAsWatched(watchlistId: string) {
+  const response = await fetch(`${API_BASE}/api/v1/watchlist/${watchlistId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "watched",
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to mark as watched: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+

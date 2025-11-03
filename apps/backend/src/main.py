@@ -72,6 +72,7 @@ from .routers import roles as roles_router  # Role management (multi-role profil
 from .routers import user_roles as user_roles_router  # User roles switcher
 from .routers import tmdb_admin as tmdb_admin_router  # TMDB Admin - Browse and import movies
 from .routers import movie_export_import as movie_export_import_router  # Movie Export/Import - Categorized data enrichment
+from .routers import award_ceremonies as award_ceremonies_router  # Award Ceremonies - Indian and international awards
 
 
 """
@@ -282,6 +283,7 @@ api.include_router(user_roles_router.router)  # GET/POST /api/v1/users/me/roles 
 # Industry Features
 api.include_router(box_office_router.router)  # GET /api/v1/box-office - Box office data
 api.include_router(awards_router.router)  # GET /api/v1/awards - Award ceremonies
+api.include_router(award_ceremonies_router.router)  # GET /api/v1/award-ceremonies - Award ceremonies management (Indian & International)
 api.include_router(festivals_router.router)  # GET /api/v1/festivals - Film festivals
 
 # Content Features

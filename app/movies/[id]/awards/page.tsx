@@ -1,13 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Award, Trophy, Star, Calendar, Loader2 } from "lucide-react"
+import { Award, Trophy, Star, Calendar, Loader2, Search, SortAsc, SortDesc } from "lucide-react"
 import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
 import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AwardCard } from "@/components/movies/award-card"
+import { AwardsStatisticsCards } from "@/components/movies/awards-statistics-cards"
+import { AwardsFilterSidebar, type AwardsFilters } from "@/components/movies/awards-filter-sidebar"
+import { fetchAllAwardCeremonies, type AwardCeremony } from "@/lib/api/award-ceremonies"
 
 interface AwardItem {
   id: string
@@ -15,6 +20,10 @@ interface AwardItem {
   year: number
   category: string
   status: "Winner" | "Nominee"
+  ceremony_id?: string
+  country?: string
+  language?: string
+  prestige_level?: string
   recipient?: string
   notes?: string
 }
@@ -31,29 +40,71 @@ export default function MovieAwardsPage() {
 
   const [movie, setMovie] = useState<Movie | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedYear, setSelectedYear] = useState<number | null>(null)
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  const [ceremonies, setCeremonies] = useState<AwardCeremony[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState<string>("year-desc")
+  const [isMobile, setIsMobile] = useState(false)
 
+  // Filters state
+  const [filters, setFilters] = useState<AwardsFilters>({
+    country: "All",
+    ceremonies: [],
+    language: "All",
+    categoryType: "All",
+    yearRange: [1900, new Date().getFullYear()],
+    status: "All",
+  })
+
+  // Check if mobile on mount and resize
   useEffect(() => {
-    const fetchMovieAwards = async () => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  // Fetch movie awards and ceremonies
+  useEffect(() => {
+    const fetchData = async () => {
       setLoading(true)
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-        const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
 
-        if (!response.ok) {
-          console.warn(`Movie API returned ${response.status}`)
+        // Fetch movie data
+        const movieResponse = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
+        if (!movieResponse.ok) {
+          console.warn(`Movie API returned ${movieResponse.status}`)
           setMovie(null)
           setLoading(false)
           return
         }
 
-        const data = await response.json()
+        const movieData = await movieResponse.json()
+        const awards = movieData.awards || []
+
+        // Set initial year range based on awards
+        if (awards.length > 0) {
+          const years = awards.map((a: AwardItem) => a.year)
+          const minYear = Math.min(...years)
+          const maxYear = Math.max(...years)
+          setFilters((prev) => ({ ...prev, yearRange: [minYear, maxYear] }))
+        }
+
         setMovie({
-          id: data.id || movieId,
-          title: data.title || "Movie",
-          awards: data.awards || [],
+          id: movieData.id || movieId,
+          title: movieData.title || "Movie",
+          awards,
         })
+
+        // Fetch award ceremonies for logos
+        try {
+          const ceremoniesData = await fetchAllAwardCeremonies()
+          setCeremonies(ceremoniesData)
+        } catch (error) {
+          console.error("Failed to fetch ceremonies:", error)
+        }
       } catch (error) {
         console.error("Failed to fetch movie awards:", error)
         setMovie(null)
@@ -62,8 +113,84 @@ export default function MovieAwardsPage() {
       }
     }
 
-    fetchMovieAwards()
+    fetchData()
   }, [movieId])
+
+  // Filter and sort awards
+  const filteredAndSortedAwards = useMemo(() => {
+    if (!movie) return []
+
+    let filtered = movie.awards.filter((award) => {
+      // Country filter
+      if (filters.country !== "All" && award.country !== filters.country) return false
+
+      // Ceremonies filter
+      if (filters.ceremonies.length > 0 && !filters.ceremonies.includes(award.name)) return false
+
+      // Language filter
+      if (filters.language !== "All" && award.language !== filters.language) return false
+
+      // Year range filter
+      if (award.year < filters.yearRange[0] || award.year > filters.yearRange[1]) return false
+
+      // Status filter
+      if (filters.status !== "All" && award.status !== filters.status) return false
+
+      // Search query filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const nameMatch = award.name.toLowerCase().includes(query)
+        const categoryMatch = award.category.toLowerCase().includes(query)
+        if (!nameMatch && !categoryMatch) return false
+      }
+
+      return true
+    })
+
+    // Sort awards
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "year-desc":
+          return b.year - a.year
+        case "year-asc":
+          return a.year - b.year
+        case "prestige":
+          const prestigeOrder = { national: 0, international: 1, industry: 2, state: 3 }
+          const aPrestige = prestigeOrder[a.prestige_level as keyof typeof prestigeOrder] ?? 4
+          const bPrestige = prestigeOrder[b.prestige_level as keyof typeof prestigeOrder] ?? 4
+          return aPrestige - bPrestige
+        case "country":
+          return (a.country || "").localeCompare(b.country || "")
+        case "status-winner":
+          if (a.status === "Winner" && b.status !== "Winner") return -1
+          if (a.status !== "Winner" && b.status === "Winner") return 1
+          return b.year - a.year
+        default:
+          return b.year - a.year
+      }
+    })
+
+    return filtered
+  }, [movie, filters, searchQuery, sortBy])
+
+  // Group awards by ceremony
+  const groupedAwards = useMemo(() => {
+    const groups: Record<string, AwardItem[]> = {}
+    filteredAndSortedAwards.forEach((award) => {
+      if (!groups[award.name]) {
+        groups[award.name] = []
+      }
+      groups[award.name].push(award)
+    })
+    return groups
+  }, [filteredAndSortedAwards])
+
+  // Get ceremony logo
+  const getCeremonyLogo = (ceremonyId?: string): string | null => {
+    if (!ceremonyId) return null
+    const ceremony = ceremonies.find((c) => c.external_id === ceremonyId)
+    return ceremony?.logo_url || null
+  }
 
   if (loading) {
     return (
@@ -89,20 +216,6 @@ export default function MovieAwardsPage() {
     { label: "Awards", href: `/movies/${movie.id}/awards` },
   ]
 
-  // Filter awards
-  const filteredAwards = movie.awards.filter((award) => {
-    if (selectedYear && award.year !== selectedYear) return false
-    if (selectedStatus && award.status !== selectedStatus) return false
-    return true
-  })
-
-  // Get unique years and sort descending
-  const years = Array.from(new Set(movie.awards.map((a) => a.year))).sort((a, b) => b - a)
-
-  // Count wins and nominations
-  const wins = movie.awards.filter((a) => a.status === "Winner").length
-  const nominations = movie.awards.filter((a) => a.status === "Nominee").length
-
   return (
     <div className="min-h-screen bg-[#141414] text-gray-100">
       <MovieDetailsNavigation movieId={movie.id} movieTitle={movie.title} />
@@ -125,169 +238,121 @@ export default function MovieAwardsPage() {
           </p>
         </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className="bg-[#1C1C1C] border-gray-700">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-400 flex items-center">
-                <Trophy className="w-4 h-4 mr-2 text-[#FFD700]" />
-                Total Awards
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{movie.awards.length}</div>
-            </CardContent>
-          </Card>
+        {/* Statistics Cards */}
+        <AwardsStatisticsCards awards={movie.awards} />
 
-          <Card className="bg-[#1C1C1C] border-gray-700">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-400 flex items-center">
-                <Star className="w-4 h-4 mr-2 text-green-400" />
-                Wins
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-400">{wins}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#1C1C1C] border-gray-700">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-400 flex items-center">
-                <Award className="w-4 h-4 mr-2 text-blue-400" />
-                Nominations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-400">{nominations}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-[#1C1C1C] rounded-xl p-4 mb-6 border border-gray-700">
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Filter by Year:</span>
-              <button
-                onClick={() => setSelectedYear(null)}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedYear === null
-                    ? "bg-[#00BFFF] text-black"
-                    : "bg-[#282828] text-gray-300 hover:bg-gray-700"
-                }`}
-              >
-                All
-              </button>
-              {years.map((year) => (
-                <button
-                  key={year}
-                  onClick={() => setSelectedYear(year)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedYear === year
-                      ? "bg-[#00BFFF] text-black"
-                      : "bg-[#282828] text-gray-300 hover:bg-gray-700"
-                  }`}
-                >
-                  {year}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm text-gray-400">Status:</span>
-              <button
-                onClick={() => setSelectedStatus(null)}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedStatus === null
-                    ? "bg-[#00BFFF] text-black"
-                    : "bg-[#282828] text-gray-300 hover:bg-gray-700"
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setSelectedStatus("Winner")}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedStatus === "Winner"
-                    ? "bg-green-500 text-black"
-                    : "bg-[#282828] text-gray-300 hover:bg-gray-700"
-                }`}
-              >
-                Wins
-              </button>
-              <button
-                onClick={() => setSelectedStatus("Nominee")}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedStatus === "Nominee"
-                    ? "bg-blue-500 text-black"
-                    : "bg-[#282828] text-gray-300 hover:bg-gray-700"
-                }`}
-              >
-                Nominations
-              </button>
-            </div>
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Filter Sidebar */}
+          <div className="lg:col-span-1">
+            {isMobile ? (
+              <AwardsFilterSidebar
+                awards={movie.awards}
+                filters={filters}
+                onFiltersChange={setFilters}
+                isMobile={true}
+              />
+            ) : (
+              <AwardsFilterSidebar
+                awards={movie.awards}
+                filters={filters}
+                onFiltersChange={setFilters}
+                isMobile={false}
+              />
+            )}
           </div>
-        </div>
 
-        {/* Awards List */}
-        {filteredAwards.length === 0 ? (
-          <Card className="bg-[#1C1C1C] border-gray-700">
-            <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <Trophy className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">No Awards Found</h3>
-                <p className="text-gray-400">
-                  {selectedYear || selectedStatus
-                    ? "Try adjusting your filters to see more awards."
-                    : "No awards have been added for this movie yet."}
-                </p>
+          {/* Awards List */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Search and Sort Bar */}
+            <div className="bg-[#1C1C1C] rounded-xl p-4 border border-gray-700">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search awards by ceremony or category..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-[#282828] border-gray-700 text-white placeholder:text-gray-500"
+                  />
+                </div>
+
+                {/* Sort Dropdown */}
+                <div className="flex items-center gap-2 sm:w-auto w-full">
+                  <SortAsc className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="bg-[#282828] border-gray-700 text-white sm:w-[200px] w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="year-desc">Year (Newest First)</SelectItem>
+                      <SelectItem value="year-asc">Year (Oldest First)</SelectItem>
+                      <SelectItem value="prestige">Prestige Level</SelectItem>
+                      <SelectItem value="country">Country</SelectItem>
+                      <SelectItem value="status-winner">Winners First</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {filteredAwards.map((award, index) => (
-              <motion.div
-                key={award.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className="bg-[#1C1C1C] border-gray-700 hover:border-[#00BFFF] transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-semibold text-white">{award.name}</h3>
-                          <Badge
-                            variant={award.status === "Winner" ? "default" : "secondary"}
-                            className={
-                              award.status === "Winner"
-                                ? "bg-green-500 text-black hover:bg-green-600"
-                                : "bg-blue-500 text-black hover:bg-blue-600"
-                            }
-                          >
-                            {award.status}
-                          </Badge>
-                        </div>
-                        <p className="text-gray-300 mb-2">{award.category}</p>
-                        {award.recipient && (
-                          <p className="text-sm text-gray-400">Recipient: {award.recipient}</p>
-                        )}
-                        {award.notes && <p className="text-sm text-gray-400 mt-2">{award.notes}</p>}
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Calendar className="w-4 h-4" />
-                        <span className="text-lg font-semibold">{award.year}</span>
-                      </div>
+
+              {/* Results Count */}
+              <div className="mt-3 text-sm text-gray-400">
+                Showing {filteredAndSortedAwards.length} of {movie.awards.length} awards
+              </div>
+            </div>
+
+            {/* Awards Display */}
+            {filteredAndSortedAwards.length === 0 ? (
+              <Card className="bg-[#1C1C1C] border-gray-700">
+                <CardContent className="pt-6">
+                  <div className="text-center py-12">
+                    <Trophy className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">No Awards Found</h3>
+                    <p className="text-gray-400">
+                      {searchQuery || filters.country !== "All" || filters.ceremonies.length > 0
+                        ? "Try adjusting your filters or search query to see more awards."
+                        : "No awards have been added for this movie yet."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* Group by ceremony */}
+                {Object.entries(groupedAwards).map(([ceremonyName, ceremonyAwards]) => (
+                  <div key={ceremonyName} className="space-y-3">
+                    {/* Ceremony Header */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
+                      <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-[#FFD700]" />
+                        {ceremonyName}
+                        <span className="text-sm text-gray-400 font-normal">
+                          ({ceremonyAwards.length} {ceremonyAwards.length === 1 ? "award" : "awards"})
+                        </span>
+                      </h2>
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+
+                    {/* Awards in this ceremony */}
+                    <div className="space-y-3">
+                      {ceremonyAwards.map((award, index) => (
+                        <AwardCard
+                          key={award.id}
+                          award={award}
+                          ceremonyLogo={getCeremonyLogo(award.ceremony_id)}
+                          index={index}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

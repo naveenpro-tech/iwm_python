@@ -409,10 +409,14 @@ class Favorite(Base):
 
 
 class AwardCeremony(Base):
+    """
+    Award ceremonies (e.g., Oscars, Filmfare, National Film Awards).
+    Enhanced to support Indian and international awards with multi-language support.
+    """
     __tablename__ = "award_ceremonies"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)  # e.g., "oscars"
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)  # e.g., "oscars", "filmfare-hindi", "national-film-awards"
     name: Mapped[str] = mapped_column(String(200))
     short_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -420,6 +424,15 @@ class AwardCeremony(Base):
     background_image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     current_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
     next_ceremony_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    # New fields for Indian awards support
+    country: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)  # India, USA, UK, International
+    language: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)  # Hindi, Tamil, Telugu, Malayalam, etc.
+    category_type: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)  # Film, Television, Music, OTT
+    prestige_level: Mapped[str | None] = mapped_column(String(50), nullable=True)  # national, state, industry, international
+    established_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    is_active: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=True, index=True)
+    display_order: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     years: Mapped[List["AwardCeremonyYear"]] = relationship(back_populates="ceremony", lazy="selectin")
 
