@@ -6,6 +6,7 @@ import dynamic from "next/dynamic"
 // Skeletons
 import SectionSkeleton from "@/components/skeletons/section-skeleton"
 import BestSceneSectionSkeleton from "@/components/skeletons/best-scene-section-skeleton"
+import { ErrorState } from "@/components/shared/error-state"
 
 // API imports
 import { getNewReleases, getFeaturedMovies, getTopRatedMovies } from "@/lib/api/movies"
@@ -84,39 +85,42 @@ export default function HomePage() {
   const [masterpieces, setMasterpieces] = useState([])
   const [siddusPicks, setSiddusPicks] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      // Fetch Telugu movies from backend
+      const [releases, featured, topRated] = await Promise.all([
+        getNewReleases(10),
+        getFeaturedMovies(10),
+        getTopRatedMovies(10),
+      ])
+
+      // Transform data to match component expectations
+      const transformMovie = (movie: any) => ({
+        id: movie.id || movie.external_id,
+        title: movie.title,
+        posterUrl: movie.posterUrl || movie.poster_url || "/placeholder.svg",
+        backdropUrl: movie.backdropUrl || movie.backdrop_url || "/placeholder.svg",
+        year: movie.year,
+        rating: movie.sidduScore || movie.siddu_score || 0,
+        genres: movie.genres || [],
+      })
+
+      setNewReleases((releases.items || releases || []).map(transformMovie))
+      setMasterpieces((featured.items || featured || []).map(transformMovie))
+      setSiddusPicks((topRated.items || topRated || []).map(transformMovie))
+    } catch (error) {
+      console.error("Failed to fetch homepage data:", error)
+      setError("Unable to load movies. Please check your connection and try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch Telugu movies from backend
-        const [releases, featured, topRated] = await Promise.all([
-          getNewReleases(10),
-          getFeaturedMovies(10),
-          getTopRatedMovies(10),
-        ])
-
-        // Transform data to match component expectations
-        const transformMovie = (movie: any) => ({
-          id: movie.id || movie.external_id,
-          title: movie.title,
-          posterUrl: movie.posterUrl || movie.poster_url || "/placeholder.svg",
-          backdropUrl: movie.backdropUrl || movie.backdrop_url || "/placeholder.svg",
-          year: movie.year,
-          rating: movie.sidduScore || movie.siddu_score || 0,
-          genres: movie.genres || [],
-        })
-
-        setNewReleases((releases.items || releases || []).map(transformMovie))
-        setMasterpieces((featured.items || featured || []).map(transformMovie))
-        setSiddusPicks((topRated.items || topRated || []).map(transformMovie))
-      } catch (error) {
-        console.error("Failed to fetch homepage data:", error)
-        // Keep empty arrays on error
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchData()
   }, [])
 
@@ -145,6 +149,10 @@ export default function HomePage() {
           <SectionSkeleton message="Loading Global Masterpieces..." />
           <SectionSkeleton message="Loading Siddu's Picks..." />
         </>
+      ) : error ? (
+        <div className="py-8">
+          <ErrorState message={error} onRetry={fetchData} />
+        </div>
       ) : (
         <>
           <Suspense fallback={<SectionSkeleton message="Loading New Releases..." />}>

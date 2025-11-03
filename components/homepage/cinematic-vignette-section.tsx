@@ -44,17 +44,17 @@ export const CinematicVignetteSection: React.FC<CinematicVignetteSectionProps> =
   const vignetteToDisplay = vignettes[0]
 
   return (
-    <section className="py-10 md:py-16 bg-black text-white overflow-hidden">
+    <section className="py-8 md:py-16 bg-black text-white overflow-hidden">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10 md:mb-14">
+        <div className="text-center mb-6 md:mb-14">
           <motion.h2
             initial={{ opacity: 0, y: -20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-300 via-slate-100 to-slate-300 mb-3 flex items-center justify-center"
+            className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-300 via-slate-100 to-slate-300 mb-3 flex items-center justify-center"
           >
-            <Clapperboard className="w-8 h-8 mr-3 text-slate-300" />
+            <Clapperboard className="w-6 h-6 md:w-8 md:h-8 mr-2 md:mr-3 text-slate-300" />
             Explore Cinematic Arts
           </motion.h2>
           <motion.p
@@ -62,14 +62,14 @@ export const CinematicVignetteSection: React.FC<CinematicVignetteSectionProps> =
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-md md:text-lg text-slate-400 max-w-2xl mx-auto"
+            className="text-sm md:text-lg text-slate-400 max-w-2xl mx-auto px-2"
           >
             Dive into visual storytelling, iconic moments, and the magic behind the movies.
           </motion.p>
         </div>
 
         <motion.div
-          className="relative aspect-[16/9] md:aspect-[21/9] lg:aspect-[2.5/1] max-h-[500px] md:max-h-[600px] rounded-xl overflow-hidden group shadow-2xl border-2 border-slate-800 hover:border-slate-600 transition-all duration-300"
+          className="relative aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] lg:aspect-[2.5/1] max-h-[400px] md:max-h-[600px] rounded-lg md:rounded-xl overflow-hidden group shadow-2xl border border-slate-800 hover:border-slate-600 transition-all duration-300"
           variants={vignetteVariants}
           initial="hidden"
           whileInView="visible"
@@ -87,20 +87,20 @@ export const CinematicVignetteSection: React.FC<CinematicVignetteSectionProps> =
             priority
             className="transition-transform duration-1000 ease-out group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent md:bg-gradient-to-r md:from-black/70 md:via-black/30 md:to-transparent p-6 md:p-10 flex flex-col justify-end md:justify-center md:w-1/2 lg:w-2/5">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent md:bg-gradient-to-r md:from-black/70 md:via-black/30 md:to-transparent p-4 md:p-10 flex flex-col justify-end md:justify-center md:w-1/2 lg:w-2/5">
             {vignetteToDisplay.quote && (
               <motion.blockquote
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="mb-4 md:mb-6"
+                className="mb-3 md:mb-6"
               >
-                <p className="text-xl md:text-2xl lg:text-3xl italic text-slate-100 leading-tight shadow-text">
+                <p className="text-base md:text-2xl lg:text-3xl italic text-slate-100 leading-snug md:leading-tight shadow-text">
                   "{vignetteToDisplay.quote}"
                 </p>
                 {vignetteToDisplay.quoteAuthor && (
-                  <cite className="block text-sm text-slate-400 mt-2 not-italic">
+                  <cite className="block text-xs md:text-sm text-slate-400 mt-1 md:mt-2 not-italic">
                     - {vignetteToDisplay.quoteAuthor}
                   </cite>
                 )}
@@ -111,7 +111,7 @@ export const CinematicVignetteSection: React.FC<CinematicVignetteSectionProps> =
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7, delay: vignetteToDisplay.quote ? 0.4 : 0.3 }}
-              className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 md:mb-3 shadow-text line-clamp-2"
+              className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-2 md:mb-3 shadow-text line-clamp-2"
             >
               {vignetteToDisplay.title}
             </motion.h3>
@@ -120,7 +120,7 @@ export const CinematicVignetteSection: React.FC<CinematicVignetteSectionProps> =
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7, delay: vignetteToDisplay.quote ? 0.5 : 0.4 }}
-              className="text-sm md:text-base text-slate-300 mb-4 md:mb-6 line-clamp-3 md:line-clamp-4 leading-relaxed shadow-text"
+              className="text-sm md:text-base text-slate-300 mb-3 md:mb-6 line-clamp-2 md:line-clamp-4 leading-relaxed shadow-text"
             >
               {vignetteToDisplay.description}
             </motion.p>
