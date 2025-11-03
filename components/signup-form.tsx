@@ -65,8 +65,8 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-5 md:space-y-4">
+      <div className="space-y-2.5 md:space-y-2">
         <Label htmlFor="signup-name" className="text-[#E0E0E0] font-dmsans">
           Name
         </Label>

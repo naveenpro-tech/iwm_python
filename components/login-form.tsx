@@ -49,8 +49,8 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-5 md:space-y-4">
+      <div className="space-y-2.5 md:space-y-2">
         <Label htmlFor="email" className="text-[#E0E0E0] font-dmsans">
           Email
         </Label>
@@ -65,7 +65,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-[#FF4500] text-sm font-dmsans"
+            className="text-[#FF4500] text-sm font-dmsans mt-1.5"
           >
             {errors.email}
           </motion.p>

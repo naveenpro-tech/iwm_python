@@ -133,7 +133,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
       {isOpen && (
         <motion.div
           ref={overlayRef}
-          className="fixed inset-0 z-[100] bg-[#1A1A1A]/90 backdrop-blur-md flex flex-col items-center pt-20 md:pt-32"
+          className="fixed inset-0 z-[100] bg-[#1A1A1A]/90 backdrop-blur-md flex flex-col items-center pt-16 md:pt-32"
           initial="hidden"
           animate="visible"
           exit="exit"
@@ -145,18 +145,18 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         >
           {/* Close Button */}
           <motion.button
-            className="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-[#282828]/70 rounded-full text-[#E0E0E0] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#00BFFF] z-10"
+            className="absolute top-3 right-3 md:top-6 md:right-6 p-2.5 md:p-2 bg-[#282828]/70 rounded-full text-[#E0E0E0] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#00BFFF] z-10"
             onClick={onClose}
             variants={contentVariants}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Close search"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 md:w-5 md:h-5" />
           </motion.button>
 
           {/* Search Input */}
-          <motion.div className="w-[90%] md:w-[80%] max-w-3xl mx-auto" variants={contentVariants}>
+          <motion.div className="w-[94%] md:w-[80%] max-w-3xl mx-auto px-2 md:px-0" variants={contentVariants}>
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
@@ -167,7 +167,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
           {/* Content Area */}
           <motion.div
-            className="w-[90%] md:w-[80%] max-w-3xl mx-auto mt-6 flex-1 overflow-hidden"
+            className="w-[94%] md:w-[80%] max-w-3xl mx-auto mt-4 md:mt-6 flex-1 overflow-hidden px-2 md:px-0"
             variants={contentVariants}
           >
             {debouncedSearchQuery && debouncedSearchQuery.length >= 2 ? (

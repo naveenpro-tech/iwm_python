@@ -470,16 +470,16 @@ export default function MoviesPage() {
               onClick={() => setShowFilters(false)}
             />
             <motion.div
-              className="fixed bottom-0 left-0 right-0 bg-[#1A1A1A] border-t border-[#3A3A3A] z-50 max-h-[80vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 bg-[#1A1A1A] border-t border-[#3A3A3A] z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
+              <div className="p-4 pb-safe">
+                <div className="flex items-center justify-between mb-4 sticky top-0 bg-[#1A1A1A] pb-3 border-b border-[#3A3A3A]/50">
                   <h3 className="text-lg font-semibold text-[#E0E0E0]">Filters</h3>
-                  <Button variant="ghost" size="icon" onClick={() => setShowFilters(false)}>
+                  <Button variant="ghost" size="icon" onClick={() => setShowFilters(false)} className="h-10 w-10">
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
