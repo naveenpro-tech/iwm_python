@@ -17,11 +17,11 @@ export function NavigationTabs({ activeTab, onTabChange }: NavigationTabsProps) 
 
   return (
     <div className="mb-6 border-b border-siddu-border-subtle">
-      <div className="flex overflow-x-auto scrollbar-hide">
+      <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            className={`relative px-4 py-3 text-sm md:text-base font-medium transition-colors whitespace-nowrap ${
+            className={`relative px-3 md:px-4 py-3 text-sm md:text-base font-medium transition-colors whitespace-nowrap snap-start ${
               activeTab === tab.id ? "text-siddu-text-light" : "text-siddu-text-subtle hover:text-siddu-text-light"
             }`}
             onClick={() => onTabChange(tab.id)}

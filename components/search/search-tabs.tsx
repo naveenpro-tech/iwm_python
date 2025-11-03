@@ -20,7 +20,7 @@ export function SearchTabs({ activeTab, onTabChange }: SearchTabsProps) {
   return (
     <div className="relative overflow-x-auto">
       <motion.div
-        className="flex space-x-1 md:space-x-2 pb-2"
+        className="flex space-x-1 md:space-x-2 pb-2 snap-x snap-mandatory"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
@@ -29,12 +29,12 @@ export function SearchTabs({ activeTab, onTabChange }: SearchTabsProps) {
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`relative px-4 py-2 rounded-full flex items-center space-x-2 whitespace-nowrap transition-all ${
+            className={`relative px-3 md:px-4 py-2 rounded-full flex items-center space-x-1.5 md:space-x-2 whitespace-nowrap transition-all snap-start ${
               activeTab === tab.id ? "bg-[#00BFFF] text-white" : "bg-[#282828] text-gray-300 hover:bg-[#333333]"
             }`}
           >
-            {tab.icon}
-            <span>{tab.label}</span>
+            <span className="flex-shrink-0">{tab.icon}</span>
+            <span className="text-sm md:text-base">{tab.label}</span>
 
             {activeTab === tab.id && (
               <motion.div

@@ -40,19 +40,29 @@ const ScheduledTasksManager = dynamic(
 
 export default function SystemPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">System Management</h1>
+    <div className="container mx-auto px-3 md:px-4 py-6 md:py-8">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">System Management</h1>
 
-      <div className="space-y-8">
-        <PlatformHealthDashboard />
+      <div className="space-y-6 md:space-y-8">
+        <div className="hidden md:block">
+          <PlatformHealthDashboard />
+        </div>
         <SystemSettings />
-        <DatabaseDiagnostics />
+        <div className="hidden md:block">
+          <DatabaseDiagnostics />
+        </div>
         <ApiKeyManagement />
-        <N8nWorkflowIntegration />
+        <div className="hidden md:block">
+          <N8nWorkflowIntegration />
+        </div>
         <NotificationSystem />
-        <BrokenLinkDetector />
+        <div className="hidden md:block">
+          <BrokenLinkDetector />
+        </div>
         <IssueTracker />
-        <ScheduledTasksManager />
+        <div className="hidden md:block">
+          <ScheduledTasksManager />
+        </div>
       </div>
     </div>
   )

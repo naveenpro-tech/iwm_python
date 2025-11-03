@@ -157,19 +157,19 @@ export default function TMDBDashboard() {
   }, [activeTab, category])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">TMDB Movie Dashboard</h1>
-          <p className="text-slate-300">Browse and import movies from The Movie Database</p>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">TMDB Movie Dashboard</h1>
+          <p className="text-sm md:text-base text-slate-300">Browse and import movies from The Movie Database</p>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="new-releases">New Releases</TabsTrigger>
-            <TabsTrigger value="search">Search</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-6 md:mb-8">
+            <TabsTrigger value="new-releases" className="text-sm md:text-base">New Releases</TabsTrigger>
+            <TabsTrigger value="search" className="text-sm md:text-base">Search</TabsTrigger>
           </TabsList>
 
           {/* New Releases Tab */}
