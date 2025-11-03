@@ -44,7 +44,7 @@ export function HeroSection({ onContinue }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-4xl md:text-6xl font-bold mb-4 font-inter"
+          className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 font-inter leading-tight"
         >
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#00BFFF] to-[#FFD700]">SIDDU</span>
           <span className="text-[#E0E0E0]"> Global Entertainment Hub</span>
@@ -54,7 +54,7 @@ export function HeroSection({ onContinue }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.8 }}
-          className="text-xl md:text-2xl text-[#A0A0A0] mb-8 font-dmsans"
+          className="text-base md:text-2xl text-[#A0A0A0] mb-6 md:mb-8 font-dmsans leading-relaxed px-4 md:px-0"
         >
           The definitive digital destination celebrating cinematic masterpieces and cricket passion from across the
           globe

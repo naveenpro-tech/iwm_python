@@ -141,14 +141,14 @@ export function ProfileHeader({
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="flex items-center">
-                  <h1 className="text-2xl md:text-3xl font-bold font-inter text-[#E0E0E0]">{name}</h1>
+                  <h1 className="text-xl md:text-3xl font-bold font-inter text-[#E0E0E0] leading-tight">{name}</h1>
                   {isVerified && (
                     <div className="ml-2 text-[#00BFFF]">
-                      <Check className="w-5 h-5" />
+                      <Check className="w-4 h-4 md:w-5 md:h-5" />
                     </div>
                   )}
                 </div>
-                <p className="text-[#A0A0A0] font-dmsans">@{username}</p>
+                <p className="text-sm md:text-base text-[#A0A0A0] font-dmsans mt-1">@{username}</p>
               </div>
 
               {/* Action Buttons */}
@@ -175,18 +175,18 @@ export function ProfileHeader({
             </div>
 
             {/* Bio */}
-            <p className="mt-4 text-[#E0E0E0] font-dmsans max-w-3xl">{bio}</p>
+            <p className="mt-3 md:mt-4 text-sm md:text-base text-[#E0E0E0] font-dmsans max-w-3xl leading-relaxed">{bio}</p>
 
             {/* Additional Info */}
-            <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="mt-3 md:mt-4 flex flex-wrap items-center gap-3 md:gap-4">
               {location && (
-                <div className="flex items-center text-[#A0A0A0] font-dmsans text-sm">
-                  <MapPin className="w-4 h-4 mr-1" />
+                <div className="flex items-center text-[#A0A0A0] font-dmsans text-xs md:text-sm">
+                  <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5" />
                   {location}
                 </div>
               )}
-              <div className="flex items-center text-[#A0A0A0] font-dmsans text-sm">
-                <Calendar className="w-4 h-4 mr-1" />
+              <div className="flex items-center text-[#A0A0A0] font-dmsans text-xs md:text-sm">
+                <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5" />
                 Joined {joinedDate}
               </div>
             </div>
