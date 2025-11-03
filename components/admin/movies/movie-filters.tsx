@@ -27,15 +27,16 @@ export function MovieFilters({ filters, onFiltersChange }: MovieFiltersProps) {
 
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-lg">Filters</h3>
-          <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1">
-            <X size={16} />
-            Reset Filters
+      <CardContent className="p-3 md:p-4">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h3 className="font-medium text-base md:text-lg">Filters</h3>
+          <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1 text-xs md:text-sm">
+            <X size={14} className="md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Reset Filters</span>
+            <span className="sm:hidden">Reset</span>
           </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <div className="space-y-2">
             <Label htmlFor="genre-filter">Genre</Label>
             <Select

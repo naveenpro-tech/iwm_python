@@ -79,13 +79,13 @@ export function WatchlistGrid({
   const groups = Object.keys(groupedItems).sort()
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {groups.map((group) => (
-        <div key={group} className="space-y-4">
-          {group && <h2 className="text-xl font-semibold text-[#E0E0E0] border-b border-[#3A3A3A] pb-2">{group}</h2>}
+        <div key={group} className="space-y-3 md:space-y-4">
+          {group && <h2 className="text-lg md:text-xl font-semibold text-[#E0E0E0] border-b border-[#3A3A3A] pb-2">{group}</h2>}
 
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 lg:gap-6"
             variants={containerVariants}
             initial="hidden"
             animate="visible"

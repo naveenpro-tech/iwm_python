@@ -132,18 +132,18 @@ export function GenreFilters({
   )
 
   return (
-    <div className="space-y-4 sticky top-[60px] md:top-[68px] z-30 bg-background py-3 border-b border-gray-800 shadow-md">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
-        <div className="overflow-x-auto pb-2 no-scrollbar">
+    <div className="space-y-3 md:space-y-4 sticky top-[60px] md:top-[68px] z-30 bg-background py-2 md:py-3 border-b border-gray-800 shadow-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
+        <div className="overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory">
           <Tabs
             value={currentFilters.subgenre || "all"}
             className="w-full"
             onValueChange={(value) => onFiltersChange({ subgenre: value })}
           >
-            <TabsList className="bg-gray-800/50 h-9">
+            <TabsList className="bg-gray-800/50 h-8 md:h-9">
               <TabsTrigger
                 value="all"
-                className="h-7 text-xs sm:text-sm px-2.5 sm:px-3 data-[state=active]:bg-[#00BFFF] data-[state=active]:text-black"
+                className="h-7 text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-[#00BFFF] data-[state=active]:text-black snap-start"
               >
                 All {genre}
               </TabsTrigger>
@@ -151,7 +151,7 @@ export function GenreFilters({
                 <TabsTrigger
                   key={sub.id}
                   value={sub.id}
-                  className="h-7 text-xs sm:text-sm px-2.5 sm:px-3 data-[state=active]:bg-[#00BFFF] data-[state=active]:text-black"
+                  className="h-7 text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-[#00BFFF] data-[state=active]:text-black snap-start"
                 >
                   {sub.name}
                 </TabsTrigger>
