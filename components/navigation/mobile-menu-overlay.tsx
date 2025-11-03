@@ -215,7 +215,7 @@ export const MobileMenuOverlay: React.FC<MobileMenuOverlayProps> = ({ isOpen, on
                     >
                       {category}
                     </h3>
-                    <div className="grid grid-cols-6 gap-2.5">
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
                       {layoutItems.map(({ item, chosenSize, dynamicData }) => (
                         <motion.div // This is the grid cell, transparent
                           key={item.id}

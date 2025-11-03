@@ -9,10 +9,10 @@ import { useMobile } from "@/hooks/use-mobile"
 import { MobileMenuOverlay } from "./mobile-menu-overlay"
 
 const mainNavItems = [
-  { href: "/", label: "Home", icon: <Home size={20} />, exact: true }, // Slightly smaller icons for the dock
-  { href: "/explore", label: "Explore", icon: <Compass size={20} /> },
-  { href: "/movies", label: "Movies", icon: <Film size={20} /> },
-  { href: "/pulse", label: "Pulse", icon: <Flame size={20} /> },
+  { href: "/", label: "Home", icon: <Home size={24} />, exact: true }, // Increased icon size for better touch targets
+  { href: "/explore", label: "Explore", icon: <Compass size={24} /> },
+  { href: "/movies", label: "Movies", icon: <Film size={24} /> },
+  { href: "/pulse", label: "Pulse", icon: <Flame size={24} /> },
 ]
 
 export function BottomNavigation() {
@@ -51,8 +51,8 @@ export function BottomNavigation() {
           {" "}
           {/* Center the dock */}
           <div
-            className="h-[56px] bg-neutral-800/60 backdrop-blur-md border border-neutral-700/70 rounded-xl shadow-2xl px-3 flex items-center"
-            // Glassmorphic dock container: slightly shorter, adjusted opacity and blur
+            className="h-[64px] bg-neutral-800/60 backdrop-blur-md border border-neutral-700/70 rounded-xl shadow-2xl px-3 flex items-center"
+            // Glassmorphic dock container: increased height to 64px for better touch targets
           >
             <div className="flex items-end space-x-1.5">
               {" "}
@@ -76,7 +76,7 @@ export function BottomNavigation() {
                     // For this QuickEdit, we assume NavLink's default or slightly modified styling works.
                     // The NavLink component itself might need to be adjusted to be more flexible.
                     // A common pattern for dock items is icon-only, with label on hover, but here we keep label.
-                    className="!w-14 !h-14 sm:!w-14 sm:!h-14 !text-[10px] !leading-tight" // More compact NavLink
+                    className="!w-16 !h-16 sm:!w-16 sm:!h-16 !text-[10px] !leading-tight" // Increased to 64px (16 * 4) for better touch targets
                   />
                 </motion.div>
               ))}
@@ -91,7 +91,7 @@ export function BottomNavigation() {
                   onClick={() => setIsMoreMenuOpen(true)}
                   className={`
                   flex flex-col items-center justify-center text-center
-                  w-14 h-14  /* Consistent sizing with NavLink overrides */
+                  w-16 h-16  /* Increased to 64px for better touch targets */
                   text-[10px] leading-tight font-medium transition-colors duration-150 ease-in-out
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 rounded-lg
                   ${isMoreMenuOpen ? "text-primary" : "text-gray-400 hover:text-gray-200"}
@@ -99,7 +99,7 @@ export function BottomNavigation() {
                   aria-label="More options"
                   aria-expanded={isMoreMenuOpen}
                 >
-                  <LayoutGrid size={20} className="mb-0.5" /> {/* Consistent icon size */}
+                  <LayoutGrid size={24} className="mb-0.5" /> {/* Increased icon size for better visibility */}
                   <span>More</span>
                 </button>
               </motion.div>
