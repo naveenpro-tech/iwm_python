@@ -32,11 +32,11 @@ export function ProfileNavigation({ activeTab, onTabChange, showApplications, sh
 
   return (
     <div className="mt-6 md:mt-8 border-b border-[#3A3A3A]">
-      <div className="flex overflow-x-auto scrollbar-hide">
+      <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            className={`relative px-4 py-3 font-inter text-sm md:text-base whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-[#00BFFF] focus:ring-inset ${
+            className={`relative px-3 md:px-4 py-3 font-inter text-sm md:text-base whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-[#00BFFF] focus:ring-inset snap-start ${
               activeTab === tab.id ? "text-[#E0E0E0]" : "text-[#A0A0A0] hover:text-[#E0E0E0]"
             }`}
             onClick={() => onTabChange(tab.id)}

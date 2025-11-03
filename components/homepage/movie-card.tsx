@@ -78,8 +78,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             transition={{ duration: 0.25, delay: 0.05 }}
           >
             <h3 className="text-base lg:text-lg font-semibold leading-tight mb-1 line-clamp-2 shadow-text">{title}</h3>
-            <div className="flex items-center text-xs mb-1.5">
-              <Star className="w-3.5 h-3.5 text-yellow-400 mr-1 fill-yellow-400" />
+            <div className="flex items-center text-xs md:text-xs mb-1.5">
+              <Star className="w-4 h-4 md:w-3.5 md:h-3.5 text-yellow-400 mr-1 fill-yellow-400" />
               <span className="font-medium">{sidduScore?.toFixed(1) || "N/A"}</span>
               <span className="mx-1.5 text-slate-400">•</span>
               <span>{year}</span>
@@ -125,7 +125,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/70 to-transparent">
               <h3 className="text-sm font-semibold text-white leading-tight line-clamp-2 shadow-text">{title}</h3>
               <div className="flex items-center text-xs text-slate-300 mt-0.5">
-                <Star className="w-3 h-3 text-yellow-400 mr-0.5 fill-yellow-400" />
+                <Star className="w-3.5 h-3.5 md:w-3 md:h-3 text-yellow-400 mr-0.5 fill-yellow-400" />
                 <span>{sidduScore?.toFixed(1) || "N/A"}</span>
               </div>
             </div>

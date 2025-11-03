@@ -9,10 +9,10 @@ import { useMobile } from "@/hooks/use-mobile"
 import { MobileMenuOverlay } from "./mobile-menu-overlay"
 
 const mainNavItems = [
-  { href: "/", label: "Home", icon: <Home size={24} />, exact: true }, // Increased icon size for better touch targets
-  { href: "/explore", label: "Explore", icon: <Compass size={24} /> },
-  { href: "/movies", label: "Movies", icon: <Film size={24} /> },
-  { href: "/pulse", label: "Pulse", icon: <Flame size={24} /> },
+  { href: "/", label: "Home", icon: <Home size={24} />, exact: true, showLabel: true },
+  { href: "/explore", label: "Explore", icon: <Compass size={24} />, showLabel: true },
+  { href: "/movies", label: "Movies", icon: <Film size={24} />, showLabel: true },
+  { href: "/pulse", label: "Pulse", icon: <Flame size={24} />, showLabel: true },
 ]
 
 export function BottomNavigation() {
