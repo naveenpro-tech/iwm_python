@@ -311,24 +311,24 @@ export function IssueTracker() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select value={selectedCategory || ""} onValueChange={(value) => setSelectedCategory(value || null)}>
+            <Select value={selectedCategory || "all"} onValueChange={(value) => setSelectedCategory(value === "all" ? null : value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="bug">Bug</SelectItem>
                 <SelectItem value="feature">Feature</SelectItem>
                 <SelectItem value="improvement">Improvement</SelectItem>
                 <SelectItem value="task">Task</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={selectedPriority || ""} onValueChange={(value) => setSelectedPriority(value || null)}>
+            <Select value={selectedPriority || "all"} onValueChange={(value) => setSelectedPriority(value === "all" ? null : value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Priorities</SelectItem>
+                <SelectItem value="all">All Priorities</SelectItem>
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
                 <SelectItem value="high">High</SelectItem>
@@ -696,12 +696,12 @@ export function IssueTracker() {
                       <SelectItem value="resolved">Resolved</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Select defaultValue={selectedIssue.assignee === "Unassigned" ? "" : selectedIssue.assignee}>
+                  <Select defaultValue={selectedIssue.assignee === "Unassigned" ? "unassigned" : selectedIssue.assignee}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Reassign" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       <SelectItem value="Rahul Kumar">Rahul Kumar</SelectItem>
                       <SelectItem value="Priya Sharma">Priya Sharma</SelectItem>
                       <SelectItem value="Vikram Singh">Vikram Singh</SelectItem>

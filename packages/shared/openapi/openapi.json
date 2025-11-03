@@ -8118,13 +8118,62 @@
         }
       }
     },
+    "/api/v1/admin/feature-flags/bulk": {
+      "put": {
+        "tags": [
+          "feature-flags"
+        ],
+        "summary": "Bulk Update Feature Flags",
+        "description": "Bulk update multiple feature flags (admin only).\nAccepts a map of feature_key to is_enabled.\n\nIMPORTANT: This endpoint MUST be defined BEFORE the /{feature_key} endpoint\nto prevent FastAPI from matching 'bulk' as a feature_key path parameter.",
+        "operationId": "bulk_update_feature_flags_api_v1_admin_feature_flags_bulk_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeatureFlagBulkUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Bulk Update Feature Flags Api V1 Admin Feature Flags Bulk Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/feature-flags/{feature_key}": {
       "put": {
         "tags": [
           "feature-flags"
         ],
         "summary": "Update Feature Flag",
-        "description": "Update a single feature flag (admin only).",
+        "description": "Update a single feature flag (admin only).\n\nIMPORTANT: This endpoint MUST be defined AFTER the /bulk endpoint\nto prevent the path parameter from matching 'bulk' as a feature_key.",
         "operationId": "update_feature_flag_api_v1_admin_feature_flags__feature_key__put",
         "security": [
           {
@@ -8174,55 +8223,6 @@
             }
           }
         }
-      }
-    },
-    "/api/v1/admin/feature-flags/bulk": {
-      "put": {
-        "tags": [
-          "feature-flags"
-        ],
-        "summary": "Bulk Update Feature Flags",
-        "description": "Bulk update multiple feature flags (admin only).\nAccepts a map of feature_key to is_enabled.",
-        "operationId": "bulk_update_feature_flags_api_v1_admin_feature_flags_bulk_put",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FeatureFlagBulkUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Bulk Update Feature Flags Api V1 Admin Feature Flags Bulk Put"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
       }
     },
     "/api/v1/admin/feature-flags/categories": {

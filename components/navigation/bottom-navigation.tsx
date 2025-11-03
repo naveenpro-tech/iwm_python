@@ -1,14 +1,12 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Home, Film, Compass, Flame, LayoutGrid } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { NavLink } from "./nav-link" // Assuming NavLink is flexible for this new style
 import { useMobile } from "@/hooks/use-mobile"
 import { MobileMenuOverlay } from "./mobile-menu-overlay"
-import { useFeatureFlags } from "@/hooks/use-feature-flags"
-import { filterNavLinksByFlags } from "@/lib/feature-flags"
 
 const mainNavItems = [
   { href: "/", label: "Home", icon: <Home size={24} />, exact: true, showLabel: true },
@@ -21,12 +19,9 @@ export function BottomNavigation() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
   const pathname = usePathname()
   const isMobile = useMobile()
-  const { flags } = useFeatureFlags()
 
-  // Filter nav items based on feature flags
-  const filteredNavItems = useMemo(() => {
-    return filterNavLinksByFlags(mainNavItems, flags)
-  }, [flags])
+  // MVP: Show all nav items without feature flag filtering
+  const filteredNavItems = mainNavItems
 
   useEffect(() => {
     setIsMoreMenuOpen(false)

@@ -15,7 +15,7 @@ const nextConfig = {
       },
       {
         protocol: 'http',
-        hostname: '192.168.0.194',
+        hostname: '192.168.0.32',
       },
     ],
     formats: ['image/webp', 'image/avif'],

@@ -4,15 +4,17 @@
  */
 
 import { getAuthHeaders } from "@/lib/api-client"
+import { getApiUrl } from "@/lib/api-config"
 import type { RolesListResponse, ActiveRoleResponse, SetActiveRoleRequest, RoleType } from "@/packages/shared/types/roles"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+// Always build API base dynamically to include /api/v1 and match current host (localhost or LAN IP)
+const API_V1 = () => `${getApiUrl()}/api/v1`
 
 /**
  * Get all available roles for the current user
  */
 export async function getUserRoles(): Promise<RolesListResponse> {
-  const response = await fetch(`${API_BASE}/users/me/roles`, {
+  const response = await fetch(`${API_V1()}/users/me/roles`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -31,7 +33,7 @@ export async function getUserRoles(): Promise<RolesListResponse> {
  * Get the current active role
  */
 export async function getActiveRole(): Promise<ActiveRoleResponse> {
-  const response = await fetch(`${API_BASE}/users/me/active-role`, {
+  const response = await fetch(`${API_V1()}/users/me/active-role`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -50,7 +52,7 @@ export async function getActiveRole(): Promise<ActiveRoleResponse> {
  * Set the active role for the current user
  */
 export async function setActiveRole(role: RoleType): Promise<ActiveRoleResponse> {
-  const response = await fetch(`${API_BASE}/users/me/active-role`, {
+  const response = await fetch(`${API_V1()}/users/me/active-role`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Menu, X } from "lucide-react"
 import { NavLogo } from "./nav-logo"
@@ -11,8 +11,6 @@ import Link from "next/link"
 import { useMobile } from "@/hooks/use-mobile"
 import { usePathname } from "next/navigation"
 import { useRoleContext } from "@/context/RoleContext"
-import { useFeatureFlags } from "@/hooks/use-feature-flags"
-import { filterNavLinksByFlags } from "@/lib/feature-flags"
 
 const mainNavLinks = [
   { href: "/movies", label: "Movies" },
@@ -32,12 +30,9 @@ export function TopNavigation() {
   const isMobile = useMobile()
   const pathname = usePathname()
   const { activeRole, availableRoles } = useRoleContext()
-  const { flags } = useFeatureFlags()
 
-  // Filter nav links based on feature flags
-  const filteredNavLinks = useMemo(() => {
-    return filterNavLinksByFlags(mainNavLinks, flags)
-  }, [flags])
+  // MVP: Show all nav links without feature flag filtering
+  const filteredNavLinks = mainNavLinks
 
   const ROLE_ICONS: Record<string, string> = {
     lover: "❤️",

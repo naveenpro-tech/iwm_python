@@ -9,6 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Save, RefreshCw, Check, AlertCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { getApiUrl } from "@/lib/api-config"
+import { getAuthHeaders } from "@/lib/auth"
 
 interface FeatureFlag {
   id: number
@@ -70,8 +72,10 @@ export function FeatureManagement() {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/feature-flags`, {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/v1/admin/feature-flags`, {
         credentials: "include",
+        headers: getAuthHeaders(),
       })
 
       if (!response.ok) {
@@ -104,9 +108,11 @@ export function FeatureManagement() {
       setIsSaving(true)
       setError(null)
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/feature-flags/bulk`, {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/v1/admin/feature-flags/bulk`, {
         method: "PUT",
         headers: {
+          ...getAuthHeaders(),
           "Content-Type": "application/json",
         },
         credentials: "include",
@@ -118,6 +124,9 @@ export function FeatureManagement() {
       if (!response.ok) {
         throw new Error("Failed to save feature flags")
       }
+
+      // Invalidate feature flags cache so user-facing UI updates immediately
+      try { localStorage.removeItem("iwm_feature_flags") } catch {}
 
       // Refresh flags from server
       await fetchFlags()

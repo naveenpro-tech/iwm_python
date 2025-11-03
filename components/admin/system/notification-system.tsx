@@ -521,7 +521,7 @@ export function NotificationSystem() {
                         onChange={(e) => setNewTemplateBody(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Use {{ variable_name }} syntax for dynamic content. Example: Hello {{ name }}
+                        Use {`{{ variable_name }}`} syntax for dynamic content. Example: Hello {`{{ name }}`}
                       </p>
                     </div>
 

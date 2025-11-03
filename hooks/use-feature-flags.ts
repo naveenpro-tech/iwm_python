@@ -1,11 +1,12 @@
 /**
  * Feature Flags Hook
- * 
+ *
  * Provides access to feature flags for controlling which features are visible/enabled.
  * Caches flags in localStorage for performance and offline support.
  */
 
 import { useState, useEffect } from 'react';
+import { getApiUrl } from '@/lib/api-config';
 
 export interface FeatureFlags {
   [key: string]: boolean;
@@ -49,7 +50,8 @@ export function useFeatureFlags(): UseFeatureFlagsReturn {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/feature-flags`);
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/v1/feature-flags`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch feature flags: ${response.statusText}`);

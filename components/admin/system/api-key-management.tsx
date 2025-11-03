@@ -540,17 +540,16 @@ export function ApiKeyManagement() {
                 </TableHeader>
                 <TableBody>
                   <AnimatePresence>
-                    <motion.div variants={containerVariants} initial="hidden" animate="visible">
-                      {filteredKeys.map((key) => (
-                        <motion.tr
-                          key={key.id}
-                          variants={itemVariants}
-                          className="group"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.2 }}
-                        >
+                    {filteredKeys.map((key) => (
+                      <motion.tr
+                        key={key.id}
+                        variants={itemVariants}
+                        className="group"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
                           <TableCell className="font-medium">
                             <div className="flex flex-col">
                               <span>{key.name}</span>
@@ -680,7 +679,6 @@ export function ApiKeyManagement() {
                           </TableCell>
                         </motion.tr>
                       ))}
-                    </motion.div>
                   </AnimatePresence>
                 </TableBody>
               </Table>
