@@ -14,7 +14,7 @@ import { MovieGrid } from "@/components/movies/movie-grid"
 import { MovieList } from "@/components/movies/movie-list"
 import { AddMoviesModal } from "./add-movies-modal"
 import { getCollection } from "@/lib/api/collections"
-import { getCurrentUser } from "@/lib/api/auth"
+import { getCurrentUser } from "@/lib/auth"
 import type { Collection } from "./types"
 
 interface CollectionDetailProps {
