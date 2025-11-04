@@ -1,7 +1,7 @@
 """add collection_likes table
 
 Revision ID: add_collection_likes
-Revises: 
+Revises: 001_feature_flags
 Create Date: 2025-01-04 12:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'add_collection_likes'
-down_revision: Union[str, None] = None
+down_revision: Union[str, None] = '001_feature_flags'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
