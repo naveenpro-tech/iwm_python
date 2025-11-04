@@ -10,16 +10,20 @@ import { MediaUploader } from "./media-uploader"
 import { ReviewGuidelines } from "./review-guidelines"
 import { ActionButtons } from "./action-buttons"
 import { useToast } from "@/hooks/use-toast"
+import { submitReview } from "@/lib/api/reviews"
+import { getCurrentUser } from "@/lib/auth"
+import { useRouter } from "next/navigation"
 
 interface MovieReviewCreationProps {
   movie: any
-  onSubmit: (review: any) => void
+  onSubmit?: (review: any) => void
   onCancel: () => void
   isModal?: boolean
 }
 
 export function MovieReviewCreation({ movie, onSubmit, onCancel, isModal = false }: MovieReviewCreationProps) {
   const { toast } = useToast()
+  const router = useRouter()
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState("")
   const [containsSpoilers, setContainsSpoilers] = useState(false)
@@ -30,6 +34,7 @@ export function MovieReviewCreation({ movie, onSubmit, onCancel, isModal = false
   const isVerified = true // Mock verification status
 
   const handleSubmit = async () => {
+    // Validation
     if (rating === 0) {
       toast({
         title: "Rating Required",
@@ -50,25 +55,62 @@ export function MovieReviewCreation({ movie, onSubmit, onCancel, isModal = false
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      // Check if user is authenticated
+      const user = await getCurrentUser()
 
-    const review = {
-      movieId: movie.id,
-      rating,
-      text: reviewText,
-      containsSpoilers,
-      media: uploadedMedia,
-      isVerified,
-      createdAt: new Date().toISOString(),
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to submit a review.",
+          variant: "destructive",
+        })
+        // Redirect to login with return URL
+        router.push(`/login?redirect=/movies/${movie.id}/review/create`)
+        return
+      }
+
+      console.log("Submitting review for movie:", movie.id)
+      console.log("User:", user.username)
+      console.log("Rating:", rating)
+      console.log("Review length:", reviewText.length)
+
+      // Submit review to backend API
+      const reviewData = {
+        content: reviewText,
+        rating: rating,
+        hasSpoilers: containsSpoilers,
+      }
+
+      const result = await submitReview(movie.id, reviewData, user.username)
+
+      console.log("Review submitted successfully:", result)
+
+      // Show success toast
+      toast({
+        title: "Review Published!",
+        description: "Your review has been successfully posted.",
+      })
+
+      // Call onSubmit callback if provided (for modal usage)
+      if (onSubmit) {
+        onSubmit(result)
+      }
+
+      // Redirect to movie page to see the review
+      router.push(`/movies/${movie.id}`)
+
+    } catch (error) {
+      console.error("Error submitting review:", error)
+
+      toast({
+        title: "Submission Failed",
+        description: error instanceof Error ? error.message : "Failed to submit review. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
-
-    onSubmit(review)
-
-    toast({
-      title: "Review Submitted!",
-      description: "Your review has been successfully posted.",
-    })
   }
 
   const handleSaveDraft = () => {

@@ -100,11 +100,6 @@ export default function CreateReviewPage() {
         <div className="max-w-4xl mx-auto">
           <MovieReviewCreation
             movie={movie}
-            onSubmit={(review) => {
-              console.log("Review submitted:", review)
-              // Handle review submission
-              router.push(`/movies/${movieId}`)
-            }}
             onCancel={() => router.back()}
           />
         </div>
