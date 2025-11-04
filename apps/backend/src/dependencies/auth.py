@@ -37,3 +37,28 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
 
+
+async def get_current_user_optional(
+    token: str | None = Depends(oauth2_scheme),
+    session: AsyncSession = Depends(get_session),
+) -> User | None:
+    """
+    Get current user if authenticated, otherwise return None.
+    Used for endpoints that need to check authentication but don't require it.
+    """
+    if not token:
+        return None
+    try:
+        payload = decode_token(token)
+        if payload.get("type") != "access":
+            return None
+        sub = payload.get("sub")
+        if not sub:
+            return None
+        user_id = int(sub)
+        res = await session.execute(select(User).where(User.id == user_id))
+        user = res.scalar_one_or_none()
+        return user
+    except Exception:
+        return None
+

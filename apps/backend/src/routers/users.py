@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from ..db import get_session
-from ..models import User, Review, Watchlist, Favorite, Collection
+from ..models import User, Review, Watchlist, Favorite, Collection, UserSettings
+from ..dependencies.auth import get_current_user_optional
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -43,6 +44,7 @@ class UserProfileResponse(BaseModel):
 async def get_user_by_username(
     username: str,
     session: AsyncSession = Depends(get_session),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> Any:
     """
     Get user profile by username.
@@ -50,6 +52,8 @@ async def get_user_by_username(
     1. Exact email match
     2. Email prefix match (username@)
     3. External_id match
+
+    Privacy: If profile is private, only the owner can view it.
     """
     user = None
 
@@ -71,6 +75,25 @@ async def get_user_by_username(
         user = result.scalar_one_or_none()
 
     if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check privacy settings
+    settings_query = select(UserSettings).where(UserSettings.user_id == user.id)
+    settings_result = await session.execute(settings_query)
+    user_settings = settings_result.scalar_one_or_none()
+
+    # Get profile visibility setting (default to "public" if not set)
+    profile_visibility = "public"
+    if user_settings and user_settings.privacy:
+        profile_visibility = user_settings.privacy.get("profileVisibility", "public")
+
+    # Check if profile is private and viewer is not the owner
+    is_owner = current_user and current_user.id == user.id
+    if profile_visibility == "private" and not is_owner:
+        # Return 404 to not reveal that the user exists
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"

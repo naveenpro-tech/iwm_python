@@ -51,6 +51,7 @@ export default function UserProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isOwnProfile, setIsOwnProfile] = useState(false)
 
   const handleProfileUpdate = async (data: {
     name: string
