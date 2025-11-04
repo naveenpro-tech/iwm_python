@@ -27,6 +27,7 @@ interface ProfileHeaderProps {
     followers: number
   }
   isVerified?: boolean
+  isOwnProfile?: boolean
   onProfileUpdate?: (data: { name: string; bio: string; location?: string; website?: string }) => Promise<void>
 }
 
@@ -41,6 +42,7 @@ export function ProfileHeader({
   website,
   stats,
   isVerified = false,
+  isOwnProfile = false,
   onProfileUpdate
 }: ProfileHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -153,15 +155,17 @@ export function ProfileHeader({
 
               {/* Action Buttons */}
               <div className="flex mt-4 md:mt-0 space-x-2">
-                <Button
-                  variant="outline"
-                  size={isMobile ? "sm" : "default"}
-                  className="border-[#3A3A3A] text-[#E0E0E0] hover:bg-[#3A3A3A]"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </Button>
+                {isOwnProfile && (
+                  <Button
+                    variant="outline"
+                    size={isMobile ? "sm" : "default"}
+                    className="border-[#3A3A3A] text-[#E0E0E0] hover:bg-[#3A3A3A]"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size={isMobile ? "sm" : "default"}

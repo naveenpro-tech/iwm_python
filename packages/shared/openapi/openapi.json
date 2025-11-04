@@ -321,8 +321,13 @@
           "users"
         ],
         "summary": "Get User By Username",
-        "description": "Get user profile by username.\nTry multiple strategies:\n1. Exact email match\n2. Email prefix match (username@)\n3. External_id match",
+        "description": "Get user profile by username.\nTry multiple strategies:\n1. Exact email match\n2. Email prefix match (username@)\n3. External_id match\n\nPrivacy: If profile is private, only the owner can view it.",
         "operationId": "get_user_by_username_api_v1_users__username__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "username",

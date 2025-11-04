@@ -239,6 +239,7 @@ export default function UserProfilePage() {
         location={userData.location}
         website={userData.website}
         stats={userData.stats}
+        isOwnProfile={isOwnProfile}
         onProfileUpdate={handleProfileUpdate}
       />
 
