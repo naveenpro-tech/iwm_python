@@ -62,7 +62,7 @@ export default function WriteReviewFAB({
         initial={{ opacity: 0, scale: 0 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, delay: 1.2 }}
-        className="hidden md:block fixed bottom-8 right-8 z-50"
+        className="hidden md:block fixed bottom-8 right-8 z-[60]"
       >
         <Button
           onClick={config.onClick}
@@ -77,7 +77,7 @@ export default function WriteReviewFAB({
         {/* Pulse Animation */}
         {isPulsing && (
           <motion.div
-            className={`absolute inset-0 ${config.color} rounded-full opacity-75`}
+            className={`absolute inset-0 ${config.color} rounded-full opacity-75 pointer-events-none`}
             animate={{
               scale: [1, 1.2, 1],
               opacity: [0.75, 0, 0.75],
@@ -96,7 +96,7 @@ export default function WriteReviewFAB({
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 1.2 }}
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-[#1A1A1A] to-transparent"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-[60] p-4 bg-gradient-to-t from-[#1A1A1A] to-transparent"
       >
         <Button
           onClick={config.onClick}
