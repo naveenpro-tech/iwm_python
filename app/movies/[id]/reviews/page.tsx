@@ -405,7 +405,7 @@ export default function ReviewsPage() {
 
       {/* Write Review FAB */}
       <WriteReviewFAB
-        movieId={Number(movieId)}
+        movieId={movieId}
         isLoggedIn={!!currentUserId}
         hasReviewed={userHasReviewed}
         requiresQuiz={requiresQuiz}

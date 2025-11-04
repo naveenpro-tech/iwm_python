@@ -230,7 +230,7 @@ export interface OfficialReviewCardProps {
 }
 
 export interface WriteReviewFABProps {
-  movieId: number
+  movieId: string
   isLoggedIn: boolean
   hasReviewed: boolean
   requiresQuiz: boolean
