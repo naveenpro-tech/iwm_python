@@ -139,26 +139,35 @@ export default function MovieTriviaPage({ params }: { params: { id: string } }) 
         const response = await fetch(`${apiBase}/api/v1/movies/${params.id}`)
         if (response.ok) {
           const data = await response.json()
+          console.log("Movie data received for trivia:", data)
+          console.log("Trivia data from backend:", data.trivia)
           setMovieTitle(data.title || "Movie")
 
           // Convert backend trivia format to Trivia format
-          const trivia = (data.trivia || []).map((item: any, index: number) => ({
-            id: `trivia-${index}`,
-            content: item.answer,
-            category: item.category || "plot-details",
-            source: item.explanation || "",
-            submittedBy: "Community",
-            submittedDate: new Date().toISOString(),
-            verified: true,
-            spoiler: false,
-            upvotes: Math.floor(Math.random() * 100),
-            downvotes: Math.floor(Math.random() * 10),
-            userVote: null,
-            isFavorited: false,
-            tags: [item.category || "trivia"],
-          }))
-          setTriviaItems(trivia)
+          if (data.trivia && Array.isArray(data.trivia) && data.trivia.length > 0) {
+            const trivia = data.trivia.map((item: any, index: number) => ({
+              id: `trivia-${index}`,
+              content: item.answer || item.content || item.text,
+              category: item.category || "plot-details",
+              source: item.explanation || item.source || "",
+              submittedBy: "Community",
+              submittedDate: new Date().toISOString(),
+              verified: true,
+              spoiler: item.spoiler || false,
+              upvotes: Math.floor(Math.random() * 100),
+              downvotes: Math.floor(Math.random() * 10),
+              userVote: null,
+              isFavorited: false,
+              tags: [item.category || "trivia"],
+            }))
+            console.log("Transformed trivia items:", trivia)
+            setTriviaItems(trivia)
+          } else {
+            console.log("No trivia data found, using mock data")
+            setTriviaItems(MOCK_TRIVIA_ITEMS_INITIAL)
+          }
         } else {
+          console.log("Failed to fetch movie, using mock data")
           // Fall back to mock data
           setTriviaItems(MOCK_TRIVIA_ITEMS_INITIAL)
         }
@@ -284,19 +293,25 @@ export default function MovieTriviaPage({ params }: { params: { id: string } }) 
 
   const handleFavoriteToggle = useCallback(
     (triviaId: string) => {
-      setTriviaItems((prevItems) =>
-        prevItems.map((item) => (item.id === triviaId ? { ...item, isFavorited: !item.isFavorited } : item)),
-      )
-      const item = triviaItems.find((t) => t.id === triviaId)
-      if (item) {
-        toast({
-          title: item.isFavorited ? "Removed from Favorites" : "Added to Favorites",
-          description: `Trivia has been ${item.isFavorited ? "removed from" : "added to"} your favorites.`,
-          className: item.isFavorited ? "bg-gray-700 text-white" : "bg-pink-500 text-white border-pink-600",
-        })
-      }
+      setTriviaItems((prevItems) => {
+        const updatedItems = prevItems.map((item) =>
+          item.id === triviaId ? { ...item, isFavorited: !item.isFavorited } : item
+        )
+
+        // Find the updated item to show toast
+        const updatedItem = updatedItems.find((t) => t.id === triviaId)
+        if (updatedItem) {
+          toast({
+            title: updatedItem.isFavorited ? "Added to Favorites" : "Removed from Favorites",
+            description: `Trivia has been ${updatedItem.isFavorited ? "added to" : "removed from"} your favorites.`,
+            className: updatedItem.isFavorited ? "bg-pink-500 text-white border-pink-600" : "bg-gray-700 text-white",
+          })
+        }
+
+        return updatedItems
+      })
     },
-    [toast, triviaItems],
+    [toast],
   )
 
   const categoryCounts = useMemo(() => {

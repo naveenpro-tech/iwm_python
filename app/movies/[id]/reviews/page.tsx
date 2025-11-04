@@ -88,8 +88,28 @@ export default function ReviewsPage() {
           setCurrentUserId(undefined)
         }
 
+        // Fetch movie data first
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const movieResponse = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
+        let movieData = null
+        if (movieResponse.ok) {
+          movieData = await movieResponse.json()
+          setMovie({
+            id: movieData.id || movieId,
+            title: movieData.title || "Movie",
+            year: movieData.year || new Date().getFullYear(),
+            posterUrl: movieData.poster_url || "/placeholder.svg",
+            backdropUrl: movieData.backdrop_url || "/placeholder.svg",
+            genres: movieData.genres || [],
+            runtime: movieData.runtime || 0,
+            director: movieData.director || "Unknown",
+          })
+        }
+
         // Fetch movie reviews from backend
+        console.log("Fetching reviews for movie:", movieId)
         const reviewsData = await getMovieReviews(movieId, 1, 100)
+        console.log("Reviews data received:", reviewsData)
 
         // Transform backend data to match component expectations
         if (reviewsData && Array.isArray(reviewsData)) {
@@ -116,8 +136,9 @@ export default function ReviewsPage() {
             user_vote: null,
           }))
 
-          // Set movie context from first review's movie data (if available)
-          if (allReviews.length > 0 && allReviews[0].movie) {
+          // Movie context already set from movieData fetch above
+          // Only update if we didn't get movie data earlier
+          if (!movieData && allReviews.length > 0 && allReviews[0].movie) {
             setMovie({
               id: allReviews[0].movie.id || movieId,
               title: allReviews[0].movie.title || "Movie",
@@ -125,17 +146,6 @@ export default function ReviewsPage() {
               posterUrl: allReviews[0].movie.posterUrl || "/placeholder.svg",
               backdropUrl: "/placeholder.svg",
               genres: allReviews[0].movie.genres || [],
-              runtime: 0,
-              director: "Unknown",
-            })
-          } else {
-            setMovie({
-              id: movieId,
-              title: "Movie",
-              year: new Date().getFullYear(),
-              posterUrl: "/placeholder.svg",
-              backdropUrl: "/placeholder.svg",
-              genres: [],
               runtime: 0,
               director: "Unknown",
             })

@@ -35,7 +35,7 @@ export async function apiRequest<T = any>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -45,14 +45,16 @@ export async function apiRequest<T = any>(
   })
 
   if (!response.ok) {
-    // Handle 401 Unauthorized - redirect to login
+    // Handle 401 Unauthorized - redirect to login with user-friendly message
     if (response.status === 401) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("access_token")
         localStorage.removeItem("refresh_token")
+        // Redirect to login with current page as redirect target
         window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
       }
-      throw new Error("Unauthorized")
+      // Throw user-friendly error message
+      throw new Error("Please log in to use this feature")
     }
 
     // Try to parse error message from response

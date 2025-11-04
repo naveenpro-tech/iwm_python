@@ -257,6 +257,25 @@ export default function MovieEditPage() {
       const producers = (movieData.crew || []).filter(c => c.role?.toLowerCase() === "producer").map(c => ({ name: c.name, image: c.image }))
       const cast = (movieData.cast || []).map(c => ({ name: c.name, image: c.image, character: c.character }))
 
+      // Transform trivia data to backend format
+      const trivia = (movieData.trivia || []).map((t: any) => ({
+        question: t.question,
+        category: t.category,
+        answer: t.answer,
+        explanation: t.explanation || undefined,
+      }))
+
+      // Transform timeline data to backend format
+      const timeline = (movieData.timelineEvents || []).map((e: any) => ({
+        date: e.date,
+        title: e.title,
+        description: e.description || "",
+        type: e.category || e.type || "production",
+      }))
+
+      console.log("Saving trivia:", trivia)
+      console.log("Saving timeline:", timeline)
+
       const payload = [{
         external_id: extId,
         title: movieData.title,
@@ -290,6 +309,8 @@ export default function MovieEditPage() {
           quality: s.quality,
           url: s.url,
         })),
+        trivia: trivia.length > 0 ? trivia : undefined,
+        timeline: timeline.length > 0 ? timeline : undefined,
       }]
 
       const res = await fetch(`${apiBase}/api/v1/admin/movies/import`, {
@@ -324,9 +345,15 @@ export default function MovieEditPage() {
         )
       }
 
+      const triviaCount = trivia.length
+      const timelineCount = timeline.length
+      const details = []
+      if (triviaCount > 0) details.push(`${triviaCount} trivia items`)
+      if (timelineCount > 0) details.push(`${timelineCount} timeline events`)
+
       toast({
         title: "Published Successfully",
-        description: `Imported: ${json.imported}, Updated: ${json.updated}. Redirecting to movie page...`
+        description: `Imported: ${json.imported}, Updated: ${json.updated}. ${details.length > 0 ? `Saved: ${details.join(", ")}. ` : ""}Redirecting to movie page...`
       })
 
       // Redirect to public movie page (frontend)
@@ -561,11 +588,13 @@ export default function MovieEditPage() {
   }
 
   const handleTriviaChange = (trivia: TriviaItem[]) => {
+    console.log("Trivia changed:", trivia)
     setMovieData((prev) => ({ ...prev!, trivia: trivia }))
     setHasChanges(true)
   }
 
   const handleTimelineEventsChange = (events: TimelineEvent[]) => {
+    console.log("Timeline events changed:", events)
     setMovieData((prev) => ({ ...prev!, timelineEvents: events }))
     setHasChanges(true)
   }

@@ -240,24 +240,35 @@ export default function MovieTimelinePage({ params }: { params: Promise<{ id: st
         const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         if (response.ok) {
           const data = await response.json()
+          console.log("Movie data received for timeline:", data)
+          console.log("Timeline data from backend:", data.timeline)
           setMovieTitle(data.title || "Movie")
 
           // Convert backend timeline format to TimelineEventData
-          const events = (data.timeline || []).map((event: any, index: number) => ({
-            id: `timeline-${index}`,
-            title: event.title,
-            date: event.date,
-            formattedDate: new Date(event.date).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            }),
-            description: event.description,
-            category: (event.type || "production") as TimelineCategory,
-            tags: [event.type || "production"],
-            significance: "major" as const,
-          }))
-          setTimelineEvents(events)
+          if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+            const events = data.timeline.map((event: any, index: number) => ({
+              id: `timeline-${index}`,
+              title: event.title || event.name,
+              date: event.date,
+              formattedDate: new Date(event.date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              description: event.description || event.details || "",
+              category: (event.type || event.category || "production") as TimelineCategory,
+              tags: [event.type || event.category || "production"],
+              significance: "major" as const,
+            }))
+            console.log("Transformed timeline events:", events)
+            setTimelineEvents(events)
+          } else {
+            console.log("No timeline data found, using mock data")
+            setTimelineEvents(mockMovieTimelineEvents)
+          }
+        } else {
+          console.log("Failed to fetch movie, using mock data")
+          setTimelineEvents(mockMovieTimelineEvents)
         }
       } catch (error) {
         console.error("Failed to fetch movie timeline:", error)

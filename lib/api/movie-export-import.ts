@@ -5,7 +5,8 @@
 
 import { getAuthHeaders } from "@/lib/auth"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const API_URL = `${API_BASE}/api/v1`
 
 export type CategoryType =
   | "basic-info"
@@ -56,7 +57,7 @@ export async function exportMovieCategory(
   const headers = getAuthHeaders()
 
   const response = await fetch(
-    `${API_BASE}/admin/movies/${movieId}/export/${category}`,
+    `${API_URL}/admin/movies/${movieId}/export/${category}`,
     {
       method: "GET",
       headers,
@@ -78,7 +79,7 @@ export async function exportAllCategories(movieId: string): Promise<Blob> {
   const headers = getAuthHeaders()
 
   const response = await fetch(
-    `${API_BASE}/admin/movies/${movieId}/export/all`,
+    `${API_URL}/admin/movies/${movieId}/export/all`,
     {
       method: "GET",
       headers,
@@ -104,7 +105,7 @@ export async function importMovieCategory(
   const headers = getAuthHeaders()
 
   const response = await fetch(
-    `${API_BASE}/admin/movies/${movieId}/import/${category}`,
+    `${API_URL}/admin/movies/${movieId}/import/${category}`,
     {
       method: "POST",
       headers: {
@@ -528,7 +529,7 @@ export async function publishDraftCategory(
   const headers = getAuthHeaders()
 
   const response = await fetch(
-    `${API_BASE}/admin/movies/${movieId}/publish/${category}`,
+    `${API_URL}/admin/movies/${movieId}/publish/${category}`,
     {
       method: "POST",
       headers,
@@ -553,7 +554,7 @@ export async function discardDraftCategory(
   const headers = getAuthHeaders()
 
   const response = await fetch(
-    `${API_BASE}/admin/movies/${movieId}/draft/${category}`,
+    `${API_URL}/admin/movies/${movieId}/draft/${category}`,
     {
       method: "DELETE",
       headers,
@@ -585,7 +586,7 @@ export async function getDraftStatus(movieId: string): Promise<{
   const headers = getAuthHeaders()
 
   const response = await fetch(
-    `${API_BASE}/admin/movies/${movieId}/draft-status`,
+    `${API_URL}/admin/movies/${movieId}/draft-status`,
     {
       method: "GET",
       headers,

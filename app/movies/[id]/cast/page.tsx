@@ -8,6 +8,8 @@ import { Loader2, User } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
+import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
+import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
 
 interface CastMember {
   id: string
@@ -26,6 +28,7 @@ export default function CastPage() {
   const [cast, setCast] = useState<CastMember[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [movieTitle, setMovieTitle] = useState("Movie")
 
   useEffect(() => {
     const fetchCast = async () => {
@@ -34,7 +37,21 @@ export default function CastPage() {
         const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         if (response.ok) {
           const data = await response.json()
-          setCast(data.cast || [])
+          console.log("Movie data received:", data)
+          console.log("Cast data:", data.cast)
+
+          // Transform cast data to use 'image' field from 'profileUrl'
+          const transformedCast = (data.cast || []).map((member: any) => ({
+            id: member.id,
+            name: member.name,
+            character: member.character,
+            image: member.profileUrl || member.image, // Use profileUrl from backend
+            role: member.role,
+          }))
+
+          console.log("Transformed cast:", transformedCast)
+          setCast(transformedCast)
+          setMovieTitle(data.title || "Movie")
         }
       } catch (error) {
         console.error("Failed to fetch cast:", error)
@@ -47,20 +64,34 @@ export default function CastPage() {
     fetchCast()
   }, [movieId, toast])
 
+  const breadcrumbItems = [
+    { label: "Movies", href: "/movies" },
+    { label: movieTitle, href: `/movies/${movieId}` },
+    { label: "Cast & Crew", href: `/movies/${movieId}/cast` },
+  ]
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-[#141414]">
+        <MovieDetailsNavigation movieId={movieId} movieTitle={movieTitle} />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-[#00BFFF]" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Cast</h1>
-        <p className="text-muted-foreground">Meet the actors in this movie</p>
-      </div>
+    <div className="min-h-screen bg-[#141414] text-gray-100">
+      <MovieDetailsNavigation movieId={movieId} movieTitle={movieTitle} />
+
+      <div className="container mx-auto py-8 px-4">
+        <BreadcrumbNavigation items={breadcrumbItems} />
+
+        <div className="mb-8 mt-6">
+          <h1 className="text-3xl font-bold mb-2 text-[#E0E0E0]">Cast & Crew</h1>
+          <p className="text-[#A0A0A0]">Meet the actors in this movie</p>
+        </div>
 
       {/* View Mode Toggle */}
       <div className="flex gap-2 mb-6">
@@ -93,7 +124,16 @@ export default function CastPage() {
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(`/people/${member.id}`)}>
                   <div className="relative aspect-square bg-muted">
                     {member.image ? (
-                      <Image src={member.image} alt={member.name} fill className="object-cover" />
+                      <Image
+                        src={member.image}
+                        alt={member.name}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          console.error("Image failed to load:", member.image)
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
                     ) : (
                       <div className="flex items-center justify-center h-full">
                         <User className="h-12 w-12 text-muted-foreground" />
@@ -128,7 +168,16 @@ export default function CastPage() {
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="relative w-16 h-16 flex-shrink-0 bg-muted rounded">
                       {member.image ? (
-                        <Image src={member.image} alt={member.name} fill className="object-cover rounded" />
+                        <Image
+                          src={member.image}
+                          alt={member.name}
+                          fill
+                          className="object-cover rounded"
+                          onError={(e) => {
+                            console.error("Image failed to load:", member.image)
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
                       ) : (
                         <div className="flex items-center justify-center h-full">
                           <User className="h-8 w-8 text-muted-foreground" />
@@ -149,6 +198,7 @@ export default function CastPage() {
           </AnimatePresence>
         </div>
       )}
+      </div>
     </div>
   )
 }

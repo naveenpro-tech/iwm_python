@@ -6,6 +6,8 @@ import { X, Plus, Check } from "lucide-react"
 import type { UserCollection } from "@/types/profile"
 import { getUserCollections, addMovieToCollection, removeMovieFromCollection, createCollection } from "@/lib/api/collections"
 import { useToast } from "@/hooks/use-toast"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 interface AddToCollectionModalProps {
   movieId: string
@@ -23,6 +25,10 @@ export function AddToCollectionModal({
   const [initialCollections, setInitialCollections] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [newCollectionName, setNewCollectionName] = useState("")
+  const [newCollectionDescription, setNewCollectionDescription] = useState("")
+  const [isCreating, setIsCreating] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -31,6 +37,19 @@ export function AddToCollectionModal({
       try {
         const { getCurrentUser } = await import("@/lib/auth")
         const current = await getCurrentUser()
+
+        if (!current) {
+          toast({
+            title: "Login Required",
+            description: "Please log in to manage collections.",
+            variant: "destructive",
+          })
+          setTimeout(() => {
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+          }, 1500)
+          return
+        }
+
         const data = await getUserCollections(current.id)
         const collectionsArray = Array.isArray(data) ? data : []
         setCollections(collectionsArray)
@@ -41,13 +60,27 @@ export function AddToCollectionModal({
           .map((c: any) => c.id || c.external_id)
         setSelectedCollections(new Set(alreadyIn))
         setInitialCollections(new Set(alreadyIn))
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to load collections:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load collections. Please try again.",
-          variant: "destructive",
-        })
+        const errorMessage = error.message || "Failed to load collections. Please try again."
+
+        // Check if it's an authentication error
+        if (errorMessage.includes("log in") || errorMessage.includes("Unauthorized")) {
+          toast({
+            title: "Login Required",
+            description: "Please log in to manage collections.",
+            variant: "destructive",
+          })
+          setTimeout(() => {
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+          }, 1500)
+        } else {
+          toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+          })
+        }
       } finally {
         setIsLoading(false)
       }
@@ -66,6 +99,82 @@ export function AddToCollectionModal({
       }
       return newSet
     })
+  }
+
+  const handleCreateCollection = async () => {
+    if (!newCollectionName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a collection name.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsCreating(true)
+    try {
+      const { getCurrentUser } = await import("@/lib/auth")
+      const current = await getCurrentUser()
+
+      if (!current) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to create collections.",
+          variant: "destructive",
+        })
+        setTimeout(() => {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }, 1500)
+        return
+      }
+
+      const newCollection = await createCollection({
+        title: newCollectionName.trim(),
+        description: newCollectionDescription.trim() || undefined,
+        isPublic: false,
+      })
+
+      // Add the new collection to the list
+      setCollections(prev => [...prev, newCollection])
+
+      // Automatically select the new collection and add the movie to it
+      setSelectedCollections(prev => new Set([...prev, newCollection.id]))
+
+      // Add movie to the new collection immediately
+      await addMovieToCollection(newCollection.id, movieId)
+
+      toast({
+        title: "Collection Created",
+        description: `"${newCollectionName}" created and ${movieTitle} added successfully.`,
+      })
+
+      // Reset form
+      setNewCollectionName("")
+      setNewCollectionDescription("")
+      setShowCreateForm(false)
+    } catch (error: any) {
+      console.error("Failed to create collection:", error)
+      const errorMessage = error.message || "Failed to create collection. Please try again."
+
+      if (errorMessage.includes("log in") || errorMessage.includes("Unauthorized")) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to create collections.",
+          variant: "destructive",
+        })
+        setTimeout(() => {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }, 1500)
+      } else {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const handleSave = async () => {
@@ -153,55 +262,108 @@ export function AddToCollectionModal({
               <div className="flex items-center justify-center py-8">
                 <div className="w-8 h-8 border-4 border-[#00BFFF] border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : collections.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-[#A0A0A0] font-dm-sans mb-4">
-                  You don't have any collections yet
-                </p>
-                <button
-                  onClick={() => {
-                    // In real implementation, this would open create collection modal
-                    console.log("Create new collection")
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#00BFFF] text-white font-dm-sans font-medium rounded-lg hover:bg-[#00BFFF]/90 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Collection
-                </button>
-              </div>
             ) : (
-              <div className="space-y-2">
-                {collections.map(collection => (
+              <div className="space-y-4">
+                {/* Create New Collection Button/Form */}
+                {!showCreateForm ? (
                   <button
-                    key={collection.id}
-                    onClick={() => toggleCollection(collection.id)}
-                    className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
-                      selectedCollections.has(collection.id)
-                        ? "border-[#00BFFF] bg-[#00BFFF]/10"
-                        : "border-[#3A3A3A] hover:border-[#00BFFF]/50"
-                    }`}
+                    onClick={() => setShowCreateForm(true)}
+                    className="w-full flex items-center justify-center gap-2 p-4 rounded-lg border-2 border-dashed border-[#3A3A3A] hover:border-[#00BFFF]/50 text-[#A0A0A0] hover:text-[#00BFFF] transition-all"
                   >
-                    <div className="flex-1 text-left">
-                      <h3 className="font-dm-sans font-medium text-[#E0E0E0]">
-                        {collection.title}
-                      </h3>
-                      <p className="text-sm text-[#A0A0A0] mt-0.5">
-                        {collection.movieCount} {collection.movieCount === 1 ? "movie" : "movies"}
-                      </p>
-                    </div>
-                    <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                        selectedCollections.has(collection.id)
-                          ? "border-[#00BFFF] bg-[#00BFFF]"
-                          : "border-[#3A3A3A]"
-                      }`}
-                    >
-                      {selectedCollections.has(collection.id) && (
-                        <Check className="w-4 h-4 text-white" />
-                      )}
-                    </div>
+                    <Plus className="w-5 h-5" />
+                    <span className="font-dm-sans font-medium">Create New Collection</span>
                   </button>
-                ))}
+                ) : (
+                  <div className="p-4 rounded-lg border-2 border-[#00BFFF] bg-[#00BFFF]/5 space-y-3">
+                    <div>
+                      <label className="block text-sm font-dm-sans text-[#E0E0E0] mb-1.5">
+                        Collection Name *
+                      </label>
+                      <Input
+                        value={newCollectionName}
+                        onChange={(e) => setNewCollectionName(e.target.value)}
+                        placeholder="e.g., My Favorite Sci-Fi"
+                        className="bg-[#1A1A1A] border-[#3A3A3A] text-[#E0E0E0]"
+                        disabled={isCreating}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-dm-sans text-[#E0E0E0] mb-1.5">
+                        Description (Optional)
+                      </label>
+                      <Textarea
+                        value={newCollectionDescription}
+                        onChange={(e) => setNewCollectionDescription(e.target.value)}
+                        placeholder="Describe your collection..."
+                        className="bg-[#1A1A1A] border-[#3A3A3A] text-[#E0E0E0] min-h-[80px]"
+                        disabled={isCreating}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleCreateCollection}
+                        disabled={isCreating || !newCollectionName.trim()}
+                        className="flex-1 px-4 py-2 bg-[#00BFFF] text-white font-dm-sans font-medium rounded-lg hover:bg-[#00BFFF]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCreating ? "Creating..." : "Create & Add Movie"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCreateForm(false)
+                          setNewCollectionName("")
+                          setNewCollectionDescription("")
+                        }}
+                        disabled={isCreating}
+                        className="px-4 py-2 border border-[#3A3A3A] text-[#E0E0E0] font-dm-sans font-medium rounded-lg hover:bg-[#3A3A3A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Collections */}
+                {collections.length === 0 && !showCreateForm ? (
+                  <div className="text-center py-8">
+                    <p className="text-[#A0A0A0] font-dm-sans">
+                      You don't have any collections yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {collections.map(collection => (
+                      <button
+                        key={collection.id}
+                        onClick={() => toggleCollection(collection.id)}
+                        className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                          selectedCollections.has(collection.id)
+                            ? "border-[#00BFFF] bg-[#00BFFF]/10"
+                            : "border-[#3A3A3A] hover:border-[#00BFFF]/50"
+                        }`}
+                      >
+                        <div className="flex-1 text-left">
+                          <h3 className="font-dm-sans font-medium text-[#E0E0E0]">
+                            {collection.title}
+                          </h3>
+                          <p className="text-sm text-[#A0A0A0] mt-0.5">
+                            {collection.movieCount} {collection.movieCount === 1 ? "movie" : "movies"}
+                          </p>
+                        </div>
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            selectedCollections.has(collection.id)
+                              ? "border-[#00BFFF] bg-[#00BFFF]"
+                              : "border-[#3A3A3A]"
+                          }`}
+                        >
+                          {selectedCollections.has(collection.id) && (
+                            <Check className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -472,10 +472,14 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
       const user = await getCurrentUser()
       if (!user) {
         toast({
-          title: "Authentication Required",
-          description: "Please log in to add movies to your watchlist.",
+          title: "Login Required",
+          description: "Please log in or create an account to add movies to your watchlist.",
           variant: "destructive",
         })
+        // Redirect to login with current page as redirect target
+        setTimeout(() => {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }, 1500)
         return
       }
 
@@ -484,13 +488,27 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
         title: "Added to Watchlist",
         description: `${movieData.title} has been added to your watchlist.`,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to add to watchlist:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add movie to watchlist. Please try again.",
-        variant: "destructive",
-      })
+      const errorMessage = error.message || "Failed to add movie to watchlist. Please try again."
+
+      // Check if it's an authentication error
+      if (errorMessage.includes("log in") || errorMessage.includes("Unauthorized")) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to add movies to your watchlist.",
+          variant: "destructive",
+        })
+        setTimeout(() => {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }, 1500)
+      } else {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsAddingToWatchlist(false)
     }
@@ -509,12 +527,16 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
       const user = await getCurrentUser()
       if (!user) {
         toast({
-          title: "Authentication Required",
-          description: "Please log in to add movies to your favorites.",
+          title: "Login Required",
+          description: "Please log in or create an account to add movies to your favorites.",
           variant: "destructive",
         })
         // Rollback optimistic update
         setIsFavorited(previousState)
+        // Redirect to login with current page as redirect target
+        setTimeout(() => {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }, 1500)
         return
       }
 
@@ -545,11 +567,24 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
       setFavoriteId(previousFavoriteId)
 
       const errorMessage = error.message || "Failed to update favorites. Please try again."
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
+
+      // Check if it's an authentication error
+      if (errorMessage.includes("log in") || errorMessage.includes("Unauthorized")) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to manage your favorites.",
+          variant: "destructive",
+        })
+        setTimeout(() => {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }, 1500)
+      } else {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsTogglingFavorite(false)
     }

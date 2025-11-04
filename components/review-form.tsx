@@ -92,7 +92,7 @@ export function ReviewForm({ movieId, movieTitle, onClose, onSuccess }: ReviewFo
           className="transition-transform hover:scale-110"
         >
           <Star
-            className={`w-8 h-8 transition-colors ${
+            className={`w-6 h-6 md:w-8 md:h-8 transition-colors ${
               isFilled ? "text-[#FFD700] fill-[#FFD700]" : "text-[#3A3A3A]"
             }`}
           />
@@ -138,10 +138,10 @@ export function ReviewForm({ movieId, movieTitle, onClose, onSuccess }: ReviewFo
             <Label className="text-[#E0E0E0] font-inter mb-3 block">
               Your Rating <span className="text-[#FF4500]">*</span>
             </Label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               {renderStars()}
               {rating > 0 && (
-                <span className="ml-4 text-2xl font-bold text-[#00BFFF] font-inter">{rating}/10</span>
+                <span className="ml-2 md:ml-4 text-xl md:text-2xl font-bold text-[#00BFFF] font-inter">{rating}/10</span>
               )}
             </div>
           </div>

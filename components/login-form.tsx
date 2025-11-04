@@ -30,15 +30,24 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       const { login, me } = await import("@/lib/auth")
       await login(email, password)
 
-      // Fetch user data to get username for profile redirect
-      try {
-        const user = await me()
-        // Extract username from email (before @) or use user.name as fallback
-        const username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-')
-        window.location.href = `/profile/${username}`
-      } catch {
-        // Fallback to dashboard if user data fetch fails
-        window.location.href = "/dashboard"
+      // Check for redirect parameter in URL
+      const urlParams = new URLSearchParams(window.location.search)
+      const redirectTo = urlParams.get('redirect')
+
+      if (redirectTo) {
+        // Redirect to the original page
+        window.location.href = redirectTo
+      } else {
+        // Fetch user data to get username for profile redirect
+        try {
+          const user = await me()
+          // Extract username from email (before @) or use user.name as fallback
+          const username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-')
+          window.location.href = `/profile/${username}`
+        } catch {
+          // Fallback to dashboard if user data fetch fails
+          window.location.href = "/dashboard"
+        }
       }
     } catch (err: any) {
       const errorMessage = err?.message || "Invalid email or password"
