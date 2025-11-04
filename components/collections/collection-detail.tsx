@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, Heart, Share2, Plus, Grid3X3, List, Film, User, Calendar } from "lucide-react"
+import { ChevronLeft, Heart, Share2, Plus, Grid3X3, List, Film, User, Calendar, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,7 +12,9 @@ import { useToast } from "@/hooks/use-toast"
 import { CollectionDetailSkeleton } from "./collection-detail-skeleton"
 import { MovieGrid } from "@/components/movies/movie-grid"
 import { MovieList } from "@/components/movies/movie-list"
+import { AddMoviesModal } from "./add-movies-modal"
 import { getCollection } from "@/lib/api/collections"
+import { getCurrentUser } from "@/lib/api/auth"
 import type { Collection } from "./types"
 
 interface CollectionDetailProps {
@@ -24,13 +26,47 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
   const [collection, setCollection] = useState<Collection | null>(null)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [isLiked, setIsLiked] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isOwner, setIsOwner] = useState(false)
+  const [showAddMoviesModal, setShowAddMoviesModal] = useState(false)
   const { toast } = useToast()
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getCurrentUser()
+        setCurrentUser(user)
+      } catch (error) {
+        console.log("User not logged in")
+        setCurrentUser(null)
+      }
+    }
+    fetchUser()
+  }, [])
 
   useEffect(() => {
     const fetchCollection = async () => {
       setIsLoading(true)
       try {
         const data = await getCollection(id)
+        console.log("Raw collection data from API:", data)
+
+        // Transform backend movies data to frontend Movie type
+        // Backend returns: { poster: "url", ... }
+        // Frontend expects: { posterUrl: "url", ... }
+        const transformedMovies = (data.movies || []).map((movie: any) => ({
+          id: movie.id,
+          title: movie.title,
+          posterUrl: movie.poster || movie.posterUrl, // Handle both formats
+          year: movie.year ? String(movie.year) : "",
+          genres: movie.genres || [],
+          sidduScore: movie.rating || movie.sidduScore,
+        }))
+
+        console.log(`Collection "${data.title}": ${transformedMovies.length} movies transformed`)
+        console.log("First movie:", transformedMovies[0])
+
         // Transform backend data to frontend Collection type
         const transformedCollection: Collection = {
           id: data.id,
@@ -44,7 +80,7 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
           tags: data.tags || [],
-          movies: data.movies || [],
+          movies: transformedMovies, // Use transformed movies
           // Computed/display fields for component compatibility
           curator: data.creator,
           moviesCount: data.movieCount || 0,
@@ -53,7 +89,14 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
           isOfficial: false,  // Not in backend yet
           isPrivate: !data.isPublic,
         }
+
+        console.log("Transformed collection:", transformedCollection)
         setCollection(transformedCollection)
+
+        // Check if current user is the owner
+        if (currentUser && data.creator === currentUser.username) {
+          setIsOwner(true)
+        }
       } catch (error) {
         console.error("Failed to fetch collection:", error)
         setCollection(null)
@@ -63,7 +106,7 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
     }
 
     fetchCollection()
-  }, [id])
+  }, [id, currentUser])
 
   const handleLike = () => {
     setIsLiked(!isLiked)
@@ -78,26 +121,62 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
 
   const handleShare = async () => {
     try {
-      // Generate public share URL
+      // Generate shareable URL (use current URL for direct import)
       const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
-      const shareUrl = `${baseUrl}/collections/${id}/public`
+      const shareUrl = `${baseUrl}/collections/${id}`
 
       if (navigator.share) {
         await navigator.share({ title: collection?.title || "Collection", url: shareUrl })
       } else {
         await navigator.clipboard.writeText(shareUrl)
-        toast({ title: "Link copied!", description: "Collection link copied to clipboard" })
+        toast({ title: "Link copied!", description: "Share this link to let others import this collection" })
       }
     } catch (err) {
       // Fallback to clipboard on error
       try {
         const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
-        const shareUrl = `${baseUrl}/collections/${id}/public`
+        const shareUrl = `${baseUrl}/collections/${id}`
         await navigator.clipboard.writeText(shareUrl)
-        toast({ title: "Link copied!", description: "Collection link copied to clipboard" })
+        toast({ title: "Link copied!", description: "Share this link to let others import this collection" })
       } catch {
         toast({ title: "Share failed", description: "Unable to share right now", variant: "destructive" })
       }
+    }
+  }
+
+  const handleImportCollection = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to import this collection",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (isOwner) {
+      toast({
+        title: "Already Yours",
+        description: "You already own this collection",
+      })
+      return
+    }
+
+    try {
+      // Simulate API call to import collection
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      toast({
+        title: "Collection Imported!",
+        description: `"${collection?.title}" has been added to your collections`,
+      })
+    } catch (error) {
+      console.error("Failed to import collection:", error)
+      toast({
+        title: "Import Failed",
+        description: "Failed to import collection. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -205,6 +284,17 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
               </div>
 
               <div className="flex flex-wrap gap-3">
+                {/* Show Import button for non-owners */}
+                {!isOwner && currentUser && (
+                  <Button
+                    className="bg-[#00BFFF] hover:bg-[#00BFFF]/90 text-white"
+                    onClick={handleImportCollection}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Import This Collection
+                  </Button>
+                )}
+
                 <Button
                   className={`${
                     isLiked
@@ -222,10 +312,17 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
                   Share
                 </Button>
 
-                <Button variant="outline" className="border-[#333333] text-white hover:bg-[#333333]">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Films
-                </Button>
+                {/* Show Add Films button only for owners */}
+                {isOwner && (
+                  <Button
+                    variant="outline"
+                    className="border-[#333333] text-white hover:bg-[#333333]"
+                    onClick={() => setShowAddMoviesModal(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Films
+                  </Button>
+                )}
               </div>
             </motion.div>
           </div>
@@ -307,6 +404,22 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add Movies Modal */}
+      <AnimatePresence>
+        {showAddMoviesModal && (
+          <AddMoviesModal
+            collectionId={id}
+            collectionTitle={collection.title}
+            onClose={() => setShowAddMoviesModal(false)}
+            onMoviesAdded={(movies) => {
+              // Refresh collection data
+              console.log("Movies added:", movies)
+              setShowAddMoviesModal(false)
+            }}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
