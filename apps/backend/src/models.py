@@ -60,6 +60,14 @@ collection_movies = Table(
     Column("movie_id", ForeignKey("movies.id"), primary_key=True),
 )
 
+collection_likes = Table(
+    "collection_likes",
+    Base.metadata,
+    Column("collection_id", ForeignKey("collections.id"), primary_key=True),
+    Column("user_id", ForeignKey("users.id"), primary_key=True),
+    Column("created_at", DateTime, default=datetime.utcnow),
+)
+
 
 
 

@@ -13,7 +13,7 @@ import { CollectionDetailSkeleton } from "./collection-detail-skeleton"
 import { MovieGrid } from "@/components/movies/movie-grid"
 import { MovieList } from "@/components/movies/movie-list"
 import { AddMoviesModal } from "./add-movies-modal"
-import { getCollection } from "@/lib/api/collections"
+import { getCollection, likeCollection } from "@/lib/api/collections"
 import { getCurrentUser } from "@/lib/auth"
 import type { Collection } from "./types"
 
@@ -108,13 +108,55 @@ export function CollectionDetail({ id }: CollectionDetailProps) {
     fetchCollection()
   }, [id, currentUser])
 
-  const handleLike = () => {
+  const handleLike = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to like this collection",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Optimistic UI update
+    const previousLiked = isLiked
+    const previousCount = collection?.likesCount || 0
+
     setIsLiked(!isLiked)
     if (collection) {
-      // Increment or decrement like count based on action
       setCollection({
         ...collection,
         likesCount: isLiked ? collection.likesCount - 1 : collection.likesCount + 1,
+      })
+    }
+
+    try {
+      const result = await likeCollection(id)
+
+      // Update based on server response
+      setIsLiked(result.liked)
+
+      toast({
+        title: result.liked ? "Collection Liked!" : "Collection Unliked",
+        description: result.liked
+          ? "Added to your liked collections"
+          : "Removed from your liked collections",
+      })
+    } catch (error) {
+      // Revert on error
+      setIsLiked(previousLiked)
+      if (collection) {
+        setCollection({
+          ...collection,
+          likesCount: previousCount,
+        })
+      }
+
+      console.error("Failed to like collection:", error)
+      toast({
+        title: "Action Failed",
+        description: "Failed to update like status. Please try again.",
+        variant: "destructive",
       })
     }
   }

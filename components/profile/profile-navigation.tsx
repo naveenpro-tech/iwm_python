@@ -14,9 +14,10 @@ interface ProfileNavigationProps {
     following: number
     followers: number
   }
+  isOwnProfile?: boolean
 }
 
-export function ProfileNavigation({ activeSection, onSectionChange, stats }: ProfileNavigationProps) {
+export function ProfileNavigation({ activeSection, onSectionChange, stats, isOwnProfile = false }: ProfileNavigationProps) {
   const isMobile = useMobile()
 
   const sections = [
@@ -26,7 +27,7 @@ export function ProfileNavigation({ activeSection, onSectionChange, stats }: Pro
     { id: "favorites", label: "Favorites", count: stats.favorites },
     { id: "collections", label: "Collections", count: stats.collections },
     { id: "history", label: "History" },
-    { id: "settings", label: "Settings" },
+    ...(isOwnProfile ? [{ id: "settings", label: "Settings" }] : []),
   ]
 
   return (

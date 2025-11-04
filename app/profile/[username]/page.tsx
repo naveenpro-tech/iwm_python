@@ -15,6 +15,7 @@ import { ProfileSettings } from "@/components/profile/sections/profile-settings"
 import { Loader2 } from "lucide-react"
 import { updateUserProfile } from "@/lib/api/profile"
 import { useToast } from "@/hooks/use-toast"
+import { getCurrentUser } from "@/lib/auth"
 
 type ProfileSection = "overview" | "reviews" | "watchlist" | "favorites" | "collections" | "history" | "settings"
 
@@ -138,6 +139,27 @@ export default function UserProfilePage() {
 
   }, [username])
 
+  // Check if current user owns this profile
+  useEffect(() => {
+    const checkOwnership = async () => {
+      try {
+        const currentUser = await getCurrentUser()
+        if (currentUser && currentUser.username === username) {
+          setIsOwnProfile(true)
+        } else {
+          setIsOwnProfile(false)
+        }
+      } catch (error) {
+        // User not logged in
+        setIsOwnProfile(false)
+      }
+    }
+
+    if (username) {
+      checkOwnership()
+    }
+  }, [username])
+
   // Allow deep-linking to specific section via ?section=...
   useEffect(() => {
     const sectionParam = (searchParams?.get('section') || '').toLowerCase()
@@ -226,6 +248,7 @@ export default function UserProfilePage() {
             activeSection={activeSection}
             onSectionChange={setActiveSection}
             stats={userData.stats}
+            isOwnProfile={isOwnProfile}
           />
         </div>
       </div>

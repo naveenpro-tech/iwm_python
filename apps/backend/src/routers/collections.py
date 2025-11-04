@@ -158,3 +158,25 @@ async def delete_collection(
         await session.rollback()
         raise HTTPException(status_code=500, detail="Failed to delete collection")
 
+
+@router.post("/{collection_id}/like")
+async def like_collection(
+    collection_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Like or unlike a collection. Toggles the like status."""
+    repo = CollectionRepository(session)
+    try:
+        result = await repo.toggle_like(
+            collection_id=collection_id,
+            user_id=current_user.id,
+        )
+        if result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+        await session.commit()
+        return {"liked": result, "message": "Collection liked" if result else "Collection unliked"}
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to like collection")
+

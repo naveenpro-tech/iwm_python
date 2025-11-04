@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from typing import Any, List
-from sqlalchemy import select, desc, delete, insert
+from sqlalchemy import select, desc, delete, insert, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 import uuid
 
-from ..models import Collection, User, Movie, collection_movies
+from ..models import Collection, User, Movie, collection_movies, collection_likes
 
 
 class CollectionRepository:
@@ -231,4 +231,56 @@ class CollectionRepository:
         await self.session.delete(collection)
         await self.session.flush()
         return True
+
+    async def toggle_like(self, collection_id: str, user_id: int) -> bool | None:
+        """Toggle like status for a collection. Returns True if liked, False if unliked, None if collection not found."""
+        if not self.session:
+            return None
+
+        # Get collection
+        coll_res = await self.session.execute(
+            select(Collection).where(Collection.external_id == collection_id)
+        )
+        collection = coll_res.scalar_one_or_none()
+        if not collection:
+            return None
+
+        # Check if already liked
+        existing = await self.session.execute(
+            select(collection_likes).where(
+                and_(
+                    collection_likes.c.collection_id == collection.id,
+                    collection_likes.c.user_id == user_id,
+                )
+            )
+        )
+        like_exists = existing.first()
+
+        if like_exists:
+            # Unlike - remove the like
+            await self.session.execute(
+                delete(collection_likes).where(
+                    and_(
+                        collection_likes.c.collection_id == collection.id,
+                        collection_likes.c.user_id == user_id,
+                    )
+                )
+            )
+            # Decrement followers count
+            if collection.followers > 0:
+                collection.followers -= 1
+            await self.session.flush()
+            return False
+        else:
+            # Like - add the like
+            await self.session.execute(
+                insert(collection_likes).values(
+                    collection_id=collection.id,
+                    user_id=user_id,
+                )
+            )
+            # Increment followers count
+            collection.followers += 1
+            await self.session.flush()
+            return True
 

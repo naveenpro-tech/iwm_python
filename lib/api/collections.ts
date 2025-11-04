@@ -159,3 +159,25 @@ export async function deleteCollection(collectionId: string) {
   }
 }
 
+/**
+ * Like or unlike a collection (toggle)
+ */
+export async function likeCollection(collectionId: string) {
+  try {
+    const response = await fetch(`${API_BASE}/api/v1/collections/${collectionId}/like`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.detail || `Failed to like collection: ${response.statusText}`)
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error("Error liking collection:", error)
+    throw error
+  }
+}
+
