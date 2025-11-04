@@ -11,11 +11,11 @@ export function NavLogo({ isMobile = false }: { isMobile?: boolean }) {
         className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="Siddu Home"
+        aria-label="Movie Madders Home"
       >
         {/* Replace with your actual logo if you have one */}
         <Film className={`h-7 w-7 ${isMobile ? "text-primary" : ""}`} />
-        {!isMobile && <span className="font-bold text-xl tracking-tight font-dmsans">Siddu</span>}
+        {!isMobile && <span className="font-bold text-xl tracking-tight font-dmsans">Movie Madders</span>}
       </motion.a>
     </Link>
   )

@@ -416,7 +416,7 @@ export default function MovieEditPage() {
           importedFrom: "Manual",
         })
         setIsLoading(false)
-        document.title = "Add New Movie | Siddu Admin"
+        document.title = "Add New Movie | Movie Madders Admin"
         return
       }
 
@@ -438,7 +438,7 @@ export default function MovieEditPage() {
             trivia: mapped.trivia || [],
             timelineEvents: mapped.timelineEvents || [],
           })
-          document.title = `Edit Movie: ${mapped.title} | Siddu Admin`
+          document.title = `Edit Movie: ${mapped.title} | Movie Madders Admin`
         }
       } catch (e: any) {
         setError(e.message || "Failed to fetch movie")
@@ -550,7 +550,7 @@ export default function MovieEditPage() {
       if (!prev) return null
       const updatedMovie = { ...prev, [fieldName]: value }
       if (fieldName === "title" && params.id !== "new") {
-        document.title = `Edit Movie: ${value} | Siddu Admin`
+        document.title = `Edit Movie: ${value} | Movie Madders Admin`
       }
       return updatedMovie
     })
@@ -561,7 +561,7 @@ export default function MovieEditPage() {
     setMovieData((prev) => ({ ...prev!, ...updates }))
     setHasChanges(true)
     if (updates.title && params.id !== "new") {
-      document.title = `Edit Movie: ${updates.title} | Siddu Admin`
+      document.title = `Edit Movie: ${updates.title} | Movie Madders Admin`
     }
   }
 

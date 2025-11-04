@@ -10,7 +10,7 @@ interface QuizTakePageProps {
 }
 
 export const metadata: Metadata = {
-  title: "Take Quiz | Siddu Global",
+  title: "Take Quiz | Movie Madders",
   description: "Test your knowledge with our interactive movie quizzes",
 }
 

@@ -3,7 +3,7 @@ import { ReviewsPageContent } from "@/components/reviews/reviews-page-content"
 import { ReviewsPageSkeleton } from "@/components/reviews/reviews-page-skeleton"
 
 export const metadata = {
-  title: "Voice of Siddu Verse | Explore Reviews",
+  title: "Voice of Movie Madders Verse | Explore Reviews",
   description: "Discover authentic community and critic insights on movies from around the world",
 }
 

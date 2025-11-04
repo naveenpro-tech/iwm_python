@@ -91,8 +91,9 @@ export function TopNavigation() {
       ${isScrolled || isMobileMenuOpen || isSearchOpen ? "bg-[#101010]/80 backdrop-blur-lg shadow-xl" : "bg-transparent"}`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3 md:space-x-6">
+          <div className="flex items-center space-x-2 md:space-x-6">
             <NavLogo />
+            <BetaBadge variant="minimal" className="sm:hidden" />
             <BetaBadge variant="compact" className="hidden sm:inline-flex" />
             {!isMobile && (
               <div className="hidden md:flex items-center space-x-1 lg:space-x-2 relative">

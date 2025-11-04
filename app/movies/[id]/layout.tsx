@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
             alt: movie.title,
           },
         ],
-        siteName: "Siddu Global Entertainment Hub",
+        siteName: "Movie Madders",
         locale: "en_US",
       },
       twitter: {

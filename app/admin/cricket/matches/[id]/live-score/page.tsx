@@ -5,7 +5,7 @@ import { LiveScorePreview } from "@/components/admin/cricket/live-score/live-sco
 import { LiveScoreAuditLog } from "@/components/admin/cricket/live-score/live-score-audit-log"
 
 export const metadata: Metadata = {
-  title: "Live Score Override | Siddu Admin",
+  title: "Live Score Override | Movie Madders Admin",
   description: "Manually update live cricket scores",
 }
 
