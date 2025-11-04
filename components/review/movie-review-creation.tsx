@@ -161,6 +161,8 @@ export function MovieReviewCreation({ movie, onSubmit, onCancel, isModal = false
             onCancel={onCancel}
             isSubmitting={isSubmitting}
             canSubmit={rating > 0 && reviewText.length >= 50}
+            rating={rating}
+            reviewLength={reviewText.length}
           />
         </motion.div>
       </div>
