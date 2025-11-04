@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TopNavigation } from "@/components/navigation/top-navigation"
 import { BottomNavigation } from "@/components/navigation/bottom-navigation"
+import { Footer } from "@/components/navigation/footer"
 import { RoleProvider } from "@/context/RoleContext"
 // import { MotionLazyContainer } from "@/components/animate/motion-lazy-container" // Optional
 
@@ -28,15 +29,26 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Siddu Global Entertainment Hub",
+  title: "Movie Madders - Your Ultimate Movie Discovery Platform (BETA)",
   description:
-    "The definitive digital destination for cinematic masterpieces, visual treats, and real-time cricket updates.",
+    "Discover, review, and share your favorite movies. Join Movie Madders beta to explore our comprehensive movie database, create collections, and connect with fellow film enthusiasts.",
   manifest: "/manifest.json",
   icons: {
     apple: "/icons/apple-touch-icon.png",
     icon: "/favicon.ico",
   },
-    generator: 'v0.app'
+  openGraph: {
+    title: "Movie Madders - Your Ultimate Movie Discovery Platform (BETA)",
+    description: "Discover, review, and share your favorite movies with Movie Madders.",
+    siteName: "Movie Madders",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Movie Madders - Your Ultimate Movie Discovery Platform (BETA)",
+    description: "Discover, review, and share your favorite movies with Movie Madders.",
+  },
+  generator: 'v0.app'
 }
 
 export const viewport: Viewport = {
@@ -61,6 +73,7 @@ export default function RootLayout({
               {/* md:pb-4 is a small padding for desktop if bottom nav is mobile only */}
               {children}
             </main>
+            <Footer />
             <BottomNavigation />
             <Toaster />
             {/* <InstallPrompt /> */}

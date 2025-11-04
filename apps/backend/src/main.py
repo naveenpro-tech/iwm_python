@@ -1,7 +1,7 @@
 """
 FastAPI Main Application Entry Point
 
-This is the heart of the IWM (I Watch Movies) backend API server.
+This is the heart of the Movie Madders backend API server.
 It initializes the FastAPI application, sets up middleware, configures CORS,
 and registers all API routes.
 
@@ -19,8 +19,8 @@ Technology Stack:
 - Pydantic: Data validation and settings management
 - Structlog: Structured logging for better debugging
 
-Author: IWM Development Team
-Last Updated: 2025-10-21
+Author: Movie Madders Development Team
+Last Updated: 2025-11-04
 """
 
 # Enable future annotations for better type hints

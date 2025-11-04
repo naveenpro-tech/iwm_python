@@ -1,7 +1,7 @@
 {
-  "name": "Siddu Global Entertainment Hub",
-  "short_name": "Siddu Hub",
-  "description": "The definitive digital destination for cinematic masterpieces, visual treats, and real-time cricket updates.",
+  "name": "Movie Madders",
+  "short_name": "Movie Madders",
+  "description": "Your ultimate movie discovery platform. Discover, review, and share your favorite movies. Currently in BETA.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0A",

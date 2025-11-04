@@ -7,9 +7,9 @@ from pydantic import Field, field_validator
 
 class Settings(BaseSettings):
     env: str = Field(default="development")
-    app_name: str = Field(default="iwm-backend")
+    app_name: str = Field(default="movie-madders-api")
     log_level: str = Field(default="INFO")
-    # Example: postgresql+asyncpg://user:pass@localhost:5432/iwm
+    # Example: postgresql+asyncpg://user:pass@localhost:5432/moviemadders
     database_url: str | None = Field(default=None)
     export_openapi_on_startup: bool = Field(default=True)
     cors_origins: list[str] = Field(default_factory=lambda: [

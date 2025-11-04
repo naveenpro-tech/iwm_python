@@ -1,0 +1,49 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bun run build",
+  "framework": "nextjs",
+  "installCommand": "bun install",
+  "devCommand": "bun run dev",
+  "env": {
+    "NEXT_PUBLIC_APP_NAME": "Movie Madders",
+    "NEXT_PUBLIC_BETA_VERSION": "true",
+    "NEXT_PUBLIC_VERSION": "0.1.0-beta"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_APP_URL": "https://moviemadders.com",
+      "NEXT_PUBLIC_API_BASE_URL": "https://api.moviemadders.com"
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://api.moviemadders.com/api/:path*",
+      "permanent": false
+    }
+  ]
+}
+

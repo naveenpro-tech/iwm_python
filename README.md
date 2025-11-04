@@ -1,6 +1,8 @@
-# IWM - I Watch Movies 🎬
+# Movie Madders 🎬
 
 **A comprehensive movie review and discovery platform built with Next.js 15 and FastAPI**
+
+> **🚧 BETA VERSION** - Movie Madders is currently in beta. Features and functionality may change.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688)](https://fastapi.tiangolo.com/)
@@ -239,7 +241,7 @@ Create `apps/backend/.env`:
 ENV=development
 
 # Database (PostgreSQL 18 on port 5433)
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/iwm
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/moviemadders
 
 # CORS
 CORS_ORIGINS=["http://localhost:3000","*"]
@@ -333,5 +335,5 @@ For questions or issues, please open an issue on GitHub.
 
 ---
 
-**Built with ❤️ by the IWM Team**
+**Built with ❤️ by the Movie Madders Team**
 

@@ -18,13 +18,12 @@ export function FinalCta({ onExplore }: FinalCtaProps) {
       >
         <h2 className="text-4xl md:text-5xl font-bold mb-6 font-inter">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#00BFFF] to-[#FFD700]">
-            Ready to Experience Siddu?
+            Ready to Experience Movie Madders?
           </span>
         </h2>
 
         <p className="text-xl md:text-2xl text-[#A0A0A0] mb-12 font-dmsans">
-          Join our vibrant community of entertainment enthusiasts and discover a world of cinematic masterpieces and
-          cricket passion.
+          Join our vibrant community of movie enthusiasts and discover a world of cinematic masterpieces.
         </p>
 
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block">
@@ -32,7 +31,7 @@ export function FinalCta({ onExplore }: FinalCtaProps) {
             onClick={onExplore}
             className="px-8 py-4 text-xl font-medium rounded-full bg-gradient-to-r from-[#00BFFF] to-[#FFD700] text-[#1A1A1A] hover:shadow-glow transition-all duration-300 group flex items-center font-inter"
           >
-            Explore Siddu
+            Explore Movie Madders
             <ArrowRight className="ml-2 w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
           </button>
         </motion.div>
@@ -44,7 +43,7 @@ export function FinalCta({ onExplore }: FinalCtaProps) {
         transition={{ delay: 0.8, duration: 0.8 }}
         className="absolute bottom-8 text-center text-[#A0A0A0] text-sm font-dmsans"
       >
-        <p>© 2023 Siddu Global Entertainment Hub. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Movie Madders. All rights reserved.</p>
       </motion.div>
     </div>
   )

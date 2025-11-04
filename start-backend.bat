@@ -1,10 +1,10 @@
 cd ../
 @echo off
-REM IWM Backend Server Start Script (Windows)
+REM Movie Madders Backend Server Start Script (Windows)
 REM This script activates the virtual environment and starts the FastAPI backend server
 
 echo.
-echo 🚀 Starting IWM Backend Server...
+echo 🚀 Starting Movie Madders Backend Server...
 echo.
 
 REM Check if virtual environment exists

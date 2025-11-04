@@ -7,6 +7,7 @@ import { NavLogo } from "./nav-logo"
 import { ProfileDropdown } from "./profile-dropdown"
 import { SearchOverlay } from "@/components/search/search-overlay"
 import { Button } from "@/components/ui/button"
+import { BetaBadge } from "@/components/ui/beta-badge"
 import Link from "next/link"
 import { useMobile } from "@/hooks/use-mobile"
 import { usePathname } from "next/navigation"
@@ -92,6 +93,7 @@ export function TopNavigation() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3 md:space-x-6">
             <NavLogo />
+            <BetaBadge variant="compact" className="hidden sm:inline-flex" />
             {!isMobile && (
               <div className="hidden md:flex items-center space-x-1 lg:space-x-2 relative">
                 {" "}

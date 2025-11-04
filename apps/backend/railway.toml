@@ -1,0 +1,20 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "hypercorn src.main:app --bind 0.0.0.0:$PORT"
+healthcheckPath = "/api/v1/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[env]
+# These will be set in Railway dashboard
+# DATABASE_URL - Auto-provided by Railway PostgreSQL
+# CORS_ORIGINS - Set to production domains
+# JWT_SECRET_KEY - Generate secure random string
+# TMDB_API_KEY - Your TMDB API key
+# GEMINI_API_KEY - Your Gemini API key
+# ENV - Set to "production"
+
