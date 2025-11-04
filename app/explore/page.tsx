@@ -2,7 +2,7 @@ import { ExploreContainer } from "@/components/explore/explore-container"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Explore | Siddu Global Entertainment Hub",
+  title: "Explore | Movie Madders",
   description: "Discover new movies, shows, and content from around the world",
 }
 

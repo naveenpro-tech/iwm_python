@@ -66,6 +66,18 @@ interface QuizGridViewProps {
 }
 
 export function QuizGridView({ searchQuery }: QuizGridViewProps) {
+  // Filter quizzes based on search query
+  const filteredQuizzes = mockQuizzes.filter((quiz) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      quiz.title.toLowerCase().includes(query) ||
+      quiz.movie.toLowerCase().includes(query) ||
+      quiz.status.toLowerCase().includes(query) ||
+      quiz.difficulty.toLowerCase().includes(query)
+    )
+  })
+
   const getStatusColor = (status: Quiz["status"]) => {
     switch (status) {
       case "active":
@@ -90,7 +102,7 @@ export function QuizGridView({ searchQuery }: QuizGridViewProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {mockQuizzes.map((quiz, index) => (
+      {filteredQuizzes.map((quiz, index) => (
         <motion.div
           key={quiz.id}
           initial={{ opacity: 0, y: 20 }}

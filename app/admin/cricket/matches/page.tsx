@@ -4,7 +4,7 @@ import { MatchesTable } from "@/components/admin/cricket/matches/matches-table"
 import { MatchesFilters } from "@/components/admin/cricket/matches/matches-filters"
 
 export const metadata: Metadata = {
-  title: "Cricket Matches | Siddu Admin",
+  title: "Cricket Matches | Movie Madders Admin",
   description: "Manage cricket matches, scores, and details",
 }
 

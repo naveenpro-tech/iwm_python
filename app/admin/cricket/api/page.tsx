@@ -5,7 +5,7 @@ import { ApiSyncStatus } from "@/components/admin/cricket/api/api-sync-status"
 import { ApiUsageMetrics } from "@/components/admin/cricket/api/api-usage-metrics"
 
 export const metadata: Metadata = {
-  title: "Cricket API Management | Siddu Admin",
+  title: "Cricket API Management | Movie Madders Admin",
   description: "Manage external cricket data API integrations",
 }
 

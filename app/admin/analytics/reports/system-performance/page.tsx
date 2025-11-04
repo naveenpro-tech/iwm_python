@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button"
 import SystemPerformanceReport from "@/components/admin/analytics/reports/system-performance/system-performance-report"
 
 export const metadata: Metadata = {
-  title: "System Performance Report | Analytics | Siddu Admin",
-  description: "Detailed system performance metrics and trends for the Siddu platform",
+  title: "System Performance Report | Analytics | Movie Madders Admin",
+  description: "Detailed system performance metrics and trends for the Movie Madders platform",
 }
 
 export default function SystemPerformanceReportPage() {

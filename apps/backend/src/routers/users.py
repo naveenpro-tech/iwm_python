@@ -90,16 +90,11 @@ async def get_user_by_username(
     if user_settings and user_settings.privacy:
         profile_visibility = user_settings.privacy.get("profileVisibility", "public")
 
-    # Debug logging
-    print(f"[PRIVACY CHECK] User: {user.email}, Visibility: {profile_visibility}, Current User: {current_user.email if current_user else 'None'}")
-
     # Check if profile is private and viewer is not the owner
     is_owner = current_user and current_user.id == user.id
-    print(f"[PRIVACY CHECK] Is Owner: {is_owner}")
 
     if profile_visibility == "private" and not is_owner:
         # Return 404 to not reveal that the user exists
-        print(f"[PRIVACY CHECK] BLOCKING ACCESS - Profile is private and viewer is not owner")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"

@@ -70,9 +70,21 @@ interface QuizManagementTableProps {
 export function QuizManagementTable({ searchQuery }: QuizManagementTableProps) {
   const [selectedQuizzes, setSelectedQuizzes] = useState<string[]>([])
 
+  // Filter quizzes based on search query
+  const filteredQuizzes = mockQuizzes.filter((quiz) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      quiz.title.toLowerCase().includes(query) ||
+      quiz.movie.toLowerCase().includes(query) ||
+      quiz.status.toLowerCase().includes(query) ||
+      quiz.difficulty.toLowerCase().includes(query)
+    )
+  })
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedQuizzes(mockQuizzes.map((quiz) => quiz.id))
+      setSelectedQuizzes(filteredQuizzes.map((quiz) => quiz.id))
     } else {
       setSelectedQuizzes([])
     }
@@ -119,7 +131,7 @@ export function QuizManagementTable({ searchQuery }: QuizManagementTableProps) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">
-              <Checkbox checked={selectedQuizzes.length === mockQuizzes.length} onCheckedChange={handleSelectAll} />
+              <Checkbox checked={selectedQuizzes.length === filteredQuizzes.length && filteredQuizzes.length > 0} onCheckedChange={handleSelectAll} />
             </TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Movie</TableHead>
@@ -132,7 +144,7 @@ export function QuizManagementTable({ searchQuery }: QuizManagementTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockQuizzes.map((quiz, index) => (
+          {filteredQuizzes.map((quiz, index) => (
             <motion.tr
               key={quiz.id}
               initial={{ opacity: 0, y: 20 }}

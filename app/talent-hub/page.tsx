@@ -692,7 +692,7 @@ export default function TalentHubPage() {
       {/* Join the Community Section */}
       <section className="py-16 px-4 md:px-6 lg:px-8 bg-[#00BFFF]/10">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4 font-inter">Join the Siddu Talent Community</h2>
+          <h2 className="text-3xl font-bold mb-4 font-inter">Join the Movie Madders Talent Community</h2>
           <p className="text-xl mb-8 text-gray-200">
             Connect with filmmakers and talent from around the world. Your next opportunity is waiting.
           </p>
@@ -716,3 +716,4 @@ export default function TalentHubPage() {
     </div>
   )
 }
+

@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button"
 import ReportsList from "@/components/admin/analytics/reports/reports-list"
 
 export const metadata: Metadata = {
-  title: "Standard Reports | Analytics | Siddu Admin",
-  description: "Browse and access standard reports for the Siddu platform",
+  title: "Standard Reports | Analytics | Movie Madders Admin",
+  description: "Browse and access standard reports for the Movie Madders platform",
 }
 
 export default function ReportsPage() {

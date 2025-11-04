@@ -2,7 +2,7 @@ import { CollectionDetail } from "@/components/collections/collection-detail"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Collection | Siddu Global Entertainment Hub",
+  title: "Collection | Movie Madders",
   description: "Explore curated movie collections",
 }
 

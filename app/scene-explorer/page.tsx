@@ -3,7 +3,7 @@ import SceneExplorerContent from "@/components/scene-explorer/scene-explorer-con
 import SceneExplorerSkeleton from "@/components/scene-explorer/scene-explorer-skeleton"
 
 export const metadata = {
-  title: "Scene Explorer | Siddu Global Entertainment Hub",
+  title: "Scene Explorer | Movie Madders",
   description: "Discover unforgettable moments from cinema's greatest stories",
 }
 

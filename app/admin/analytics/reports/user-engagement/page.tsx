@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button"
 import UserEngagementReport from "@/components/admin/analytics/reports/user-engagement/user-engagement-report"
 
 export const metadata: Metadata = {
-  title: "User Engagement Report | Analytics | Siddu Admin",
-  description: "Detailed user engagement metrics and trends for the Siddu platform",
+  title: "User Engagement Report | Analytics | Movie Madders Admin",
+  description: "Detailed user engagement metrics and trends for the Movie Madders platform",
 }
 
 export default function UserEngagementReportPage() {

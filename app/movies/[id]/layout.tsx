@@ -11,12 +11,12 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
 
   // Fallback metadata
   const fallbackMetadata: Metadata = {
-    title: "Movie Details - Siddu Global Entertainment Hub",
+    title: "Movie Details - Movie Madders",
     description: "Explore detailed information, reviews, and more about this movie.",
     openGraph: {
       title: "Movie Details",
       description: "Explore detailed information, reviews, and more about this movie.",
-      siteName: "Siddu Global Entertainment Hub",
+      siteName: "Movie Madders",
     },
   }
 

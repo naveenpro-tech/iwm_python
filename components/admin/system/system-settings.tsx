@@ -27,7 +27,7 @@ import { motion, AnimatePresence } from "framer-motion"
 // Mock system settings data
 const systemSettings = {
   general: {
-    siteName: "Siddu Global Entertainment Hub",
+    siteName: "Movie Madders",
     siteDescription:
       "The definitive digital destination for celebrating cinematic masterpieces and visual treats from across the globe, while also providing real-time cricket updates for India's passionate fans.",
     maintenanceMode: false,
@@ -62,7 +62,7 @@ const systemSettings = {
     maxLoginAttempts: 5,
     lockoutDuration: 30, // minutes
     enableCaptcha: true,
-    allowedOrigins: ["https://siddu.com", "https://admin.siddu.com"],
+    allowedOrigins: ["https://moviemadders.com", "https://admin.moviemadders.com"],
     enableCSRFProtection: true,
     enableXSSProtection: true,
   },
@@ -84,7 +84,7 @@ const systemSettings = {
     enableMinification: true,
     enableCompression: true,
     enableCDN: true,
-    cdnUrl: "https://cdn.siddu.com",
+    cdnUrl: "https://cdn.moviemadders.com",
     enableServiceWorker: true,
     enablePrefetching: true,
   },
@@ -92,8 +92,8 @@ const systemSettings = {
     enableEmailNotifications: true,
     enablePushNotifications: true,
     enableInAppNotifications: true,
-    adminEmailRecipients: "admin@siddu.com, support@siddu.com",
-    defaultFromEmail: "noreply@siddu.com",
+    adminEmailRecipients: "admin@moviemadders.com, support@moviemadders.com",
+    defaultFromEmail: "noreply@moviemadders.com",
     notificationDigestFrequency: "daily", // instant, daily, weekly
     enableMarketingEmails: true,
   },

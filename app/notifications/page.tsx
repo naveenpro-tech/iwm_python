@@ -19,12 +19,12 @@ export default function NotificationsPage() {
 
   const markAsRead = (id: string) => {
     setNotifications((prev) =>
-      prev.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)),
+      prev.map((notification) => (notification.id === id ? { ...notification, isRead: true } : notification)),
     )
   }
 
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, isRead: true })))
   }
 
   const deleteNotification = (id: string) => {
@@ -38,7 +38,7 @@ export default function NotificationsPage() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <NotificationsHeader unreadCount={notifications.filter((n) => !n.read).length} onMarkAllRead={markAllAsRead} />
+      <NotificationsHeader unreadCount={notifications.filter((n) => !n.isRead).length} onMarkAllRead={markAllAsRead} />
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">

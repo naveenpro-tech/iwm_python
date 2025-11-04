@@ -6,8 +6,8 @@ import StandardReports from "@/components/admin/analytics/reports/standard-repor
 import IntegrationInfo from "@/components/admin/analytics/shared/integration-info"
 
 export const metadata: Metadata = {
-  title: "Analytics & Reporting | Siddu Admin",
-  description: "Comprehensive analytics and reporting dashboard for Siddu platform",
+  title: "Analytics & Reporting | Movie Madders Admin",
+  description: "Comprehensive analytics and reporting dashboard for Movie Madders platform",
 }
 
 export default function AnalyticsPage() {

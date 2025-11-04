@@ -6,7 +6,7 @@ import { RecentOverrides } from "@/components/admin/cricket/recent-overrides"
 import { UpcomingMatches } from "@/components/admin/cricket/upcoming-matches"
 
 export const metadata: Metadata = {
-  title: "Cricket Management | Siddu Admin",
+  title: "Cricket Management | Movie Madders Admin",
   description: "Manage cricket content, matches, teams, and players",
 }
 

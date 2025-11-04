@@ -11,7 +11,7 @@ export default function UserManagementPage() {
       <Card className="bg-card shadow-lg border-border/50">
         <CardHeader>
           <CardTitle className="text-xl">All Users</CardTitle>
-          <CardDescription>Manage user accounts, roles, and permissions within the Siddu platform.</CardDescription>
+          <CardDescription>Manage user accounts, roles, and permissions within the Movie Madders platform.</CardDescription>
         </CardHeader>
         <CardContent>
           <UserManagementTable />

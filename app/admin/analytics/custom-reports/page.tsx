@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button"
 import CustomReportBuilder from "@/components/admin/analytics/custom-reports/custom-report-builder"
 
 export const metadata: Metadata = {
-  title: "Custom Report Builder | Analytics | Siddu Admin",
-  description: "Build custom reports for the Siddu platform",
+  title: "Custom Report Builder | Analytics | Movie Madders Admin",
+  description: "Build custom reports for the Movie Madders platform",
 }
 
 export default function CustomReportBuilderPage() {
