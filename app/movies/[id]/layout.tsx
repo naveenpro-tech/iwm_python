@@ -1,12 +1,12 @@
 import { Metadata, ResolvingMetadata } from "next"
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
   children: React.ReactNode
 }
 
 export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
-  const movieId = params.id
+  const { id: movieId } = await params
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
   // Fallback metadata

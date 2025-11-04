@@ -242,10 +242,13 @@ export default function MovieTimelinePage({ params }: { params: Promise<{ id: st
           const data = await response.json()
           console.log("Movie data received for timeline:", data)
           console.log("Timeline data from backend:", data.timeline)
+          console.log("Timeline is array?", Array.isArray(data.timeline))
+          console.log("Timeline length:", data.timeline?.length)
           setMovieTitle(data.title || "Movie")
 
           // Convert backend timeline format to TimelineEventData
           if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+            console.log("✅ Found timeline data, transforming...")
             const events = data.timeline.map((event: any, index: number) => ({
               id: `timeline-${index}`,
               title: event.title || event.name,
@@ -263,7 +266,8 @@ export default function MovieTimelinePage({ params }: { params: Promise<{ id: st
             console.log("Transformed timeline events:", events)
             setTimelineEvents(events)
           } else {
-            console.log("No timeline data found, using mock data")
+            console.log("❌ No timeline data found (null, empty, or not array), using mock data")
+            console.log("Setting mock timeline events:", mockMovieTimelineEvents.length, "events")
             setTimelineEvents(mockMovieTimelineEvents)
           }
         } else {

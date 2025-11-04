@@ -118,7 +118,7 @@ const MOCK_TRIVIA_ITEMS_INITIAL: Trivia[] = [
   },
 ]
 
-export default function MovieTriviaPage({ params }: { params: { id: string } }) {
+export default function MovieTriviaPage({ params }: { params: Promise<{ id: string }> }) {
   const [triviaItems, setTriviaItems] = useState<Trivia[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAddingTrivia, setIsAddingTrivia] = useState(false)
@@ -129,22 +129,33 @@ export default function MovieTriviaPage({ params }: { params: { id: string } }) 
   const { toast } = useToast()
 
   const [movieTitle, setMovieTitle] = useState("Movie")
-  const movie = useMemo(() => ({ id: params.id, title: movieTitle }), [params.id, movieTitle])
+  const [movieId, setMovieId] = useState<string>("")
+  const movie = useMemo(() => ({ id: movieId, title: movieTitle }), [movieId, movieTitle])
+
+  // Unwrap params Promise
+  useEffect(() => {
+    params.then(p => setMovieId(p.id))
+  }, [params])
 
   useEffect(() => {
+    if (!movieId) return
+
     const fetchMovieAndTrivia = async () => {
       setIsLoading(true)
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-        const response = await fetch(`${apiBase}/api/v1/movies/${params.id}`)
+        const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         if (response.ok) {
           const data = await response.json()
           console.log("Movie data received for trivia:", data)
           console.log("Trivia data from backend:", data.trivia)
+          console.log("Trivia is array?", Array.isArray(data.trivia))
+          console.log("Trivia length:", data.trivia?.length)
           setMovieTitle(data.title || "Movie")
 
           // Convert backend trivia format to Trivia format
           if (data.trivia && Array.isArray(data.trivia) && data.trivia.length > 0) {
+            console.log("✅ Found trivia data, transforming...")
             const trivia = data.trivia.map((item: any, index: number) => ({
               id: `trivia-${index}`,
               content: item.answer || item.content || item.text,
@@ -163,7 +174,8 @@ export default function MovieTriviaPage({ params }: { params: { id: string } }) 
             console.log("Transformed trivia items:", trivia)
             setTriviaItems(trivia)
           } else {
-            console.log("No trivia data found, using mock data")
+            console.log("❌ No trivia data found (null, empty, or not array), using mock data")
+            console.log("Setting mock trivia items:", MOCK_TRIVIA_ITEMS_INITIAL.length, "items")
             setTriviaItems(MOCK_TRIVIA_ITEMS_INITIAL)
           }
         } else {
@@ -181,7 +193,7 @@ export default function MovieTriviaPage({ params }: { params: { id: string } }) 
     }
 
     fetchMovieAndTrivia()
-  }, [params.id])
+  }, [movieId])
 
   const breadcrumbItems = useMemo(
     () => [
