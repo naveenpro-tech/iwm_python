@@ -36,6 +36,23 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _convert_database_url_to_async(cls, v):
+        """
+        Convert Render's postgresql:// URL to postgresql+asyncpg:// format.
+        Render provides DATABASE_URL in the format: postgresql://user:pass@host:port/db
+        But we need: postgresql+asyncpg://user:pass@host:port/db for async SQLAlchemy
+        """
+        if v and isinstance(v, str):
+            # Convert postgres:// to postgresql+asyncpg://
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+            # Convert postgresql:// to postgresql+asyncpg://
+            elif v.startswith("postgresql://") and "+asyncpg" not in v:
+                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _parse_cors_origins(cls, v):
