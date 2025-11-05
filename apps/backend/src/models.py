@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
 
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 
 
 # Enums for multi-role profile system
@@ -1181,6 +1181,11 @@ class CriticProfile(Base):
     reviews: Mapped[List["CriticReview"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
     followers: Mapped[List["CriticFollower"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
     analytics: Mapped[List["CriticAnalytics"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+    blog_posts: Mapped[List["CriticBlogPost"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+    recommendations: Mapped[List["CriticRecommendation"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+    pinned_content: Mapped[List["CriticPinnedContent"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+    affiliate_links: Mapped[List["CriticAffiliateLink"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
+    brand_deals: Mapped[List["CriticBrandDeal"]] = relationship(back_populates="critic", cascade="all, delete-orphan")
 
 
 class CriticSocialLink(Base):
@@ -1227,6 +1232,7 @@ class CriticReview(Base):
     movie: Mapped["Movie"] = relationship(lazy="selectin")
     comments: Mapped[List["CriticReviewComment"]] = relationship(back_populates="review", cascade="all, delete-orphan")
     likes: Mapped[List["CriticReviewLike"]] = relationship(back_populates="review", cascade="all, delete-orphan")
+    sponsor_disclosure: Mapped["CriticSponsorDisclosure | None"] = relationship(back_populates="review", uselist=False)
 
 
 class CriticReviewComment(Base):
@@ -1316,6 +1322,150 @@ class CriticAnalytics(Base):
 
     # Relationships
     critic: Mapped["CriticProfile"] = relationship(back_populates="analytics", lazy="selectin")
+
+
+class CriticBlogPost(Base):
+    """Blog posts written by critics"""
+    __tablename__ = "critic_blog_posts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+
+    title: Mapped[str] = mapped_column(String(200))
+    slug: Mapped[str] = mapped_column(String(250), unique=True, index=True)
+    content: Mapped[str] = mapped_column(Text)  # Markdown
+    excerpt: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    cover_image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    tags: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+
+    status: Mapped[str] = mapped_column(String(20), default="draft", index=True)  # draft, published, archived
+    published_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+
+    view_count: Mapped[int] = mapped_column(Integer, default=0)
+    like_count: Mapped[int] = mapped_column(Integer, default=0)
+    comment_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="blog_posts")
+    sponsor_disclosure: Mapped["CriticSponsorDisclosure | None"] = relationship(back_populates="blog_post", uselist=False)
+
+
+class CriticRecommendation(Base):
+    """Movie recommendations by critics"""
+    __tablename__ = "critic_recommendations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id", ondelete="CASCADE"), index=True)
+
+    recommendation_type: Mapped[str] = mapped_column(String(50), index=True)  # must_watch, hidden_gem, guilty_pleasure, etc.
+    reason: Mapped[str] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="recommendations")
+    movie: Mapped["Movie"] = relationship()
+
+
+class CriticPinnedContent(Base):
+    """Content pinned to critic profile"""
+    __tablename__ = "critic_pinned_content"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+
+    content_type: Mapped[str] = mapped_column(String(50))  # review, blog_post, recommendation
+    content_id: Mapped[int] = mapped_column(Integer)  # ID of the content item
+
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    pinned_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="pinned_content")
+
+
+class CriticAffiliateLink(Base):
+    """Affiliate links managed by critics"""
+    __tablename__ = "critic_affiliate_links"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+
+    label: Mapped[str] = mapped_column(String(100))  # "Watch on Netflix", "Buy on Amazon"
+    platform: Mapped[str] = mapped_column(String(50))  # netflix, amazon, apple_tv, etc.
+    url: Mapped[str] = mapped_column(String(500))
+
+    utm_source: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    utm_medium: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    utm_campaign: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    click_count: Mapped[int] = mapped_column(Integer, default=0)
+    conversion_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="affiliate_links")
+
+
+class CriticBrandDeal(Base):
+    """Brand deals and sponsorships for critics"""
+    __tablename__ = "critic_brand_deals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    critic_id: Mapped[int] = mapped_column(ForeignKey("critic_profiles.id", ondelete="CASCADE"), index=True)
+
+    brand_name: Mapped[str] = mapped_column(String(200))
+    campaign_title: Mapped[str] = mapped_column(String(200))
+    brief: Mapped[str] = mapped_column(Text)
+
+    rate_card: Mapped[float | None] = mapped_column(Float, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="pending", index=True)  # pending, accepted, completed, cancelled
+
+    deliverables: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array
+    disclosure_required: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    start_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    critic: Mapped["CriticProfile"] = relationship(back_populates="brand_deals")
+
+
+class CriticSponsorDisclosure(Base):
+    """FTC-compliant sponsor disclosures for content"""
+    __tablename__ = "critic_sponsor_disclosures"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+
+    review_id: Mapped[int | None] = mapped_column(ForeignKey("critic_reviews.id", ondelete="CASCADE"), nullable=True, index=True)
+    blog_post_id: Mapped[int | None] = mapped_column(ForeignKey("critic_blog_posts.id", ondelete="CASCADE"), nullable=True, index=True)
+    brand_deal_id: Mapped[int | None] = mapped_column(ForeignKey("critic_brand_deals.id", ondelete="SET NULL"), nullable=True)
+
+    disclosure_text: Mapped[str] = mapped_column(Text)
+    disclosure_type: Mapped[str] = mapped_column(String(50))  # sponsored, affiliate, gifted, partnership
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    review: Mapped["CriticReview | None"] = relationship(back_populates="sponsor_disclosure")
+    blog_post: Mapped["CriticBlogPost | None"] = relationship(back_populates="sponsor_disclosure")
+    brand_deal: Mapped["CriticBrandDeal | None"] = relationship()
 
 
 class FeatureFlag(Base):
