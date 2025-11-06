@@ -67,6 +67,11 @@ from .routers import auth as auth_router  # Authentication (login, signup, JWT)
 from .routers import critics as critics_router  # Critic Hub - Critic profiles
 from .routers import critic_reviews as critic_reviews_router  # Critic Hub - Critic reviews
 from .routers import critic_verification as critic_verification_router  # Critic Hub - Verification
+from .routers import critic_blog as critic_blog_router  # Critic Hub - Blog posts
+from .routers import critic_recommendations as critic_recommendations_router  # Critic Hub - Recommendations
+from .routers import critic_pinned as critic_pinned_router  # Critic Hub - Pinned content
+from .routers import critic_affiliate as critic_affiliate_router  # Critic Hub - Affiliate links
+from .routers import critic_brand_deals as critic_brand_deals_router  # Critic Hub - Brand deals
 from .routers import users as users_router  # User profiles
 from .routers import roles as roles_router  # Role management (multi-role profiles)
 from .routers import user_roles as user_roles_router  # User roles switcher
@@ -308,6 +313,11 @@ api.include_router(feature_flags_router.router)  # GET/PUT /api/v1/feature-flags
 api.include_router(critics_router.router)  # GET /api/v1/critics - Critic profiles
 api.include_router(critic_reviews_router.router)  # GET /api/v1/critic-reviews - Critic reviews
 api.include_router(critic_verification_router.router)  # POST /api/v1/critic-verification - Verification
+api.include_router(critic_blog_router.router)  # POST /api/v1/critic-blog - Blog posts
+api.include_router(critic_recommendations_router.router)  # POST /api/v1/critic-recommendations - Recommendations
+api.include_router(critic_pinned_router.router)  # POST /api/v1/critic-pinned - Pinned content
+api.include_router(critic_affiliate_router.router)  # POST /api/v1/critic-affiliate - Affiliate links
+api.include_router(critic_brand_deals_router.router)  # POST /api/v1/critic-brand-deals - Brand deals
 
 # Attach the versioned API router to the main app
 app.include_router(api)

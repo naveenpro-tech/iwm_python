@@ -192,42 +192,65 @@
 
 ---
 
+### **Backend - API Routers (100%)**
+
+- [x] **critic_blog.py** - Blog post API (9 endpoints)
+  - POST /critic-blog - Create blog post (critics only)
+  - GET /critic-blog/{post_identifier} - Get by ID/external_id/slug (public)
+  - PUT /critic-blog/{post_id} - Update blog post (owner only)
+  - DELETE /critic-blog/{post_id} - Delete blog post (owner only)
+  - GET /critic-blog/critic/{username} - List by critic (public for published)
+  - POST /critic-blog/{post_id}/publish - Publish draft (owner only)
+  - POST /critic-blog/{post_id}/like - Like post (authenticated)
+  - DELETE /critic-blog/{post_id}/like - Unlike post (authenticated)
+  - Auto view tracking on published posts
+
+- [x] **critic_recommendations.py** - Recommendation API (5 endpoints)
+  - POST /critic-recommendations - Create recommendation (critics only)
+  - GET /critic-recommendations/critic/{username} - List by critic (public)
+  - GET /critic-recommendations/type/{type} - List by type globally (public)
+  - GET /critic-recommendations/{recommendation_id} - Get by ID (public)
+  - DELETE /critic-recommendations/{recommendation_id} - Delete (owner only)
+  - Duplicate prevention
+
+- [x] **critic_pinned.py** - Pinned content API (5 endpoints)
+  - POST /critic-pinned - Pin content (critics only, max 5)
+  - GET /critic-pinned/critic/{username} - Get pinned (public)
+  - PUT /critic-pinned/reorder - Bulk reorder (owner only)
+  - GET /critic-pinned/{pin_id} - Get by ID (public)
+  - DELETE /critic-pinned/{pin_id} - Unpin (owner only)
+  - Auto-reordering after delete
+
+- [x] **critic_affiliate.py** - Affiliate link API (8 endpoints)
+  - POST /critic-affiliate - Create link (critics only)
+  - GET /critic-affiliate/critic/{username} - List links (public for active)
+  - POST /critic-affiliate/{link_id}/click - Track click (public, rate-limited)
+  - PUT /critic-affiliate/{link_id} - Update link (owner only)
+  - DELETE /critic-affiliate/{link_id} - Delete link (owner only)
+  - GET /critic-affiliate/{link_id} - Get by ID (public for active)
+  - POST /critic-affiliate/{link_id}/conversion - Track conversion (webhook)
+  - Click and conversion analytics
+
+- [x] **critic_brand_deals.py** - Brand deal API (10 endpoints)
+  - POST /critic-brand-deals - Create deal (critics only)
+  - GET /critic-brand-deals/critic/{username} - List deals (owner only, private)
+  - PUT /critic-brand-deals/{deal_id}/status - Update status (owner only)
+  - PUT /critic-brand-deals/{deal_id} - Update deal (owner only)
+  - GET /critic-brand-deals/{deal_id} - Get by ID (owner only)
+  - POST /critic-brand-deals/disclosures - Create disclosure (critics only)
+  - GET /critic-brand-deals/disclosures/review/{review_id} - Get disclosure (public)
+  - GET /critic-brand-deals/disclosures/blog-post/{blog_post_id} - Get disclosure (public)
+  - GET /critic-brand-deals/disclosures/{disclosure_id} - Get by ID (public)
+  - FTC compliance enforced
+
+- [x] **main.py** - Router registration
+  - Added 5 new router imports
+  - Registered all 5 routers under /api/v1
+  - Total: 37 new API endpoints
+
+---
+
 ## 📋 TODO
-
-### **Backend - API Routers (0%)**
-
-- [ ] Create `apps/backend/src/routers/critic_blog.py`
-  - POST /critic-blog (create)
-  - GET /critic-blog/{post_id} (get by ID or slug)
-  - PUT /critic-blog/{post_id} (update)
-  - DELETE /critic-blog/{post_id} (delete)
-  - GET /critic-blog/critic/{username} (list by critic)
-  - POST /critic-blog/{post_id}/publish (publish draft)
-
-- [ ] Create `apps/backend/src/routers/critic_recommendations.py`
-  - POST /critic-recommendations (create)
-  - GET /critic-recommendations/critic/{username} (list by critic)
-  - DELETE /critic-recommendations/{recommendation_id} (delete)
-
-- [ ] Create `apps/backend/src/routers/critic_pinned.py`
-  - POST /critic-pinned (pin content)
-  - GET /critic-pinned/critic/{username} (get pinned)
-  - PUT /critic-pinned/{pin_id}/reorder (reorder)
-  - DELETE /critic-pinned/{pin_id} (unpin)
-
-- [ ] Create `apps/backend/src/routers/critic_affiliate.py`
-  - POST /critic-affiliate (create link)
-  - GET /critic-affiliate/critic/{username} (list links)
-  - POST /critic-affiliate/{link_id}/click (track click)
-  - PUT /critic-affiliate/{link_id} (update)
-  - DELETE /critic-affiliate/{link_id} (delete)
-
-- [ ] Create `apps/backend/src/routers/critic_brand_deals.py`
-  - POST /critic-brand-deals (create deal)
-  - GET /critic-brand-deals/critic/{username} (list deals)
-  - PUT /critic-brand-deals/{deal_id}/status (update status)
-  - POST /critic-disclosures (create disclosure)
-  - GET /critic-disclosures/review/{review_id} (get disclosure)
 
 - [ ] Update `apps/backend/src/routers/critic_verification.py`
   - Add RBAC enforcement (admin/moderator only)
@@ -303,7 +326,7 @@
 | **Database Models** | ✅ Complete | 100% (6/6 models) |
 | **Pydantic Schemas** | ✅ Complete | 100% (5/5 schema files) |
 | **Repository Layer** | ✅ Complete | 100% (5/5 repos, 65 methods) |
-| **API Routers** | 🚧 Not Started | 0% (0/5 routers) |
+| **API Routers** | ✅ Complete | 100% (5/5 routers, 37 endpoints) |
 | **Database Migration** | 🚧 Not Started | 0% |
 | **Backend Tests** | 🚧 Not Started | 0% |
 | **Frontend Studio** | 🚧 Not Started | 0% (0/12 components) |
@@ -312,7 +335,7 @@
 | **TypeScript Types** | 🚧 Not Started | 0% (0/4 files) |
 | **E2E Tests** | 🚧 Not Started | 0% (0/4 tests) |
 
-**Overall P0 Progress:** ~35% (Foundation + Repository Layer complete)
+**Overall P0 Progress:** ~50% (Backend complete, Frontend pending)
 
 ---
 
