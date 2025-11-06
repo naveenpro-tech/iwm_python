@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Star, CheckCircle2, ArrowRight } from "lucid
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { getApiUrl } from "@/lib/api-config"
 
 interface CriticReview {
   id: string
@@ -30,7 +31,6 @@ export function VerifiedCriticReviewsSection({ movieId }: VerifiedCriticReviewsS
 
   useEffect(() => {
     const fetchCriticReviews = async () => {
-      const { getApiUrl } = require("@/lib/api-config")
       const apiBase = getApiUrl()
       const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
 

@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
 import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
+import { getApiUrl } from "@/lib/api-config"
 
 interface Scene {
   id: string
@@ -46,7 +47,6 @@ export default function ScenesPage() {
     const fetchMovieAndScenes = async () => {
       setLoading(true)
       try {
-        const { getApiUrl } = require("@/lib/api-config")
         const apiBase = getApiUrl()
 
         // Fetch movie data for title

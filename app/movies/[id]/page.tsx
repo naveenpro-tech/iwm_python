@@ -17,6 +17,7 @@ import { addToWatchlist } from "@/lib/api/watchlist"
 import { getCurrentUser } from "@/lib/auth"
 import { AddToCollectionModal } from "@/components/profile/collections/add-to-collection-modal"
 import { addToFavorites, removeFromFavorites, getFavorites } from "@/lib/api/favorites"
+import { getApiUrl } from "@/lib/api-config"
 
 // Fallback mock movie data (used when backend is unavailable)
 const fallbackMovieData = {
@@ -617,7 +618,6 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     const fetchMovie = async () => {
-      const { getApiUrl } = require("@/lib/api-config")
       const apiBase = getApiUrl()
       const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
 

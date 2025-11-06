@@ -16,6 +16,7 @@ import { LoadingState } from "@/components/movies/loading-state"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
+import { getApiUrl } from "@/lib/api-config"
 
 // Backend integration
 
@@ -94,7 +95,6 @@ export default function MoviesPage() {
   }, [searchParams, isInitialized])
   // Fetch movies from backend when filters/sort change
   useEffect(() => {
-    const { getApiUrl } = require("@/lib/api-config")
     const apiBase = getApiUrl()
     const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
     if (!useBackend || !apiBase) return

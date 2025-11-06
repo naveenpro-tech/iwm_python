@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MovieReviewCreation } from "@/components/review/movie-review-creation"
+import { getApiUrl } from "@/lib/api-config"
 
 export default function CreateReviewPage() {
   const params = useParams()
@@ -21,7 +22,6 @@ export default function CreateReviewPage() {
       setError(null)
 
       try {
-        const { getApiUrl } = require("@/lib/api-config")
         const apiBase = getApiUrl()
         console.log("Fetching movie data for review creation:", movieId)
 
