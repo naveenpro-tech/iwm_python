@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
-from ..database import get_db
-from ..dependencies import get_current_user
+from ..db import get_session
+from ..dependencies.auth import get_current_user
 from ..models import User, CriticProfile
 from ..repositories.critic_brand_deals import CriticBrandDealRepository
 from ..repositories.critics import CriticRepository
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/v1/critic-brand-deals", tags=["Critic Brand Deal
 
 async def get_critic_profile(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ) -> CriticProfile:
     """Dependency to get current user's critic profile"""
     critic_repo = CriticRepository(db)
@@ -43,7 +43,7 @@ async def get_critic_profile(
 async def create_brand_deal(
     deal_data: CriticBrandDealCreate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Create a new brand deal (critics only)"""
     brand_deal_repo = CriticBrandDealRepository(db)
@@ -63,7 +63,7 @@ async def list_brand_deals_by_critic(
     status_filter: Optional[str] = Query(None, alias="status"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
     """List brand deals by critic username (owner only for privacy)"""
@@ -103,7 +103,7 @@ async def update_brand_deal_status(
     deal_id: int,
     status_data: UpdateBrandDealStatusRequest,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Update brand deal status (owner only)"""
     brand_deal_repo = CriticBrandDealRepository(db)
@@ -137,7 +137,7 @@ async def update_brand_deal(
     deal_id: int,
     deal_data: CriticBrandDealUpdate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Update brand deal (owner only)"""
     brand_deal_repo = CriticBrandDealRepository(db)
@@ -167,7 +167,7 @@ async def update_brand_deal(
 async def get_brand_deal(
     deal_id: int,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get brand deal by ID (owner only)"""
     brand_deal_repo = CriticBrandDealRepository(db)
@@ -195,7 +195,7 @@ async def get_brand_deal(
 async def create_sponsor_disclosure(
     disclosure_data: CriticSponsorDisclosureCreate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Create a sponsor disclosure for review or blog post (critics only)"""
     brand_deal_repo = CriticBrandDealRepository(db)
@@ -224,7 +224,7 @@ async def create_sponsor_disclosure(
 @router.get("/disclosures/review/{review_id}", response_model=CriticSponsorDisclosureResponse)
 async def get_disclosure_by_review(
     review_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get sponsor disclosure for a review (public)"""
     brand_deal_repo = CriticBrandDealRepository(db)
@@ -242,7 +242,7 @@ async def get_disclosure_by_review(
 @router.get("/disclosures/blog-post/{blog_post_id}", response_model=CriticSponsorDisclosureResponse)
 async def get_disclosure_by_blog_post(
     blog_post_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get sponsor disclosure for a blog post (public)"""
     brand_deal_repo = CriticBrandDealRepository(db)
@@ -260,7 +260,7 @@ async def get_disclosure_by_blog_post(
 @router.get("/disclosures/{disclosure_id}", response_model=CriticSponsorDisclosureResponse)
 async def get_disclosure(
     disclosure_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get sponsor disclosure by ID (public)"""
     brand_deal_repo = CriticBrandDealRepository(db)

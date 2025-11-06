@@ -475,7 +475,7 @@ All public-facing critic profile components updated with real API integration:
 - Graceful fallback to mock data if API fails
 - All components responsive and production-ready
 
-### **🚧 Priority 7: Backend Testing (IN PROGRESS - 30%)**
+### **✅ Priority 7: Backend Testing (REPOSITORY LAYER COMPLETE - 50%)**
 
 **Testing Infrastructure (100% Complete):**
 1. ✅ Created `pytest.ini` - Pytest configuration with coverage settings
@@ -483,13 +483,16 @@ All public-facing critic profile components updated with real API integration:
 3. ✅ Enhanced `tests/conftest.py` - Comprehensive fixtures
 4. ✅ Created `tests/README.md` - Complete testing guide
 5. ✅ Created `docs/critic/TESTING_SUMMARY.md` - Testing strategy
+6. ✅ Fixed import errors in 5 critic router files (database → db)
 
-**Repository Layer Unit Tests (20% Complete - 1/5 files):**
-1. ✅ `test_critic_blog_repository.py` - 18 tests, ~90% coverage
-2. 🚧 `test_critic_recommendations_repository.py` - Not yet created
-3. 🚧 `test_critic_pinned_repository.py` - Not yet created
-4. 🚧 `test_critic_affiliate_repository.py` - Not yet created
-5. 🚧 `test_critic_brand_deals_repository.py` - Not yet created
+**Repository Layer Unit Tests (100% Complete - 5/5 files):**
+1. ✅ `test_critic_blog_repository.py` - 18 tests, all 15 methods covered, ~90% coverage
+2. ✅ `test_critic_recommendations_repository.py` - 15 tests, all 9 methods covered
+3. ✅ `test_critic_pinned_repository.py` - 18 tests, all 11 methods covered (includes CRITICAL auto-reorder test)
+4. ✅ `test_critic_affiliate_repository.py` - 16 tests, all 13 methods covered (click/conversion tracking)
+5. ✅ `test_critic_brand_deals_repository.py` - 18 tests, all 16 methods covered (brand deals + sponsor disclosures)
+
+**Total Repository Tests:** 85 test functions covering 64 repository methods
 
 **API Integration Tests (0% Complete - 0/5 files):**
 - 🚧 All 5 API test files pending

@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from ..database import get_db
-from ..dependencies import get_current_user
+from ..db import get_session
+from ..dependencies.auth import get_current_user
 from ..models import User, CriticProfile
 from ..repositories.critic_pinned import CriticPinnedContentRepository
 from ..repositories.critics import CriticRepository
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/v1/critic-pinned", tags=["Critic Pinned Content"
 
 async def get_critic_profile(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ) -> CriticProfile:
     """Dependency to get current user's critic profile"""
     critic_repo = CriticRepository(db)
@@ -38,7 +38,7 @@ async def get_critic_profile(
 async def pin_content(
     pinned_data: CriticPinnedContentCreate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Pin content to critic profile (critics only)"""
     pinned_repo = CriticPinnedContentRepository(db)
@@ -79,7 +79,7 @@ async def pin_content(
 @router.get("/critic/{username}", response_model=List[CriticPinnedContentResponse])
 async def get_pinned_content_by_critic(
     username: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get all pinned content for a critic (public)"""
     pinned_repo = CriticPinnedContentRepository(db)
@@ -103,7 +103,7 @@ async def get_pinned_content_by_critic(
 async def reorder_pinned_content(
     reorder_data: ReorderPinnedContentRequest,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Reorder pinned content (owner only)"""
     pinned_repo = CriticPinnedContentRepository(db)
@@ -132,7 +132,7 @@ async def reorder_pinned_content(
 async def unpin_content(
     pin_id: int,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Unpin content (owner only)"""
     pinned_repo = CriticPinnedContentRepository(db)
@@ -161,7 +161,7 @@ async def unpin_content(
 @router.get("/{pin_id}", response_model=CriticPinnedContentResponse)
 async def get_pinned_content(
     pin_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get pinned content by ID (public)"""
     pinned_repo = CriticPinnedContentRepository(db)

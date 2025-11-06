@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
-from ..database import get_db
-from ..dependencies import get_current_user
+from ..db import get_session
+from ..dependencies.auth import get_current_user
 from ..models import User, CriticProfile
 from ..repositories.critic_affiliate import CriticAffiliateLinkRepository
 from ..repositories.critics import CriticRepository
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/v1/critic-affiliate", tags=["Critic Affiliate Li
 
 async def get_critic_profile(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ) -> CriticProfile:
     """Dependency to get current user's critic profile"""
     critic_repo = CriticRepository(db)
@@ -40,7 +40,7 @@ async def get_critic_profile(
 async def create_affiliate_link(
     link_data: CriticAffiliateLinkCreate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Create a new affiliate link (critics only)"""
     affiliate_repo = CriticAffiliateLinkRepository(db)
@@ -61,7 +61,7 @@ async def list_affiliate_links_by_critic(
     platform: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
     """List affiliate links by critic username (public for active, owner for all)"""
@@ -99,7 +99,7 @@ async def list_affiliate_links_by_critic(
 async def track_affiliate_click(
     link_id: int,
     click_data: AffiliateLinkClickRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Track affiliate link click (public, rate-limited)"""
     affiliate_repo = CriticAffiliateLinkRepository(db)
@@ -134,7 +134,7 @@ async def update_affiliate_link(
     link_id: int,
     link_data: CriticAffiliateLinkUpdate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Update affiliate link (owner only)"""
     affiliate_repo = CriticAffiliateLinkRepository(db)
@@ -164,7 +164,7 @@ async def update_affiliate_link(
 async def delete_affiliate_link(
     link_id: int,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Delete affiliate link (owner only)"""
     affiliate_repo = CriticAffiliateLinkRepository(db)
@@ -193,7 +193,7 @@ async def delete_affiliate_link(
 @router.get("/{link_id}", response_model=CriticAffiliateLinkResponse)
 async def get_affiliate_link(
     link_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
     """Get affiliate link by ID (public for active, owner for all)"""
@@ -222,7 +222,7 @@ async def get_affiliate_link(
 @router.post("/{link_id}/conversion", status_code=status.HTTP_204_NO_CONTENT)
 async def track_affiliate_conversion(
     link_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Track affiliate link conversion (webhook/callback endpoint)"""
     affiliate_repo = CriticAffiliateLinkRepository(db)

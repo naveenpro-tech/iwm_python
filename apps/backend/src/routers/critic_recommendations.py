@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
-from ..database import get_db
-from ..dependencies import get_current_user
+from ..db import get_session
+from ..dependencies.auth import get_current_user
 from ..models import User, CriticProfile
 from ..repositories.critic_recommendations import CriticRecommendationRepository
 from ..repositories.critics import CriticRepository
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/v1/critic-recommendations", tags=["Critic Recomm
 
 async def get_critic_profile(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ) -> CriticProfile:
     """Dependency to get current user's critic profile"""
     critic_repo = CriticRepository(db)
@@ -38,7 +38,7 @@ async def get_critic_profile(
 async def create_recommendation(
     recommendation_data: CriticRecommendationCreate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Create a new movie recommendation (critics only)"""
     recommendation_repo = CriticRecommendationRepository(db)
@@ -79,7 +79,7 @@ async def list_recommendations_by_critic(
     recommendation_type: Optional[str] = Query(None, alias="type"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """List recommendations by critic username (public)"""
     recommendation_repo = CriticRecommendationRepository(db)
@@ -109,7 +109,7 @@ async def list_recommendations_by_type(
     recommendation_type: str,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """List all recommendations by type across all critics (public)"""
     recommendation_repo = CriticRecommendationRepository(db)
@@ -140,7 +140,7 @@ async def list_recommendations_by_type(
 async def delete_recommendation(
     recommendation_id: int,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Delete recommendation (owner only)"""
     recommendation_repo = CriticRecommendationRepository(db)
@@ -169,7 +169,7 @@ async def delete_recommendation(
 @router.get("/{recommendation_id}", response_model=CriticRecommendationResponse)
 async def get_recommendation(
     recommendation_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get recommendation by ID (public)"""
     recommendation_repo = CriticRecommendationRepository(db)

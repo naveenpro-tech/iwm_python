@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
-from ..database import get_db
-from ..dependencies import get_current_user
+from ..db import get_session
+from ..dependencies.auth import get_current_user
 from ..models import User, CriticProfile
 from ..repositories.critic_blog import CriticBlogRepository
 from ..repositories.critics import CriticRepository
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/v1/critic-blog", tags=["Critic Blog"])
 
 async def get_critic_profile(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ) -> CriticProfile:
     """Dependency to get current user's critic profile"""
     critic_repo = CriticRepository(db)
@@ -40,7 +40,7 @@ async def get_critic_profile(
 async def create_blog_post(
     post_data: CriticBlogPostCreate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Create a new blog post (critics only)"""
     blog_repo = CriticBlogRepository(db)
@@ -56,7 +56,7 @@ async def create_blog_post(
 @router.get("/{post_identifier}", response_model=CriticBlogPostResponse)
 async def get_blog_post(
     post_identifier: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Get blog post by ID, external ID, or slug (public)"""
     blog_repo = CriticBlogRepository(db)
@@ -93,7 +93,7 @@ async def update_blog_post(
     post_id: int,
     post_data: CriticBlogPostUpdate,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Update blog post (owner only)"""
     blog_repo = CriticBlogRepository(db)
@@ -123,7 +123,7 @@ async def update_blog_post(
 async def delete_blog_post(
     post_id: int,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Delete blog post (owner only)"""
     blog_repo = CriticBlogRepository(db)
@@ -155,7 +155,7 @@ async def list_blog_posts_by_critic(
     status_filter: Optional[str] = Query(None, alias="status"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
     """List blog posts by critic username (public for published, owner for all)"""
@@ -203,7 +203,7 @@ async def list_blog_posts_by_critic(
 async def publish_blog_post(
     post_id: int,
     critic_profile: CriticProfile = Depends(get_critic_profile),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Publish a draft blog post (owner only)"""
     blog_repo = CriticBlogRepository(db)
@@ -240,7 +240,7 @@ async def publish_blog_post(
 async def like_blog_post(
     post_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Like a blog post (authenticated users)"""
     blog_repo = CriticBlogRepository(db)
@@ -263,7 +263,7 @@ async def like_blog_post(
 async def unlike_blog_post(
     post_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
     """Unlike a blog post (authenticated users)"""
     blog_repo = CriticBlogRepository(db)
