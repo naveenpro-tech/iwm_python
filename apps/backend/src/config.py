@@ -2,6 +2,7 @@ import json
 import os
 import json
 from pathlib import Path
+from typing import Any
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 
@@ -12,12 +13,12 @@ class Settings(BaseSettings):
     # Example: postgresql+asyncpg://user:pass@localhost:5432/moviemadders
     database_url: str | None = Field(default=None)
     export_openapi_on_startup: bool = Field(default=True)
-    cors_origins: list[str] = Field(default_factory=lambda: [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://192.168.0.194:3000",  # Mobile access on local network
-        "http://192.168.0.194:5173",  # Alternative port for mobile
-    ])  # Frontend ports (desktop + mobile network access)
+
+    # CORS Origins - Configured via CORS_ORIGINS environment variable
+    # Default: "http://localhost:3000" (safe fallback for local development)
+    # See .env.example for configuration examples
+    # Stored as string, parsed to list in model_post_init
+    cors_origins_str: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
 
     # JWT/Auth settings
     jwt_secret_key: str = Field(default=os.getenv("JWT_SECRET_KEY", "dev-secret-change-me"))
@@ -34,6 +35,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=str((Path(__file__).resolve().parents[1] / ".env")),
         extra="ignore",
+        # Disable JSON parsing for CORS_ORIGINS to allow our custom validator to handle it
+        env_parse_none_str="null",
     )
 
     @field_validator("database_url", mode="before")
@@ -53,18 +56,38 @@ class Settings(BaseSettings):
                 return v.replace("postgresql://", "postgresql+asyncpg://", 1)
         return v
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def _parse_cors_origins(cls, v):
-        if isinstance(v, str):
-            s = v.strip()
-            if s.startswith("["):
-                try:
-                    return json.loads(s)
-                except Exception:
-                    pass
-            return [item.strip() for item in s.split(",") if item.strip()]
-        return v
+    @property
+    def cors_origins(self) -> list[str]:
+        """
+        Parse CORS origins from the cors_origins_str field.
+
+        Supports multiple formats:
+        1. Comma-separated string: "http://localhost:3000,http://localhost:5173"
+        2. JSON array string: '["http://localhost:3000","http://localhost:5173"]'
+
+        Returns a list of unique, trimmed origin URLs.
+        Falls back to ["http://localhost:3000"] if empty or invalid.
+        """
+        raw = self.cors_origins_str.strip()
+
+        if not raw:
+            return ["http://localhost:3000"]
+
+        # Try parsing as JSON array first
+        if raw.startswith("["):
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    # Remove duplicates and strip whitespace
+                    return list(dict.fromkeys([item.strip() for item in parsed if item and item.strip()]))
+            except Exception:
+                pass
+
+        # Parse as comma-separated string
+        origins = [item.strip() for item in raw.split(",") if item.strip()]
+
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(origins)) if origins else ["http://localhost:3000"]
 
 settings = Settings()
 

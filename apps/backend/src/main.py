@@ -203,9 +203,14 @@ Why do we need CORS?
 - We configure CORS to allow specific origins
 
 Security Considerations:
-- In development: We allow '*' (all origins) for convenience
-- In production: We should only allow specific domains (e.g., https://iwm.com)
+- In development: We allow specific localhost origins for testing
+- In production: We should only allow specific domains (e.g., https://moviemadders.com)
 - Credentials (cookies, auth headers) can't be used with wildcard origins
+
+Configuration:
+- CORS origins are configured via the CORS_ORIGINS environment variable
+- See .env.example for configuration examples
+- Supports both comma-separated and JSON array formats
 
 For Beginners:
 - allow_origins: Which websites can call this API
@@ -219,12 +224,20 @@ For Beginners:
 _allowed_origins = settings.cors_origins
 _allow_credentials = True
 
+# Warn if using default CORS origins (helps catch misconfiguration)
+if _allowed_origins == ["http://localhost:3000"]:
+    log.warning(
+        "cors_using_defaults",
+        message="Using default CORS origins. Set CORS_ORIGINS environment variable for production.",
+        origins=_allowed_origins
+    )
+
 # Add CORS middleware to the application
 # Middleware: Code that runs before/after each request
 # NOTE: We explicitly set allow_origin_regex to None to prevent wildcard behavior
 app.add_middleware(
     CORSMiddleware,  # The CORS middleware class
-    allow_origins=_allowed_origins,  # Which origins can call this API
+    allow_origins=_allowed_origins,  # Which origins can call this API (from environment variable)
     allow_credentials=_allow_credentials,  # Whether to allow cookies/auth
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],  # Allow all HTTP headers

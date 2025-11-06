@@ -3,7 +3,9 @@
  * Fetches movie data from the FastAPI backend
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+import { getApiUrl } from "@/lib/api-config"
+
+const API_BASE = getApiUrl()
 
 export interface MovieQueryParams {
   page?: number
