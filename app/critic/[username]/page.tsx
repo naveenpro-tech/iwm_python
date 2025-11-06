@@ -29,36 +29,70 @@ export default function CriticProfilePage() {
 
   useEffect(() => {
     const fetchCriticData = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-      const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
       try {
-        if (useBackend && apiBase) {
-          // Try backend first
-          const [profileResponse, reviewsResponse] = await Promise.all([
-            fetch(`${apiBase}/api/v1/critics/${username}`),
-            fetch(`${apiBase}/api/v1/critic-reviews/critic/${username}`),
-          ])
+        // Fetch critic profile
+        const profileResponse = await fetch(`${apiBase}/api/v1/critics/${username}`)
 
-          if (!profileResponse.ok) {
-            if (profileResponse.status === 404) {
-              throw new Error("Critic not found")
-            }
-            throw new Error(`Failed to fetch critic profile: ${profileResponse.statusText}`)
+        if (!profileResponse.ok) {
+          if (profileResponse.status === 404) {
+            throw new Error("Critic not found")
           }
-
-          if (!reviewsResponse.ok) {
-          throw new Error(`Failed to fetch reviews: ${reviewsResponse.statusText}`)
+          throw new Error(`Failed to fetch critic profile: ${profileResponse.statusText}`)
         }
 
-          const profileData = await profileResponse.json()
-          const reviewsData = await reviewsResponse.json()
+        const profileData = await profileResponse.json()
 
-          setCriticProfile(profileData)
+        // Fetch all content in parallel
+        const [reviewsRes, recommendationsRes, blogPostsRes, pinnedRes] = await Promise.allSettled([
+          fetch(`${apiBase}/api/v1/critic-reviews/critic/${username}`),
+          fetch(`${apiBase}/api/v1/critic-recommendations?critic_username=${username}`),
+          fetch(`${apiBase}/api/v1/critic-blog?critic_username=${username}&status=published`),
+          fetch(`${apiBase}/api/v1/critic-pinned?critic_username=${username}`),
+        ])
+
+        let reviewsData: any[] = []
+        let recommendationsData: any[] = []
+        let blogPostsData: any[] = []
+        let pinnedData: any[] = []
+
+        // Process reviews
+        if (reviewsRes.status === "fulfilled" && reviewsRes.value.ok) {
+          reviewsData = await reviewsRes.value.json()
           setCriticReviews(reviewsData.reviews || reviewsData || [])
-        } else {
-          throw new Error("Backend not configured")
         }
+
+        // Process recommendations
+        if (recommendationsRes.status === "fulfilled" && recommendationsRes.value.ok) {
+          recommendationsData = await recommendationsRes.value.json()
+          setRecommendations(recommendationsData || [])
+        }
+
+        // Process blog posts
+        if (blogPostsRes.status === "fulfilled" && blogPostsRes.value.ok) {
+          blogPostsData = await blogPostsRes.value.json()
+          setBlogPosts(blogPostsData || [])
+        }
+
+        // Process pinned content
+        if (pinnedRes.status === "fulfilled" && pinnedRes.value.ok) {
+          pinnedData = await pinnedRes.value.json()
+          setPinnedContent(pinnedData || [])
+        }
+
+        // Enhance profile with content counts
+        const enhancedProfile = {
+          ...profileData,
+          blog_count: blogPostsData.length || 0,
+          recommendation_count: recommendationsData.length || 0,
+        }
+        setCriticProfile(enhancedProfile)
+
+        // Generate analytics from profile data
+        const mockAnalytics = generateCriticAnalytics(username, profileData.review_count || 0)
+        setAnalytics(mockAnalytics)
+
       } catch (err) {
         console.warn("Backend fetch failed, using mock data:", err)
         // Use mock data as fallback

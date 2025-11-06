@@ -2,14 +2,31 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Star, Heart, MessageCircle, Eye, Calendar } from "lucide-react"
+import { Star, Heart, MessageCircle, Eye, Calendar, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import Link from "next/link"
 import type { CriticReview } from "@/types/critic"
 
 interface CriticReviewCardProps {
   review: CriticReview
+}
+
+// Helper function to get disclosure badge color
+const getDisclosureBadgeColor = (type: string) => {
+  switch (type) {
+    case 'sponsored':
+      return 'bg-[#F59E0B] text-[#1A1A1A]'
+    case 'affiliate':
+      return 'bg-[#8B5CF6] text-white'
+    case 'gifted':
+      return 'bg-[#EC4899] text-white'
+    case 'partnership':
+      return 'bg-[#10B981] text-white'
+    default:
+      return 'bg-[#A0A0A0] text-white'
+  }
 }
 
 export default function CriticReviewCard({ review }: CriticReviewCardProps) {
@@ -40,6 +57,16 @@ export default function CriticReviewCard({ review }: CriticReviewCardProps) {
                 <Star className="w-4 h-4 text-[#FFD700] fill-[#FFD700]" />
                 <span className="text-white font-bold text-sm">{review.rating}/10</span>
               </div>
+
+              {/* Sponsor Disclosure Badge */}
+              {review.disclosure && (
+                <div className="absolute top-2 left-2">
+                  <Badge className={`${getDisclosureBadgeColor(review.disclosure.disclosure_type)} font-semibold text-xs flex items-center gap-1`}>
+                    <AlertCircle className="w-3 h-3" />
+                    {review.disclosure.disclosure_type.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
             </div>
           </Link>
 

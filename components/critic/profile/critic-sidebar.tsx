@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Youtube, Twitter, Instagram, Globe, Calendar, TrendingUp, Star, Eye, Heart, FileText } from "lucide-react"
+import { Youtube, Twitter, Instagram, Globe, Calendar, TrendingUp, Star, Eye, Heart, FileText, Sparkles, Bookmark } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -78,7 +78,23 @@ export default function CriticSidebar({ profile, analytics }: CriticSidebarProps
                 <FileText className="w-4 h-4" />
                 <span className="text-sm">Total Reviews</span>
               </div>
-              <span className="text-lg font-bold text-[#FFD700]">{(profile?.total_reviews ?? 0).toLocaleString()}</span>
+              <span className="text-lg font-bold text-[#FFD700]">{(profile?.total_reviews ?? profile?.review_count ?? 0).toLocaleString()}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[#A0A0A0]">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm">Blog Posts</span>
+              </div>
+              <span className="text-lg font-bold text-[#EC4899]">{(profile?.blog_count ?? 0).toLocaleString()}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[#A0A0A0]">
+                <Bookmark className="w-4 h-4" />
+                <span className="text-sm">Recommendations</span>
+              </div>
+              <span className="text-lg font-bold text-[#8B5CF6]">{(profile?.recommendation_count ?? 0).toLocaleString()}</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -86,7 +102,7 @@ export default function CriticSidebar({ profile, analytics }: CriticSidebarProps
                 <TrendingUp className="w-4 h-4" />
                 <span className="text-sm">Followers</span>
               </div>
-              <span className="text-lg font-bold text-[#00BFFF]">{(profile?.total_followers ?? 0).toLocaleString()}</span>
+              <span className="text-lg font-bold text-[#00BFFF]">{(profile?.total_followers ?? profile?.follower_count ?? 0).toLocaleString()}</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -94,15 +110,7 @@ export default function CriticSidebar({ profile, analytics }: CriticSidebarProps
                 <Star className="w-4 h-4" />
                 <span className="text-sm">Avg Rating</span>
               </div>
-              <span className="text-lg font-bold text-[#8B5CF6]">{(profile?.avg_rating ?? 0).toFixed(1)}</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#A0A0A0]">
-                <Heart className="w-4 h-4" />
-                <span className="text-sm">Total Likes</span>
-              </div>
-              <span className="text-lg font-bold text-[#EC4899]">{(profile?.total_likes ?? 0).toLocaleString()}</span>
+              <span className="text-lg font-bold text-[#10B981]">{(profile?.avg_rating ?? 0).toFixed(1)}</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -110,7 +118,7 @@ export default function CriticSidebar({ profile, analytics }: CriticSidebarProps
                 <Eye className="w-4 h-4" />
                 <span className="text-sm">Total Views</span>
               </div>
-              <span className="text-lg font-bold text-[#10B981]">{(profile?.total_views ?? 0).toLocaleString()}</span>
+              <span className="text-lg font-bold text-[#F59E0B]">{(profile?.total_views ?? 0).toLocaleString()}</span>
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t border-[#3A3A3A]">

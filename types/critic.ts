@@ -21,6 +21,11 @@ export interface CriticProfile {
   total_views: number
   joined_at: string
   social_links: SocialLink[]
+  // New counts for MVP features
+  blog_count?: number
+  recommendation_count?: number
+  review_count?: number
+  follower_count?: number
 }
 
 export interface SocialLink {
@@ -48,6 +53,8 @@ export interface CriticReview {
     poster_url: string | null
     year: string | null
   }
+  // Sponsor disclosure (if applicable)
+  disclosure?: SponsorDisclosure
 }
 
 export interface MovieInfo {
@@ -91,6 +98,8 @@ export interface CriticBlogPost {
   views_count: number
   is_published: boolean
   read_time_minutes: number
+  // Sponsor disclosure (if applicable)
+  disclosure?: SponsorDisclosure
 }
 
 export interface PinnedContent {
@@ -126,5 +135,36 @@ export interface CriticAnalytics {
     avg_comments_per_review: number
     avg_views_per_review: number
   }
+}
+
+// Sponsor Disclosure Types
+export interface SponsorDisclosure {
+  id: number
+  disclosure_type: 'sponsored' | 'affiliate' | 'gifted' | 'partnership'
+  brand_name: string
+  disclosure_text: string
+  created_at: string
+}
+
+export interface AffiliateLink {
+  id: number
+  critic_id: number
+  platform: string
+  url: string
+  description: string | null
+  click_count: number
+  created_at: string
+}
+
+export interface BrandDeal {
+  id: number
+  critic_id: number
+  brand_name: string
+  deal_type: 'sponsored_content' | 'affiliate' | 'ambassador' | 'one_time'
+  start_date: string
+  end_date: string | null
+  status: 'active' | 'completed' | 'cancelled'
+  notes: string | null
+  created_at: string
 }
 

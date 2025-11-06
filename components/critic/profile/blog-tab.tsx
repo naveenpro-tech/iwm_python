@@ -2,12 +2,28 @@
 
 import { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, Clock, Eye, Tag } from "lucide-react"
+import { Calendar, Clock, Eye, Tag, AlertCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { CriticBlogPost } from "@/types/critic"
+
+// Helper function to get disclosure badge color
+const getDisclosureBadgeColor = (type: string) => {
+  switch (type) {
+    case 'sponsored':
+      return 'bg-[#F59E0B] text-[#1A1A1A]'
+    case 'affiliate':
+      return 'bg-[#8B5CF6] text-white'
+    case 'gifted':
+      return 'bg-[#EC4899] text-white'
+    case 'partnership':
+      return 'bg-[#10B981] text-white'
+    default:
+      return 'bg-[#A0A0A0] text-white'
+  }
+}
 
 interface BlogTabProps {
   blogPosts: CriticBlogPost[]
@@ -133,11 +149,31 @@ function BlogPostCard({ post, criticUsername }: { post: CriticBlogPost; criticUs
                 className="object-cover transition-transform group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#282828]/50 md:block hidden" />
+
+              {/* Sponsor Disclosure Badge */}
+              {post.disclosure && (
+                <div className="absolute top-2 left-2">
+                  <Badge className={`${getDisclosureBadgeColor(post.disclosure.disclosure_type)} font-semibold text-xs flex items-center gap-1`}>
+                    <AlertCircle className="w-3 h-3" />
+                    {post.disclosure.disclosure_type.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
             </div>
           )}
 
           {/* Content */}
           <div className="flex-1 p-6">
+            {/* Sponsor Disclosure (if no image) */}
+            {!post.featured_image_url && post.disclosure && (
+              <div className="mb-3">
+                <Badge className={`${getDisclosureBadgeColor(post.disclosure.disclosure_type)} font-semibold text-xs flex items-center gap-1 w-fit`}>
+                  <AlertCircle className="w-3 h-3" />
+                  {post.disclosure.disclosure_type.toUpperCase()}
+                </Badge>
+              </div>
+            )}
+
             {/* Metadata */}
             <div className="flex flex-wrap items-center gap-3 mb-3 text-sm text-[#A0A0A0]">
               <div className="flex items-center gap-1">
