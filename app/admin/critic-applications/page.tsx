@@ -10,24 +10,61 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { generateMockApplications, type CriticApplication } from "@/lib/critic/mock-applications"
+import { apiGet, apiPut } from "@/lib/api-client"
+
+interface CriticApplication {
+  id: number
+  user_id: number
+  requested_username: string
+  requested_display_name: string
+  bio: string
+  youtube_url?: string
+  twitter_url?: string
+  instagram_url?: string
+  website_url?: string
+  portfolio_links: string[]
+  why_apply: string
+  status: "pending" | "approved" | "rejected"
+  submitted_at: string
+  reviewed_at?: string
+  reviewed_by?: number
+  admin_notes?: string
+  rejection_reason?: string
+}
 
 export default function CriticApplicationsPage() {
   const { toast } = useToast()
   const [applications, setApplications] = useState<CriticApplication[]>([])
   const [filteredApplications, setFilteredApplications] = useState<CriticApplication[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all")
   const [selectedApplication, setSelectedApplication] = useState<CriticApplication | null>(null)
   const [showApproveModal, setShowApproveModal] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState("")
+  const [adminNotes, setAdminNotes] = useState("")
 
   useEffect(() => {
-    const apps = generateMockApplications()
-    setApplications(apps)
-    setFilteredApplications(apps)
+    fetchApplications()
   }, [])
+
+  async function fetchApplications() {
+    try {
+      const data = await apiGet<CriticApplication[]>("/api/v1/critic-verification/admin/applications")
+      setApplications(data)
+      setFilteredApplications(data)
+    } catch (error) {
+      console.error("Failed to fetch applications:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load applications",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     let filtered = [...applications]
@@ -49,51 +86,79 @@ export default function CriticApplicationsPage() {
     setFilteredApplications(filtered)
   }, [searchQuery, statusFilter, applications])
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedApplication) return
 
-    setApplications(
-      applications.map((app) =>
-        app.id === selectedApplication.id
-          ? { ...app, status: "approved" as const, reviewedBy: "admin", reviewedDate: new Date().toISOString() }
-          : app
-      )
-    )
+    try {
+      await apiPut(`/api/v1/critic-verification/admin/applications/${selectedApplication.id}`, {
+        status: "approved",
+        admin_notes: adminNotes,
+      })
 
-    toast({ title: "Success", description: `${selectedApplication.fullName} has been approved as a verified critic` })
-    setShowApproveModal(false)
-    setSelectedApplication(null)
+      toast({
+        title: "Success",
+        description: `${selectedApplication.requested_display_name} has been approved as a verified critic`
+      })
+
+      setShowApproveModal(false)
+      setSelectedApplication(null)
+      setAdminNotes("")
+
+      // Refresh applications
+      await fetchApplications()
+    } catch (error) {
+      console.error("Failed to approve application:", error)
+      toast({
+        title: "Error",
+        description: "Failed to approve application",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!selectedApplication || !rejectionReason) {
       toast({ title: "Error", description: "Please provide a rejection reason", variant: "destructive" })
       return
     }
 
-    setApplications(
-      applications.map((app) =>
-        app.id === selectedApplication.id
-          ? {
-              ...app,
-              status: "rejected" as const,
-              reviewedBy: "admin",
-              reviewedDate: new Date().toISOString(),
-              rejectionReason,
-            }
-          : app
-      )
-    )
+    try {
+      await apiPut(`/api/v1/critic-verification/admin/applications/${selectedApplication.id}`, {
+        status: "rejected",
+        rejection_reason: rejectionReason,
+        admin_notes: adminNotes,
+      })
 
-    toast({ title: "Success", description: `Application rejected` })
-    setShowRejectModal(false)
-    setSelectedApplication(null)
-    setRejectionReason("")
+      toast({ title: "Success", description: `Application rejected` })
+
+      setShowRejectModal(false)
+      setSelectedApplication(null)
+      setRejectionReason("")
+      setAdminNotes("")
+
+      // Refresh applications
+      await fetchApplications()
+    } catch (error) {
+      console.error("Failed to reject application:", error)
+      toast({
+        title: "Error",
+        description: "Failed to reject application",
+        variant: "destructive",
+      })
+    }
   }
 
   const pendingCount = applications.filter((a) => a.status === "pending").length
   const approvedCount = applications.filter((a) => a.status === "approved").length
   const rejectedCount = applications.filter((a) => a.status === "rejected").length
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#1A1A1A] flex items-center justify-center">
+        <div className="text-[#E0E0E0] text-xl">Loading applications...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#1A1A1A] py-8">
@@ -182,13 +247,15 @@ export default function CriticApplicationsPage() {
         {/* Approve Modal */}
         <AnimatePresence>
           {showApproveModal && selectedApplication && (
-            <ConfirmModal
-              title="Approve Application?"
-              message={`Are you sure you want to approve ${selectedApplication.fullName} as a verified critic?`}
-              confirmText="Approve"
-              confirmColor="bg-[#00BFFF] hover:bg-[#00A3DD]"
+            <ApproveModal
+              application={selectedApplication}
+              adminNotes={adminNotes}
+              setAdminNotes={setAdminNotes}
               onConfirm={handleApprove}
-              onCancel={() => setShowApproveModal(false)}
+              onCancel={() => {
+                setShowApproveModal(false)
+                setAdminNotes("")
+              }}
             />
           )}
         </AnimatePresence>
@@ -246,6 +313,14 @@ function ApplicationRow({ application, index, onView, onApprove, onReject }: any
     rejected: "text-red-500 bg-red-500/10 border-red-500/30",
   }
 
+  // Generate initials for avatar fallback
+  const initials = application.requested_display_name
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -256,16 +331,15 @@ function ApplicationRow({ application, index, onView, onApprove, onReject }: any
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
-              <div
-                className="w-12 h-12 rounded-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${application.profilePicture})` }}
-              />
+              <div className="w-12 h-12 rounded-full bg-[#00BFFF] flex items-center justify-center text-[#1A1A1A] font-bold">
+                {initials}
+              </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#E0E0E0]">{application.fullName}</h3>
-                <p className="text-sm text-[#A0A0A0]">@{application.username}</p>
+                <h3 className="text-lg font-bold text-[#E0E0E0]">{application.requested_display_name}</h3>
+                <p className="text-sm text-[#A0A0A0]">@{application.requested_username}</p>
               </div>
               <div className="text-sm text-[#A0A0A0]">
-                {new Date(application.appliedDate).toLocaleDateString()}
+                {new Date(application.submitted_at).toLocaleDateString()}
               </div>
               <div className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[application.status]}`}>
                 {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
@@ -297,6 +371,13 @@ function ApplicationRow({ application, index, onView, onApprove, onReject }: any
 }
 
 function ApplicationModal({ application, onClose }: { application: CriticApplication; onClose: () => void }) {
+  const initials = application.requested_display_name
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -316,13 +397,12 @@ function ApplicationModal({ application, onClose }: { application: CriticApplica
 
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <div
-              className="w-20 h-20 rounded-full bg-cover bg-center"
-              style={{ backgroundImage: `url(${application.profilePicture})` }}
-            />
+            <div className="w-20 h-20 rounded-full bg-[#00BFFF] flex items-center justify-center text-[#1A1A1A] font-bold text-2xl">
+              {initials}
+            </div>
             <div>
-              <h3 className="text-xl font-bold text-[#E0E0E0]">{application.fullName}</h3>
-              <p className="text-[#A0A0A0]">@{application.username}</p>
+              <h3 className="text-xl font-bold text-[#E0E0E0]">{application.requested_display_name}</h3>
+              <p className="text-[#A0A0A0]">@{application.requested_username}</p>
             </div>
           </div>
 
@@ -334,19 +414,24 @@ function ApplicationModal({ application, onClose }: { application: CriticApplica
           <div>
             <Label className="text-[#E0E0E0] mb-2 block">Social Media</Label>
             <div className="space-y-2">
-              {application.youtubeUrl && (
-                <a href={application.youtubeUrl} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
-                  YouTube: {application.youtubeUrl}
+              {application.youtube_url && (
+                <a href={application.youtube_url} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
+                  YouTube: {application.youtube_url}
                 </a>
               )}
-              {application.twitterUrl && (
-                <a href={application.twitterUrl} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
-                  Twitter: {application.twitterUrl}
+              {application.twitter_url && (
+                <a href={application.twitter_url} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
+                  Twitter: {application.twitter_url}
                 </a>
               )}
-              {application.instagramUrl && (
-                <a href={application.instagramUrl} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
-                  Instagram: {application.instagramUrl}
+              {application.instagram_url && (
+                <a href={application.instagram_url} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
+                  Instagram: {application.instagram_url}
+                </a>
+              )}
+              {application.website_url && (
+                <a href={application.website_url} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
+                  Website: {application.website_url}
                 </a>
               )}
             </div>
@@ -355,7 +440,7 @@ function ApplicationModal({ application, onClose }: { application: CriticApplica
           <div>
             <Label className="text-[#E0E0E0] mb-2 block">Portfolio Links</Label>
             <div className="space-y-2">
-              {application.portfolioLinks.map((link, i) => (
+              {application.portfolio_links.map((link, i) => (
                 <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="block text-[#00BFFF] hover:underline">
                   {link}
                 </a>
@@ -365,13 +450,20 @@ function ApplicationModal({ application, onClose }: { application: CriticApplica
 
           <div>
             <Label className="text-[#E0E0E0] mb-2 block">Why Apply</Label>
-            <p className="text-[#A0A0A0]">{application.whyApply}</p>
+            <p className="text-[#A0A0A0]">{application.why_apply}</p>
           </div>
 
-          {application.status === "rejected" && application.rejectionReason && (
+          {application.admin_notes && (
+            <div>
+              <Label className="text-[#00BFFF] mb-2 block">Admin Notes</Label>
+              <p className="text-[#A0A0A0]">{application.admin_notes}</p>
+            </div>
+          )}
+
+          {application.status === "rejected" && application.rejection_reason && (
             <div>
               <Label className="text-red-500 mb-2 block">Rejection Reason</Label>
-              <p className="text-[#A0A0A0]">{application.rejectionReason}</p>
+              <p className="text-[#A0A0A0]">{application.rejection_reason}</p>
             </div>
           )}
         </div>
@@ -386,7 +478,7 @@ function ApplicationModal({ application, onClose }: { application: CriticApplica
   )
 }
 
-function ConfirmModal({ title, message, confirmText, confirmColor, onConfirm, onCancel }: any) {
+function ApproveModal({ application, adminNotes, setAdminNotes, onConfirm, onCancel }: any) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -402,14 +494,26 @@ function ConfirmModal({ title, message, confirmText, confirmColor, onConfirm, on
         onClick={(e) => e.stopPropagation()}
         className="bg-[#1A1A1A] border border-[#3A3A3A] rounded-xl p-6 max-w-md"
       >
-        <h3 className="text-xl font-bold text-[#E0E0E0] mb-4">{title}</h3>
-        <p className="text-[#A0A0A0] mb-6">{message}</p>
+        <h3 className="text-xl font-bold text-[#E0E0E0] mb-4">Approve Application</h3>
+        <p className="text-[#A0A0A0] mb-4">
+          Approve {application.requested_display_name} as a verified critic?
+        </p>
+        <div className="mb-4">
+          <Label className="text-[#E0E0E0] mb-2 block">Admin Notes (Optional)</Label>
+          <Textarea
+            value={adminNotes}
+            onChange={(e) => setAdminNotes(e.target.value)}
+            placeholder="Internal notes about this approval..."
+            rows={3}
+            className="bg-[#282828] border-[#3A3A3A] text-[#E0E0E0]"
+          />
+        </div>
         <div className="flex gap-2 justify-end">
           <Button onClick={onCancel} variant="outline" className="border-[#3A3A3A] text-[#E0E0E0]">
             Cancel
           </Button>
-          <Button onClick={onConfirm} className={confirmColor}>
-            {confirmText}
+          <Button onClick={onConfirm} className="bg-[#00BFFF] hover:bg-[#00A3DD] text-[#1A1A1A]">
+            Approve
           </Button>
         </div>
       </motion.div>
@@ -435,12 +539,12 @@ function RejectModal({ application, rejectionReason, setRejectionReason, onConfi
       >
         <h3 className="text-xl font-bold text-[#E0E0E0] mb-4">Reject Application</h3>
         <p className="text-[#A0A0A0] mb-4">
-          Provide a reason for rejecting {application.fullName}'s application:
+          Provide a reason for rejecting {application.requested_display_name}'s application:
         </p>
         <Textarea
           value={rejectionReason}
           onChange={(e) => setRejectionReason(e.target.value)}
-          placeholder="Enter rejection reason..."
+          placeholder="Enter rejection reason (will be sent to applicant)..."
           rows={4}
           className="bg-[#282828] border-[#3A3A3A] text-[#E0E0E0] mb-4"
         />
