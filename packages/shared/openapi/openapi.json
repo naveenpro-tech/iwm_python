@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "iwm-backend",
+    "title": "movie-madders-api",
     "version": "1.0.0"
   },
   "paths": {
@@ -9474,6 +9474,1771 @@
           }
         }
       }
+    },
+    "/api/v1/api/v1/critic-blog": {
+      "post": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "Create Blog Post",
+        "description": "Create a new blog post (critics only)",
+        "operationId": "create_blog_post_api_v1_api_v1_critic_blog_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticBlogPostCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBlogPostResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api/v1/critic-blog/{post_identifier}": {
+      "get": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "Get Blog Post",
+        "description": "Get blog post by ID, external ID, or slug (public)",
+        "operationId": "get_blog_post_api_v1_api_v1_critic_blog__post_identifier__get",
+        "parameters": [
+          {
+            "name": "post_identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Post Identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBlogPostResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-blog/{post_id}": {
+      "put": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "Update Blog Post",
+        "description": "Update blog post (owner only)",
+        "operationId": "update_blog_post_api_v1_api_v1_critic_blog__post_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticBlogPostUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBlogPostResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "Delete Blog Post",
+        "description": "Delete blog post (owner only)",
+        "operationId": "delete_blog_post_api_v1_api_v1_critic_blog__post_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-blog/critic/{username}": {
+      "get": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "List Blog Posts By Critic",
+        "description": "List blog posts by critic username (public for published, owner for all)",
+        "operationId": "list_blog_posts_by_critic_api_v1_api_v1_critic_blog_critic__username__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBlogPostListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-blog/{post_id}/publish": {
+      "post": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "Publish Blog Post",
+        "description": "Publish a draft blog post (owner only)",
+        "operationId": "publish_blog_post_api_v1_api_v1_critic_blog__post_id__publish_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBlogPostResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-blog/{post_id}/like": {
+      "post": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "Like Blog Post",
+        "description": "Like a blog post (authenticated users)",
+        "operationId": "like_blog_post_api_v1_api_v1_critic_blog__post_id__like_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Critic Blog"
+        ],
+        "summary": "Unlike Blog Post",
+        "description": "Unlike a blog post (authenticated users)",
+        "operationId": "unlike_blog_post_api_v1_api_v1_critic_blog__post_id__like_delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-recommendations": {
+      "post": {
+        "tags": [
+          "Critic Recommendations"
+        ],
+        "summary": "Create Recommendation",
+        "description": "Create a new movie recommendation (critics only)",
+        "operationId": "create_recommendation_api_v1_api_v1_critic_recommendations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticRecommendationCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticRecommendationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api/v1/critic-recommendations/critic/{username}": {
+      "get": {
+        "tags": [
+          "Critic Recommendations"
+        ],
+        "summary": "List Recommendations By Critic",
+        "description": "List recommendations by critic username (public)",
+        "operationId": "list_recommendations_by_critic_api_v1_api_v1_critic_recommendations_critic__username__get",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CriticRecommendationResponse"
+                  },
+                  "title": "Response List Recommendations By Critic Api V1 Api V1 Critic Recommendations Critic  Username  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-recommendations/type/{recommendation_type}": {
+      "get": {
+        "tags": [
+          "Critic Recommendations"
+        ],
+        "summary": "List Recommendations By Type",
+        "description": "List all recommendations by type across all critics (public)",
+        "operationId": "list_recommendations_by_type_api_v1_api_v1_critic_recommendations_type__recommendation_type__get",
+        "parameters": [
+          {
+            "name": "recommendation_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Recommendation Type"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CriticRecommendationResponse"
+                  },
+                  "title": "Response List Recommendations By Type Api V1 Api V1 Critic Recommendations Type  Recommendation Type  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-recommendations/{recommendation_id}": {
+      "delete": {
+        "tags": [
+          "Critic Recommendations"
+        ],
+        "summary": "Delete Recommendation",
+        "description": "Delete recommendation (owner only)",
+        "operationId": "delete_recommendation_api_v1_api_v1_critic_recommendations__recommendation_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Critic Recommendations"
+        ],
+        "summary": "Get Recommendation",
+        "description": "Get recommendation by ID (public)",
+        "operationId": "get_recommendation_api_v1_api_v1_critic_recommendations__recommendation_id__get",
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticRecommendationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-pinned": {
+      "post": {
+        "tags": [
+          "Critic Pinned Content"
+        ],
+        "summary": "Pin Content",
+        "description": "Pin content to critic profile (critics only)",
+        "operationId": "pin_content_api_v1_api_v1_critic_pinned_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticPinnedContentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticPinnedContentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api/v1/critic-pinned/critic/{username}": {
+      "get": {
+        "tags": [
+          "Critic Pinned Content"
+        ],
+        "summary": "Get Pinned Content By Critic",
+        "description": "Get all pinned content for a critic (public)",
+        "operationId": "get_pinned_content_by_critic_api_v1_api_v1_critic_pinned_critic__username__get",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CriticPinnedContentResponse"
+                  },
+                  "title": "Response Get Pinned Content By Critic Api V1 Api V1 Critic Pinned Critic  Username  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-pinned/reorder": {
+      "put": {
+        "tags": [
+          "Critic Pinned Content"
+        ],
+        "summary": "Reorder Pinned Content",
+        "description": "Reorder pinned content (owner only)",
+        "operationId": "reorder_pinned_content_api_v1_api_v1_critic_pinned_reorder_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderPinnedContentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api/v1/critic-pinned/{pin_id}": {
+      "delete": {
+        "tags": [
+          "Critic Pinned Content"
+        ],
+        "summary": "Unpin Content",
+        "description": "Unpin content (owner only)",
+        "operationId": "unpin_content_api_v1_api_v1_critic_pinned__pin_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Pin Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Critic Pinned Content"
+        ],
+        "summary": "Get Pinned Content",
+        "description": "Get pinned content by ID (public)",
+        "operationId": "get_pinned_content_api_v1_api_v1_critic_pinned__pin_id__get",
+        "parameters": [
+          {
+            "name": "pin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Pin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticPinnedContentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-affiliate": {
+      "post": {
+        "tags": [
+          "Critic Affiliate Links"
+        ],
+        "summary": "Create Affiliate Link",
+        "description": "Create a new affiliate link (critics only)",
+        "operationId": "create_affiliate_link_api_v1_api_v1_critic_affiliate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticAffiliateLinkCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticAffiliateLinkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api/v1/critic-affiliate/critic/{username}": {
+      "get": {
+        "tags": [
+          "Critic Affiliate Links"
+        ],
+        "summary": "List Affiliate Links By Critic",
+        "description": "List affiliate links by critic username (public for active, owner for all)",
+        "operationId": "list_affiliate_links_by_critic_api_v1_api_v1_critic_affiliate_critic__username__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Active"
+            }
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Platform"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CriticAffiliateLinkResponse"
+                  },
+                  "title": "Response List Affiliate Links By Critic Api V1 Api V1 Critic Affiliate Critic  Username  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-affiliate/{link_id}/click": {
+      "post": {
+        "tags": [
+          "Critic Affiliate Links"
+        ],
+        "summary": "Track Affiliate Click",
+        "description": "Track affiliate link click (public, rate-limited)",
+        "operationId": "track_affiliate_click_api_v1_api_v1_critic_affiliate__link_id__click_post",
+        "parameters": [
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Link Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AffiliateLinkClickRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateLinkClickResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-affiliate/{link_id}": {
+      "put": {
+        "tags": [
+          "Critic Affiliate Links"
+        ],
+        "summary": "Update Affiliate Link",
+        "description": "Update affiliate link (owner only)",
+        "operationId": "update_affiliate_link_api_v1_api_v1_critic_affiliate__link_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Link Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticAffiliateLinkUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticAffiliateLinkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Critic Affiliate Links"
+        ],
+        "summary": "Delete Affiliate Link",
+        "description": "Delete affiliate link (owner only)",
+        "operationId": "delete_affiliate_link_api_v1_api_v1_critic_affiliate__link_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Link Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Critic Affiliate Links"
+        ],
+        "summary": "Get Affiliate Link",
+        "description": "Get affiliate link by ID (public for active, owner for all)",
+        "operationId": "get_affiliate_link_api_v1_api_v1_critic_affiliate__link_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Link Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticAffiliateLinkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-affiliate/{link_id}/conversion": {
+      "post": {
+        "tags": [
+          "Critic Affiliate Links"
+        ],
+        "summary": "Track Affiliate Conversion",
+        "description": "Track affiliate link conversion (webhook/callback endpoint)",
+        "operationId": "track_affiliate_conversion_api_v1_api_v1_critic_affiliate__link_id__conversion_post",
+        "parameters": [
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Link Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals": {
+      "post": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Create Brand Deal",
+        "description": "Create a new brand deal (critics only)",
+        "operationId": "create_brand_deal_api_v1_api_v1_critic_brand_deals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticBrandDealCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBrandDealResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals/critic/{username}": {
+      "get": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "List Brand Deals By Critic",
+        "description": "List brand deals by critic username (owner only for privacy)",
+        "operationId": "list_brand_deals_by_critic_api_v1_api_v1_critic_brand_deals_critic__username__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CriticBrandDealResponse"
+                  },
+                  "title": "Response List Brand Deals By Critic Api V1 Api V1 Critic Brand Deals Critic  Username  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals/{deal_id}/status": {
+      "put": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Update Brand Deal Status",
+        "description": "Update brand deal status (owner only)",
+        "operationId": "update_brand_deal_status_api_v1_api_v1_critic_brand_deals__deal_id__status_put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Deal Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBrandDealStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBrandDealResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals/{deal_id}": {
+      "put": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Update Brand Deal",
+        "description": "Update brand deal (owner only)",
+        "operationId": "update_brand_deal_api_v1_api_v1_critic_brand_deals__deal_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Deal Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticBrandDealUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBrandDealResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Get Brand Deal",
+        "description": "Get brand deal by ID (owner only)",
+        "operationId": "get_brand_deal_api_v1_api_v1_critic_brand_deals__deal_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Deal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticBrandDealResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals/disclosures": {
+      "post": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Create Sponsor Disclosure",
+        "description": "Create a sponsor disclosure for review or blog post (critics only)",
+        "operationId": "create_sponsor_disclosure_api_v1_api_v1_critic_brand_deals_disclosures_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriticSponsorDisclosureCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticSponsorDisclosureResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals/disclosures/review/{review_id}": {
+      "get": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Get Disclosure By Review",
+        "description": "Get sponsor disclosure for a review (public)",
+        "operationId": "get_disclosure_by_review_api_v1_api_v1_critic_brand_deals_disclosures_review__review_id__get",
+        "parameters": [
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Review Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticSponsorDisclosureResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals/disclosures/blog-post/{blog_post_id}": {
+      "get": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Get Disclosure By Blog Post",
+        "description": "Get sponsor disclosure for a blog post (public)",
+        "operationId": "get_disclosure_by_blog_post_api_v1_api_v1_critic_brand_deals_disclosures_blog_post__blog_post_id__get",
+        "parameters": [
+          {
+            "name": "blog_post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Blog Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticSponsorDisclosureResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/v1/critic-brand-deals/disclosures/{disclosure_id}": {
+      "get": {
+        "tags": [
+          "Critic Brand Deals"
+        ],
+        "summary": "Get Disclosure",
+        "description": "Get sponsor disclosure by ID (public)",
+        "operationId": "get_disclosure_api_v1_api_v1_critic_brand_deals_disclosures__disclosure_id__get",
+        "parameters": [
+          {
+            "name": "disclosure_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Disclosure Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticSponsorDisclosureResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9651,6 +11416,58 @@
           "joinedDate"
         ],
         "title": "AdminUserOut"
+      },
+      "AffiliateLinkClickRequest": {
+        "properties": {
+          "referrer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referrer",
+            "description": "Referrer URL"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent",
+            "description": "User agent string"
+          }
+        },
+        "type": "object",
+        "title": "AffiliateLinkClickRequest",
+        "description": "Schema for tracking affiliate link clicks"
+      },
+      "AffiliateLinkClickResponse": {
+        "properties": {
+          "redirect_url": {
+            "type": "string",
+            "title": "Redirect Url"
+          },
+          "click_tracked": {
+            "type": "boolean",
+            "title": "Click Tracked",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "redirect_url"
+        ],
+        "title": "AffiliateLinkClickResponse",
+        "description": "Schema for affiliate link click response"
       },
       "AnalyticsOverviewOut": {
         "properties": {
@@ -10858,17 +12675,102 @@
         ],
         "title": "CommentResponse"
       },
-      "CriticInfoResponse": {
+      "CriticAffiliateLinkCreate": {
         "properties": {
-          "username": {
+          "label": {
             "type": "string",
-            "title": "Username"
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Label",
+            "description": "Display label for the link"
           },
-          "display_name": {
+          "platform": {
             "type": "string",
-            "title": "Display Name"
+            "title": "Platform",
+            "description": "Platform name (e.g., netflix, amazon, apple_tv)"
           },
-          "logo_url": {
+          "url": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Url",
+            "description": "Affiliate URL"
+          },
+          "utm_source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Source",
+            "description": "UTM source parameter"
+          },
+          "utm_medium": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Medium",
+            "description": "UTM medium parameter"
+          },
+          "utm_campaign": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Campaign",
+            "description": "UTM campaign parameter"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "platform",
+          "url"
+        ],
+        "title": "CriticAffiliateLinkCreate",
+        "description": "Schema for creating an affiliate link"
+      },
+      "CriticAffiliateLinkResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "critic_username": {
+            "type": "string",
+            "title": "Critic Username"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "utm_source": {
             "anyOf": [
               {
                 "type": "string"
@@ -10877,21 +12779,908 @@
                 "type": "null"
               }
             ],
-            "title": "Logo Url"
+            "title": "Utm Source"
           },
-          "is_verified": {
+          "utm_medium": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Medium"
+          },
+          "utm_campaign": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Campaign"
+          },
+          "click_count": {
+            "type": "integer",
+            "title": "Click Count"
+          },
+          "conversion_count": {
+            "type": "integer",
+            "title": "Conversion Count"
+          },
+          "is_active": {
             "type": "boolean",
-            "title": "Is Verified"
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
-          "username",
-          "display_name",
-          "logo_url",
-          "is_verified"
+          "id",
+          "external_id",
+          "critic_username",
+          "label",
+          "platform",
+          "url",
+          "click_count",
+          "conversion_count",
+          "is_active",
+          "created_at"
         ],
-        "title": "CriticInfoResponse"
+        "title": "CriticAffiliateLinkResponse",
+        "description": "Schema for affiliate link response"
+      },
+      "CriticAffiliateLinkUpdate": {
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "utm_source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Source"
+          },
+          "utm_medium": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Medium"
+          },
+          "utm_campaign": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utm Campaign"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "CriticAffiliateLinkUpdate",
+        "description": "Schema for updating an affiliate link"
+      },
+      "CriticBlogPostCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Title",
+            "description": "Blog post title"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Content",
+            "description": "Blog post content (Markdown)"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt",
+            "description": "Short excerpt/summary"
+          },
+          "cover_image_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Image Url",
+            "description": "Cover image URL"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Tags for categorization"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Post status: draft, published, archived",
+            "default": "draft"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "title": "CriticBlogPostCreate",
+        "description": "Schema for creating a blog post"
+      },
+      "CriticBlogPostListResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "critic_username": {
+            "type": "string",
+            "title": "Critic Username"
+          },
+          "critic_display_name": {
+            "type": "string",
+            "title": "Critic Display Name"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "cover_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Image Url"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "view_count": {
+            "type": "integer",
+            "title": "View Count"
+          },
+          "like_count": {
+            "type": "integer",
+            "title": "Like Count"
+          },
+          "comment_count": {
+            "type": "integer",
+            "title": "Comment Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "critic_username",
+          "critic_display_name",
+          "title",
+          "slug",
+          "tags",
+          "status",
+          "view_count",
+          "like_count",
+          "comment_count",
+          "created_at"
+        ],
+        "title": "CriticBlogPostListResponse",
+        "description": "Schema for blog post list item (lighter than full response)"
+      },
+      "CriticBlogPostResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "critic": {
+            "$ref": "#/components/schemas/src__schemas__critic_blog__CriticInfoResponse"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "cover_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Image Url"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "view_count": {
+            "type": "integer",
+            "title": "View Count"
+          },
+          "like_count": {
+            "type": "integer",
+            "title": "Like Count"
+          },
+          "comment_count": {
+            "type": "integer",
+            "title": "Comment Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "critic",
+          "title",
+          "slug",
+          "content",
+          "tags",
+          "status",
+          "view_count",
+          "like_count",
+          "comment_count",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CriticBlogPostResponse",
+        "description": "Schema for blog post response"
+      },
+      "CriticBlogPostUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "cover_image_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Image Url"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "title": "CriticBlogPostUpdate",
+        "description": "Schema for updating a blog post"
+      },
+      "CriticBrandDealCreate": {
+        "properties": {
+          "brand_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Brand Name",
+            "description": "Brand/company name"
+          },
+          "campaign_title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Campaign Title",
+            "description": "Campaign title"
+          },
+          "brief": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Brief",
+            "description": "Campaign brief/description"
+          },
+          "rate_card": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Card",
+            "description": "Proposed rate/budget"
+          },
+          "disclosure_required": {
+            "type": "boolean",
+            "title": "Disclosure Required",
+            "description": "Whether FTC disclosure is required",
+            "default": true
+          },
+          "deliverables": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deliverables",
+            "description": "List of deliverables"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "brand_name",
+          "campaign_title",
+          "brief"
+        ],
+        "title": "CriticBrandDealCreate",
+        "description": "Schema for creating a brand deal"
+      },
+      "CriticBrandDealResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "critic_username": {
+            "type": "string",
+            "title": "Critic Username"
+          },
+          "brand_name": {
+            "type": "string",
+            "title": "Brand Name"
+          },
+          "campaign_title": {
+            "type": "string",
+            "title": "Campaign Title"
+          },
+          "brief": {
+            "type": "string",
+            "title": "Brief"
+          },
+          "rate_card": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Card"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "deliverables": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deliverables"
+          },
+          "disclosure_required": {
+            "type": "boolean",
+            "title": "Disclosure Required"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "critic_username",
+          "brand_name",
+          "campaign_title",
+          "brief",
+          "status",
+          "disclosure_required",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CriticBrandDealResponse",
+        "description": "Schema for brand deal response"
+      },
+      "CriticBrandDealUpdate": {
+        "properties": {
+          "brand_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Name"
+          },
+          "campaign_title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign Title"
+          },
+          "brief": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brief"
+          },
+          "rate_card": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Card"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "deliverables": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deliverables"
+          },
+          "disclosure_required": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disclosure Required"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          }
+        },
+        "type": "object",
+        "title": "CriticBrandDealUpdate",
+        "description": "Schema for updating a brand deal"
+      },
+      "CriticPinnedContentCreate": {
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "title": "Content Type",
+            "description": "Type of content: review, blog_post, recommendation"
+          },
+          "content_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Content Id",
+            "description": "ID of the content item"
+          },
+          "display_order": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Display Order",
+            "description": "Display order (0 = first)",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "content_type",
+          "content_id"
+        ],
+        "title": "CriticPinnedContentCreate",
+        "description": "Schema for pinning content"
+      },
+      "CriticPinnedContentResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "critic_username": {
+            "type": "string",
+            "title": "Critic Username"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "content_id": {
+            "type": "integer",
+            "title": "Content Id"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order"
+          },
+          "pinned_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Pinned At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "critic_username",
+          "content_type",
+          "content_id",
+          "display_order",
+          "pinned_at"
+        ],
+        "title": "CriticPinnedContentResponse",
+        "description": "Schema for pinned content response"
       },
       "CriticProfileResponse": {
         "properties": {
@@ -11152,6 +13941,80 @@
         },
         "type": "object",
         "title": "CriticProfileUpdate"
+      },
+      "CriticRecommendationCreate": {
+        "properties": {
+          "movie_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Movie Id",
+            "description": "ID of the movie being recommended"
+          },
+          "recommendation_type": {
+            "type": "string",
+            "title": "Recommendation Type",
+            "description": "Type of recommendation"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Reason",
+            "description": "Reason for recommendation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movie_id",
+          "recommendation_type",
+          "reason"
+        ],
+        "title": "CriticRecommendationCreate",
+        "description": "Schema for creating a recommendation"
+      },
+      "CriticRecommendationResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "critic_username": {
+            "type": "string",
+            "title": "Critic Username"
+          },
+          "movie": {
+            "$ref": "#/components/schemas/src__schemas__critic_recommendations__MovieInfoResponse"
+          },
+          "recommendation_type": {
+            "type": "string",
+            "title": "Recommendation Type"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "critic_username",
+          "movie",
+          "recommendation_type",
+          "reason",
+          "created_at"
+        ],
+        "title": "CriticRecommendationResponse",
+        "description": "Schema for recommendation response"
       },
       "CriticReviewCreate": {
         "properties": {
@@ -11414,10 +14277,10 @@
             "title": "Meta Description"
           },
           "critic": {
-            "$ref": "#/components/schemas/CriticInfoResponse"
+            "$ref": "#/components/schemas/src__routers__critic_reviews__CriticInfoResponse"
           },
           "movie": {
-            "$ref": "#/components/schemas/MovieInfoResponse"
+            "$ref": "#/components/schemas/src__routers__critic_reviews__MovieInfoResponse"
           }
         },
         "type": "object",
@@ -11574,6 +14437,133 @@
         },
         "type": "object",
         "title": "CriticReviewUpdate"
+      },
+      "CriticSponsorDisclosureCreate": {
+        "properties": {
+          "review_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Id",
+            "description": "Review ID if disclosure is for a review"
+          },
+          "blog_post_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blog Post Id",
+            "description": "Blog post ID if disclosure is for a blog post"
+          },
+          "brand_deal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Deal Id",
+            "description": "Associated brand deal ID"
+          },
+          "disclosure_text": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Disclosure Text",
+            "description": "FTC-compliant disclosure text"
+          },
+          "disclosure_type": {
+            "type": "string",
+            "title": "Disclosure Type",
+            "description": "Type: sponsored, affiliate, gifted, partnership"
+          }
+        },
+        "type": "object",
+        "required": [
+          "disclosure_text",
+          "disclosure_type"
+        ],
+        "title": "CriticSponsorDisclosureCreate",
+        "description": "Schema for creating a sponsor disclosure"
+      },
+      "CriticSponsorDisclosureResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "review_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Id"
+          },
+          "blog_post_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blog Post Id"
+          },
+          "brand_deal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Deal Id"
+          },
+          "disclosure_text": {
+            "type": "string",
+            "title": "Disclosure Text"
+          },
+          "disclosure_type": {
+            "type": "string",
+            "title": "Disclosure Type"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "disclosure_text",
+          "disclosure_type",
+          "created_at"
+        ],
+        "title": "CriticSponsorDisclosureResponse",
+        "description": "Schema for sponsor disclosure response"
       },
       "CurationResponse": {
         "properties": {
@@ -13042,53 +16032,6 @@
         ],
         "title": "MovieImportIn"
       },
-      "MovieInfoResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "external_id": {
-            "type": "string",
-            "title": "External Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "poster_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Poster Url"
-          },
-          "year": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Year"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "external_id",
-          "title",
-          "poster_url",
-          "year"
-        ],
-        "title": "MovieInfoResponse"
-      },
       "NotificationOut": {
         "properties": {
           "id": {
@@ -13321,6 +16264,26 @@
           "refresh_token"
         ],
         "title": "RefreshBody"
+      },
+      "ReorderPinnedContentRequest": {
+        "properties": {
+          "pin_id": {
+            "type": "integer",
+            "title": "Pin Id"
+          },
+          "new_order": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "New Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pin_id",
+          "new_order"
+        ],
+        "title": "ReorderPinnedContentRequest",
+        "description": "Schema for reordering multiple pinned items"
       },
       "ReviewIn": {
         "properties": {
@@ -14090,6 +17053,36 @@
         ],
         "title": "TriviaIn"
       },
+      "UpdateBrandDealStatusRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "New status: pending, accepted, completed, cancelled"
+          },
+          "deliverables": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deliverables",
+            "description": "Updated deliverables list"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "UpdateBrandDealStatusRequest",
+        "description": "Schema for updating brand deal status"
+      },
       "UpdateProfileBody": {
         "properties": {
           "name": {
@@ -14494,6 +17487,170 @@
         },
         "type": "object",
         "title": "WatchlistItemUpdate"
+      },
+      "src__routers__critic_reviews__CriticInfoResponse": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "display_name",
+          "logo_url",
+          "is_verified"
+        ],
+        "title": "CriticInfoResponse"
+      },
+      "src__routers__critic_reviews__MovieInfoResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "external_id": {
+            "type": "string",
+            "title": "External Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Url"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "external_id",
+          "title",
+          "poster_url",
+          "year"
+        ],
+        "title": "MovieInfoResponse"
+      },
+      "src__schemas__critic_blog__CriticInfoResponse": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "display_name",
+          "is_verified"
+        ],
+        "title": "CriticInfoResponse",
+        "description": "Minimal critic info for blog post responses"
+      },
+      "src__schemas__critic_recommendations__MovieInfoResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "release_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Year"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Url"
+          },
+          "genres": {
+            "items": {},
+            "type": "array",
+            "title": "Genres",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "MovieInfoResponse",
+        "description": "Minimal movie info for recommendation responses"
       }
     },
     "securitySchemes": {
