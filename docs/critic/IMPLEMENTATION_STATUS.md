@@ -111,52 +111,84 @@
 
 ---
 
+## ✅ COMPLETED (Continued)
+
+### **Backend - Repository Layer (100%)**
+
+- [x] **critic_blog.py** - Blog post repository (15 methods)
+  - create_blog_post() - Create with auto-slug generation
+  - get_blog_post_by_id() - Get by ID with relationships
+  - get_blog_post_by_external_id() - Get by external ID
+  - get_blog_post_by_slug() - Get by URL slug
+  - update_blog_post() - Update with auto-slug regeneration
+  - delete_blog_post() - Delete blog post
+  - list_blog_posts_by_critic() - List with status filter
+  - list_blog_posts_by_username() - List by username
+  - publish_blog_post() - Publish draft
+  - increment_view_count() - Track views
+  - increment_like_count() - Track likes
+  - decrement_like_count() - Unlike
+  - get_total_count_by_critic() - Count posts
+
+- [x] **critic_recommendations.py** - Recommendation repository (10 methods)
+  - create_recommendation() - Create recommendation
+  - get_recommendation_by_id() - Get by ID
+  - get_recommendation_by_external_id() - Get by external ID
+  - list_recommendations_by_critic() - List with type filter
+  - list_recommendations_by_username() - List by username
+  - list_recommendations_by_type() - List by type globally
+  - delete_recommendation() - Delete recommendation
+  - check_duplicate_recommendation() - Prevent duplicates
+  - get_total_count_by_critic() - Count recommendations
+
+- [x] **critic_pinned.py** - Pinned content repository (11 methods)
+  - create_pinned_content() - Pin content with auto-ordering
+  - get_pinned_content_by_id() - Get by ID
+  - get_pinned_content_by_external_id() - Get by external ID
+  - get_pinned_content_by_critic() - Get all pinned (ordered)
+  - get_pinned_content_by_username() - Get by username
+  - update_pinned_content() - Update pinned item
+  - delete_pinned_content() - Unpin with auto-reorder
+  - reorder_pinned_content() - Bulk reorder
+  - get_pinned_count() - Count pinned items
+  - check_duplicate_pin() - Prevent duplicate pins
+  - _reorder_after_delete() - Internal reordering
+
+- [x] **critic_affiliate.py** - Affiliate link repository (13 methods)
+  - create_affiliate_link() - Create link
+  - get_affiliate_link_by_id() - Get by ID
+  - get_affiliate_link_by_external_id() - Get by external ID
+  - list_affiliate_links_by_critic() - List with filters
+  - list_affiliate_links_by_username() - List by username
+  - update_affiliate_link() - Update link
+  - delete_affiliate_link() - Delete link
+  - track_click() - Increment click count
+  - track_conversion() - Increment conversion count
+  - get_total_clicks_by_critic() - Total clicks
+  - get_total_conversions_by_critic() - Total conversions
+  - get_top_performing_links() - Top links by clicks
+  - get_total_count_by_critic() - Count links
+
+- [x] **critic_brand_deals.py** - Brand deal repository (16 methods)
+  - create_brand_deal() - Create deal
+  - get_brand_deal_by_id() - Get by ID
+  - get_brand_deal_by_external_id() - Get by external ID
+  - list_brand_deals_by_critic() - List with status filter
+  - list_brand_deals_by_username() - List by username
+  - update_brand_deal() - Update deal
+  - update_brand_deal_status() - Update status only
+  - get_active_brand_deals() - Get accepted deals
+  - get_total_count_by_critic() - Count deals
+  - create_sponsor_disclosure() - Create disclosure
+  - get_disclosure_by_id() - Get disclosure by ID
+  - get_disclosure_by_external_id() - Get by external ID
+  - get_disclosure_by_review() - Get for review
+  - get_disclosure_by_blog_post() - Get for blog post
+  - delete_disclosure() - Delete disclosure
+
+---
+
 ## 🚧 IN PROGRESS
-
-### **Backend - Repository Layer (0%)**
-
-**Next Steps:**
-- [ ] Create `apps/backend/src/repositories/critic_blog.py`
-  - create_blog_post()
-  - get_blog_post_by_id()
-  - get_blog_post_by_slug()
-  - update_blog_post()
-  - delete_blog_post()
-  - list_blog_posts_by_critic()
-  - publish_blog_post()
-  - increment_view_count()
-
-- [ ] Create `apps/backend/src/repositories/critic_recommendations.py`
-  - create_recommendation()
-  - get_recommendation_by_id()
-  - list_recommendations_by_critic()
-  - list_recommendations_by_type()
-  - delete_recommendation()
-
-- [ ] Create `apps/backend/src/repositories/critic_pinned.py`
-  - create_pinned_content()
-  - get_pinned_content_by_critic()
-  - update_display_order()
-  - delete_pinned_content()
-  - reorder_pinned_content()
-
-- [ ] Create `apps/backend/src/repositories/critic_affiliate.py`
-  - create_affiliate_link()
-  - get_affiliate_link_by_id()
-  - list_affiliate_links_by_critic()
-  - update_affiliate_link()
-  - delete_affiliate_link()
-  - track_click()
-  - track_conversion()
-
-- [ ] Create `apps/backend/src/repositories/critic_brand_deals.py`
-  - create_brand_deal()
-  - get_brand_deal_by_id()
-  - list_brand_deals_by_critic()
-  - update_brand_deal()
-  - update_brand_deal_status()
-  - create_sponsor_disclosure()
-  - get_disclosure_by_content()
 
 ---
 
@@ -270,7 +302,7 @@
 | **Documentation** | ✅ Complete | 100% (3/3 docs) |
 | **Database Models** | ✅ Complete | 100% (6/6 models) |
 | **Pydantic Schemas** | ✅ Complete | 100% (5/5 schema files) |
-| **Repository Layer** | 🚧 Not Started | 0% (0/5 repos) |
+| **Repository Layer** | ✅ Complete | 100% (5/5 repos, 65 methods) |
 | **API Routers** | 🚧 Not Started | 0% (0/5 routers) |
 | **Database Migration** | 🚧 Not Started | 0% |
 | **Backend Tests** | 🚧 Not Started | 0% |
@@ -280,7 +312,7 @@
 | **TypeScript Types** | 🚧 Not Started | 0% (0/4 files) |
 | **E2E Tests** | 🚧 Not Started | 0% (0/4 tests) |
 
-**Overall P0 Progress:** ~20% (Foundation complete, implementation pending)
+**Overall P0 Progress:** ~35% (Foundation + Repository Layer complete)
 
 ---
 
