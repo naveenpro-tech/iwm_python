@@ -21,7 +21,8 @@ export default function CreateReviewPage() {
       setError(null)
 
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const { getApiUrl } = require("@/lib/api-config")
+        const apiBase = getApiUrl()
         console.log("Fetching movie data for review creation:", movieId)
 
         const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)

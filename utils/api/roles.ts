@@ -4,8 +4,9 @@
  */
 
 import { getAccessToken } from "@/lib/auth"
+import { getApiUrl } from "@/lib/api-config"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const API_BASE_URL = () => getApiUrl()
 
 /**
  * Fetch role-specific profile data
@@ -17,7 +18,7 @@ export async function getRoleProfile(roleType: string): Promise<any> {
       throw new Error("Not authenticated")
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/roles/${roleType}`, {
+    const response = await fetch(`${API_BASE_URL()}/api/v1/roles/${roleType}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -111,7 +112,7 @@ export async function activateRole(roleType: string, handle?: string): Promise<a
       throw new Error("Not authenticated")
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/roles/${roleType}/activate`, {
+    const response = await fetch(`${API_BASE_URL()}/api/v1/roles/${roleType}/activate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -144,7 +145,7 @@ export async function deactivateRole(roleType: string): Promise<any> {
       throw new Error("Not authenticated")
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/roles/${roleType}/deactivate`, {
+    const response = await fetch(`${API_BASE_URL()}/api/v1/roles/${roleType}/deactivate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

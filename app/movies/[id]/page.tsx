@@ -617,7 +617,8 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     const fetchMovie = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+      const { getApiUrl } = require("@/lib/api-config")
+      const apiBase = getApiUrl()
       const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
 
       if (!useBackend || !apiBase) {

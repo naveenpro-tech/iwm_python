@@ -46,7 +46,8 @@ export default function ScenesPage() {
     const fetchMovieAndScenes = async () => {
       setLoading(true)
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const { getApiUrl } = require("@/lib/api-config")
+        const apiBase = getApiUrl()
 
         // Fetch movie data for title
         const movieResponse = await fetch(`${apiBase}/api/v1/movies/${movieId}`)

@@ -20,15 +20,10 @@ export function getApiUrl(): string {
 
   // Client-side: detect based on current hostname
   const hostname = window.location.hostname;
-  
-  // If accessing via localhost, use localhost backend
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:8000';
-  }
-  
-  // If accessing via network IP, use the same IP for backend
-  // This assumes backend is running on the same machine on port 8000
-  return `http://${hostname}:8000`;
+
+  // Always use localhost:8000 for development
+  // The backend is bound to 127.0.0.1:8000 which is accessible as localhost
+  return 'http://localhost:8000';
 }
 
 /**

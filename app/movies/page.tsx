@@ -94,7 +94,8 @@ export default function MoviesPage() {
   }, [searchParams, isInitialized])
   // Fetch movies from backend when filters/sort change
   useEffect(() => {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+    const { getApiUrl } = require("@/lib/api-config")
+    const apiBase = getApiUrl()
     const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
     if (!useBackend || !apiBase) return
     setIsLoading(true)
