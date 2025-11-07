@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Zap,
   Database,
+  Award,
 } from "lucide-react"
 
 const navItems = [
@@ -51,14 +52,24 @@ const navItems = [
     icon: Database,
   },
   {
+    title: "Critic Applications",
+    href: "/admin/critic-applications",
+    icon: Award,
+  },
+  {
+    title: "Verified Critics",
+    href: "/admin/critics",
+    icon: UserCheck,
+  },
+  {
     title: "Talent Hub Management",
     href: "/admin/talent-hub",
-    icon: UserCheck,
+    icon: Briefcase,
   },
   {
     title: "Industry Professional Management",
     href: "/admin/industry",
-    icon: Briefcase,
+    icon: UserCheck,
   },
   {
     title: "Cricket Content Management",
