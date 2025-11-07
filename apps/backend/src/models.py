@@ -1164,6 +1164,9 @@ class CriticProfile(Base):
     verification_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     verification_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)  # Admin can suspend/activate critics
+    suspended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    suspension_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     follower_count: Mapped[int] = mapped_column(Integer, default=0)
     total_reviews: Mapped[int] = mapped_column(Integer, default=0)
     avg_engagement: Mapped[float] = mapped_column(Float, default=0.0)

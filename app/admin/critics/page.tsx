@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { apiGet, apiPut } from "@/lib/api-client"
+import { apiGet, apiPost } from "@/lib/api-client"
 
 interface Critic {
   id: number
@@ -79,13 +79,16 @@ export default function AdminCriticsPage() {
 
   const handleSuspend = async (criticId: number, username: string) => {
     try {
-      // TODO: Add API endpoint to suspend critic
-      // For now, just update local state
+      // Call backend API to suspend critic
+      await apiPost(`/api/v1/critics/${criticId}/suspend`, {})
+
+      // Update local state
       setCritics(
         critics.map((c) =>
           c.id === criticId ? { ...c, is_active: false } : c
         )
       )
+
       toast({ title: "Success", description: `Critic @${username} has been suspended` })
     } catch (error) {
       console.error("Failed to suspend critic:", error)
@@ -99,13 +102,16 @@ export default function AdminCriticsPage() {
 
   const handleRestore = async (criticId: number, username: string) => {
     try {
-      // TODO: Add API endpoint to restore critic
-      // For now, just update local state
+      // Call backend API to activate critic
+      await apiPost(`/api/v1/critics/${criticId}/activate`, {})
+
+      // Update local state
       setCritics(
         critics.map((c) =>
           c.id === criticId ? { ...c, is_active: true } : c
         )
       )
+
       toast({ title: "Success", description: `Critic @${username} has been restored` })
     } catch (error) {
       console.error("Failed to restore critic:", error)

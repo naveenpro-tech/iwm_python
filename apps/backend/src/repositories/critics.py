@@ -232,3 +232,33 @@ class CriticRepository:
         )
         return result.scalar() or 0
 
+    async def suspend_critic(self, critic_id: int, reason: str | None = None) -> Optional[CriticProfile]:
+        """Suspend a critic (admin only)"""
+        await self.db.execute(
+            update(CriticProfile)
+            .where(CriticProfile.id == critic_id)
+            .values(
+                is_active=False,
+                suspended_at=datetime.utcnow(),
+                suspension_reason=reason,
+                updated_at=datetime.utcnow()
+            )
+        )
+        await self.db.commit()
+        return await self.get_critic_by_id(critic_id)
+
+    async def activate_critic(self, critic_id: int) -> Optional[CriticProfile]:
+        """Activate a suspended critic (admin only)"""
+        await self.db.execute(
+            update(CriticProfile)
+            .where(CriticProfile.id == critic_id)
+            .values(
+                is_active=True,
+                suspended_at=None,
+                suspension_reason=None,
+                updated_at=datetime.utcnow()
+            )
+        )
+        await self.db.commit()
+        return await self.get_critic_by_id(critic_id)
+

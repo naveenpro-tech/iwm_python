@@ -7,6 +7,7 @@ from typing import List, Optional
 from ..db import get_session
 from ..repositories.critics import CriticRepository
 from ..dependencies.auth import get_current_user
+from ..dependencies.admin import require_admin
 from ..models import User
 
 
@@ -43,6 +44,7 @@ class CriticProfileResponse(BaseModel):
     banner_video_url: Optional[str]
     is_verified: bool
     verification_level: Optional[str]
+    is_active: bool = True  # Admin can suspend/activate critics
     follower_count: int
     total_reviews: int
     avg_engagement: float
@@ -258,14 +260,60 @@ async def get_critic_followers(
     """Get followers of a critic"""
     repo = CriticRepository(db)
     critic = await repo.get_critic_by_username(username)
-    
+
     if not critic:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Critic not found"
         )
-    
+
     followers = await repo.get_followers(critic.id, limit=limit, offset=offset)
-    
+
     return [FollowerResponse.from_orm(follower) for follower in followers]
+
+
+# --- Admin Endpoints ---
+@router.post("/{critic_id}/suspend")
+async def suspend_critic(
+    critic_id: int,
+    reason: Optional[str] = None,
+    admin_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_session)
+):
+    """Suspend a critic (admin only)"""
+    repo = CriticRepository(db)
+    critic = await repo.get_critic_by_id(critic_id)
+
+    if not critic:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Critic not found"
+        )
+
+    # Suspend the critic
+    await repo.suspend_critic(critic_id, reason=reason)
+
+    return {"message": f"Critic {critic.username} has been suspended", "critic_id": critic_id}
+
+
+@router.post("/{critic_id}/activate")
+async def activate_critic(
+    critic_id: int,
+    admin_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_session)
+):
+    """Activate a suspended critic (admin only)"""
+    repo = CriticRepository(db)
+    critic = await repo.get_critic_by_id(critic_id)
+
+    if not critic:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Critic not found"
+        )
+
+    # Activate the critic
+    await repo.activate_critic(critic_id)
+
+    return {"message": f"Critic {critic.username} has been activated", "critic_id": critic_id}
 
