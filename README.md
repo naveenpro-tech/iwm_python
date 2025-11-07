@@ -260,7 +260,10 @@ EXPORT_OPENAPI_ON_STARTUP=true
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Base URL for the backend API (used in all environments)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+# Enable backend calls (set to true in dev/staging/prod)
+NEXT_PUBLIC_ENABLE_BACKEND=true
 ```
 
 ---

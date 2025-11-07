@@ -12,18 +12,29 @@
  * This allows the app to work both on localhost and network access
  */
 export function getApiUrl(): string {
-  // Check if we're in the browser
-  if (typeof window === 'undefined') {
-    // Server-side: use environment variable or default to localhost
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  // Client-first rule: if browsing from localhost, force localhost backend
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+      return 'http://localhost:8000'
+    }
   }
 
-  // Client-side: detect based on current hostname
-  const hostname = window.location.hostname;
+  // Prefer explicit environment override (works both on server and client)
+  const envOverride = (typeof process !== 'undefined' && process.env && (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL)) || ''
+  if (envOverride) {
+    return envOverride.replace(/\/+$/, '')
+  }
 
-  // Always use localhost:8000 for development
-  // The backend is bound to 127.0.0.1:8000 which is accessible as localhost
-  return 'http://localhost:8000';
+  // Client-side: derive from current hostname for local/LAN dev when no env set
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname
+    // Fallback for LAN dev: assume backend on same host port 8000
+    return `http://${hostname}:8000`
+  }
+
+  // Server-side fallback (SSR/build) when no override provided
+  return process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 }
 
 /**

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { getApiUrl } from "@/lib/api-config"
 
 export default function AdminMoviesEnrichPage() {
   const [query, setQuery] = useState("")
@@ -8,7 +9,7 @@ export default function AdminMoviesEnrichPage() {
   const [existingId, setExistingId] = useState("")
   const [loading, setLoading] = useState<null | string>(null)
   const [result, setResult] = useState<any>(null)
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+  const apiBase = getApiUrl()
 
   const call = async (path: string, body: any) => {
     setLoading(path)

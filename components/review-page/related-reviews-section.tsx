@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { getApiUrl } from "@/lib/api-config"
 
 interface RelatedReview {
   id: string
@@ -31,7 +32,7 @@ export function RelatedReviewsSection({ movieId, currentReviewId }: RelatedRevie
 
   useEffect(() => {
     const fetchRelatedReviews = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+      const apiBase = getApiUrl()
       const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
 
       if (!useBackend || !apiBase) {

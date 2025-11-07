@@ -26,9 +26,8 @@ export default function CreateReviewPage() {
         console.log("Fetching movie data for review creation:", movieId)
 
         const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
-
         if (!response.ok) {
-          throw new Error(`Failed to fetch movie: ${response.statusText}`)
+          throw new Error(`Failed to fetch movie: ${response.status} ${response.statusText}`)
         }
 
         const data = await response.json()

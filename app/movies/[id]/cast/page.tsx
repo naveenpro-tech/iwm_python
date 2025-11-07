@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { MovieDetailsNavigation } from "@/components/movie-details-navigation"
 import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
+import { getApiUrl } from "@/lib/api-config"
 
 interface CastMember {
   id: string
@@ -33,7 +34,7 @@ export default function CastPage() {
   useEffect(() => {
     const fetchCast = async () => {
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const apiBase = getApiUrl()
         const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         if (response.ok) {
           const data = await response.json()

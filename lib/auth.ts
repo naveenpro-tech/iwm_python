@@ -7,16 +7,15 @@ export type User = {
   avatarUrl?: string | null
 }
 
-// Environment variables - Next.js replaces these at build time
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-const ENABLE_BACKEND = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true"
+import { getApiUrl } from "@/lib/api-config"
 
 function getApiBase(): string {
-  return API_BASE_URL
+  // Delegate to centralized resolver which handles env and localhost/LAN logic
+  return getApiUrl()
 }
 
 function getUseBackend(): boolean {
-  return ENABLE_BACKEND && !!API_BASE_URL
+  return (process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true") && !!getApiBase()
 }
 
 function storage() {

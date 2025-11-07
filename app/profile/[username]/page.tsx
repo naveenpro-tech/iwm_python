@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react"
 import { updateUserProfile } from "@/lib/api/profile"
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser } from "@/lib/auth"
+import { getApiUrl } from "@/lib/api-config"
 
 type ProfileSection = "overview" | "reviews" | "watchlist" | "favorites" | "collections" | "history" | "settings"
 
@@ -84,7 +85,7 @@ export default function UserProfilePage() {
       setError(null)
 
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const apiBase = getApiUrl()
 
         // Fetch user profile from backend
         const response = await fetch(`${apiBase}/api/v1/users/${username}`, {

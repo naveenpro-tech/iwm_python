@@ -48,7 +48,7 @@ export async function updateRoleProfile(roleType: string, data: any): Promise<an
       throw new Error("Not authenticated")
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/roles/${roleType}/profile`, {
+    const response = await fetch(`${API_BASE_URL()}/api/v1/roles/${roleType}/profile`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +79,7 @@ export async function getUserRoles(): Promise<any> {
       throw new Error("Not authenticated")
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/roles`, {
+    const response = await fetch(`${API_BASE_URL()}/api/v1/roles`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { Metadata, ResolvingMetadata } from "next"
+import { getApiUrl } from "@/lib/api-config"
 
 interface Props {
   params: Promise<{ id: string }>
@@ -7,7 +8,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
   const { id: movieId } = await params
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+  const apiBase = getApiUrl()
 
   // Fallback metadata
   const fallbackMetadata: Metadata = {
