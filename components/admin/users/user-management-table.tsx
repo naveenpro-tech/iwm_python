@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ import {
   ChevronUp,
   PlusCircle,
   Filter,
+  RefreshCw,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
@@ -38,6 +39,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal"
 import { AddUserModal } from "./add-user-modal"
 import { ManageRolesModal } from "./manage-roles-modal"
 import { UserBatchActionsToolbar, type BatchActionType } from "./user-batch-actions-toolbar"
+import { listUsers, type AdminUser } from "@/lib/api/admin/users"
 
 // Expanded Mock user data
 const initialUsers: User[] = Array.from({ length: 28 }, (_, i) => {
@@ -95,6 +97,8 @@ export function UserManagementTable() {
   const router = useRouter()
   const { toast } = useToast()
   const [users, setUsers] = useState<User[]>(initialUsers)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState("")
   const [sortField, setSortField] = useState<keyof User | null>("name")
@@ -116,6 +120,64 @@ export function UserManagementTable() {
     userId: string
   } | null>(null)
   const [batchConfirmAction, setBatchConfirmAction] = useState<BatchActionType | null>(null)
+
+  // Fetch users from API
+  const fetchUsers = async (showRefreshIndicator = false) => {
+    try {
+      if (showRefreshIndicator) {
+        setIsRefreshing(true)
+      } else {
+        setIsLoading(true)
+      }
+
+      const apiUsers = await listUsers({
+        search: searchTerm || undefined,
+        role: filterRole !== "all" ? filterRole : undefined,
+        status: filterStatus !== "all" ? filterStatus : undefined,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+      })
+
+      // Convert AdminUser to User type
+      const convertedUsers: User[] = apiUsers.map((apiUser) => ({
+        id: apiUser.id,
+        name: apiUser.name,
+        email: apiUser.email,
+        roles: apiUser.roles as UserRole[],
+        status: apiUser.status as UserStatus,
+        joinedDate: apiUser.joinedDate,
+        lastLogin: apiUser.lastLogin,
+        profileType: apiUser.profileType as any,
+        verificationStatus: apiUser.verificationStatus as any,
+        accountType: apiUser.accountType,
+        phoneNumber: apiUser.phoneNumber,
+        location: apiUser.location,
+      }))
+
+      setUsers(convertedUsers)
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load users. Using cached data.",
+        variant: "destructive",
+      })
+      // Keep using mock data on error
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  // Fetch users on mount and when filters change
+  useEffect(() => {
+    fetchUsers()
+  }, [searchTerm, filterRole, filterStatus, currentPage])
+
+  // Refresh handler
+  const handleRefresh = () => {
+    fetchUsers(true)
+  }
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -362,9 +424,20 @@ export function UserManagementTable() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openAddUserModal} className="w-full sm:w-auto">
-          <PlusCircle size={16} className="mr-2" /> Add User
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={16} className={cn("mr-2", isRefreshing && "animate-spin")} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </Button>
+          <Button onClick={openAddUserModal} className="w-full sm:w-auto">
+            <PlusCircle size={16} className="mr-2" /> Add User
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-md border bg-background">
@@ -395,7 +468,16 @@ export function UserManagementTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedUsers.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-2">
+                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <p className="text-muted-foreground">Loading users...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : paginatedUsers.length > 0 ? (
               paginatedUsers.map((user, index) => (
                 <motion.tr
                   key={user.id}
