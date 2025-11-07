@@ -1,35 +1,86 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Plus, Eye, Heart, Users, TrendingUp, Edit, Trash2, FileText } from "lucide-react"
+import { Plus, Eye, Heart, Users, TrendingUp, Edit, Trash2, FileText, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { generateMockDashboardStats, generateMockDrafts, type DashboardStats, type DraftReview } from "@/lib/critic/mock-drafts"
-import { generateMockCriticReview } from "@/lib/critic/mock-critic-review"
+import { checkApplicationStatus } from "@/lib/api/critic-verification"
+import { getCriticDashboardStats, listMyReviews, type CriticReviewResponse, type DashboardStats } from "@/lib/api/critic-reviews"
+
+interface DraftReview {
+  id: number | string
+  title: string
+  movie: string
+  lastSaved: string
+  progress: number
+}
 
 export default function CriticDashboardPage() {
+  const router = useRouter()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [drafts, setDrafts] = useState<DraftReview[]>([])
   const [recentReviews, setRecentReviews] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [verificationStatus, setVerificationStatus] = useState<"pending" | "approved" | "not_applied" | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
-      // Mock data for now
-      setStats(generateMockDashboardStats())
-      setDrafts(generateMockDrafts())
-      setRecentReviews([
-        generateMockCriticReview("the-shawshank-redemption-1994"),
-        generateMockCriticReview("inception-2010"),
-      ])
-      setIsLoading(false)
+      try {
+        // Check verification status
+        const appStatus = await checkApplicationStatus()
+        setVerificationStatus(appStatus.status || "not_applied")
+
+        // If not approved, redirect to application status
+        if (appStatus.status !== "approved") {
+          router.push("/critic/application-status")
+          return
+        }
+
+        // Fetch real data from backend
+        try {
+          const dashboardStats = await getCriticDashboardStats()
+          setStats(dashboardStats)
+        } catch (err) {
+          console.error("Failed to fetch dashboard stats:", err)
+          throw err
+        }
+
+        try {
+          const myReviews = await listMyReviews()
+          const draftReviews = myReviews.filter((r) => r.is_draft)
+          const publishedReviews = myReviews.filter((r) => !r.is_draft)
+
+          // Convert to DraftReview format for display
+          setDrafts(
+            draftReviews.map((r) => ({
+              id: r.id,
+              title: r.title,
+              movie: r.title,
+              lastSaved: r.updated_at,
+              progress: 75,
+            }))
+          )
+
+          setRecentReviews(publishedReviews.slice(0, 5))
+        } catch (err) {
+          console.error("Failed to fetch reviews:", err)
+          throw err
+        }
+      } catch (error) {
+        console.error("Error checking verification status:", error)
+        // If error checking status, redirect to application status
+        router.push("/critic/application-status")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     fetchData()
-  }, [])
+  }, [router])
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`

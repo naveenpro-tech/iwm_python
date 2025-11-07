@@ -45,12 +45,34 @@ export default function CreateReviewPage() {
   }
 
   const handleSaveDraft = async () => {
+    if (!formData.selectedMovie) {
+      toast({ title: "Error", description: "Please select a movie", variant: "destructive" })
+      return
+    }
+
     setAutoSaving(true)
-    // API call would go here
-    setTimeout(() => {
-      setAutoSaving(false)
+    try {
+      const { createCriticReview } = await import("@/lib/api/critic-reviews")
+      await createCriticReview({
+        movie_id: formData.selectedMovie.id,
+        title: formData.title || "Untitled Review",
+        content: formData.writtenContent,
+        numeric_rating: formData.rating || 0,
+        tags: formData.tags,
+        youtube_video_id: formData.youtubeVideoId,
+        is_draft: true,
+      })
       toast({ title: "Draft saved", description: "Your review has been saved as a draft" })
-    }, 1000)
+    } catch (error: any) {
+      console.error("Error saving draft:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save draft",
+        variant: "destructive",
+      })
+    } finally {
+      setAutoSaving(false)
+    }
   }
 
   const handlePublish = async () => {
@@ -59,8 +81,36 @@ export default function CreateReviewPage() {
       return
     }
 
-    // API call would go here
-    toast({ title: "Success", description: "Review published successfully!" })
+    if (!formData.selectedMovie) {
+      toast({ title: "Error", description: "Please select a movie", variant: "destructive" })
+      return
+    }
+
+    setIsPublishing(true)
+    try {
+      const { createCriticReview } = await import("@/lib/api/critic-reviews")
+      const review = await createCriticReview({
+        movie_id: formData.selectedMovie.id,
+        title: formData.title || "Untitled Review",
+        content: formData.writtenContent,
+        numeric_rating: formData.rating,
+        tags: formData.tags,
+        youtube_video_id: formData.youtubeVideoId,
+        is_draft: false,
+      })
+      toast({ title: "Success", description: "Review published successfully!" })
+      // Redirect to the published review
+      window.location.href = `/critic/dashboard`
+    } catch (error: any) {
+      console.error("Error publishing review:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to publish review",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPublishing(false)
+    }
   }
 
   const letterGrades = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"]

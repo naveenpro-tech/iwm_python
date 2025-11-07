@@ -2,7 +2,7 @@
 
 import { use as usePromise, useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, Save, Send, Trash2, Eye, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Save, Send, Trash2, Eye, AlertTriangle, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { generateMockDrafts } from "@/lib/critic/mock-drafts"
+import { getCriticReview, updateCriticReview, deleteCriticReview } from "@/lib/api/critic-reviews"
 
 export default function EditReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = usePromise(params)
@@ -44,57 +44,132 @@ export default function EditReviewPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     const fetchReview = async () => {
-      // Mock data - in real app would fetch from API
-      const drafts = generateMockDrafts()
-      const draft = drafts.find((d) => d.id === id)
+      try {
+        const review = await getCriticReview(id)
 
-      if (draft) {
-        setFormData({
-          movieTitle: draft.movieTitle,
-          movieYear: draft.movieYear,
-          rating: draft.rating,
-          ratingNumeric: draft.ratingNumeric,
-          ratingBreakdown: {
-            story: draft.ratingBreakdown[0]?.score || 0,
-            acting: draft.ratingBreakdown[1]?.score || 0,
-            direction: draft.ratingBreakdown[2]?.score || 0,
-            cinematography: draft.ratingBreakdown[3]?.score || 0,
-            music: draft.ratingBreakdown[4]?.score || 0,
-            overall: draft.ratingBreakdown[5]?.score || 0,
-          },
-          youtubeUrl: draft.youtubeVideoId || "",
-          writtenContent: draft.writtenContent,
-          tags: draft.tags,
-          spoilerWarning: draft.spoilerWarning,
+        if (review) {
+          setFormData({
+            movieTitle: review.movie?.title || "Unknown Movie",
+            movieYear: review.movie?.release_year || 0,
+            rating: review.letter_rating || "",
+            ratingNumeric: review.numeric_rating || 0,
+            ratingBreakdown: {
+              story: 0,
+              acting: 0,
+              direction: 0,
+              cinematography: 0,
+              music: 0,
+              overall: review.numeric_rating || 0,
+            },
+            youtubeUrl: review.youtube_video_id || "",
+            writtenContent: review.content || "",
+            tags: review.tags || [],
+            spoilerWarning: review.contains_spoilers || false,
+          })
+        } else {
+          toast({
+            title: "Error",
+            description: "Review not found",
+            variant: "destructive",
+          })
+          router.push("/critic/dashboard")
+        }
+      } catch (error: any) {
+        console.error("Error fetching review:", error)
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load review",
+          variant: "destructive",
         })
+        router.push("/critic/dashboard")
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
 
-    fetchReview()
-  }, [id])
+    if (id) {
+      fetchReview()
+    }
+  }, [id, router, toast])
 
   const handleSaveDraft = async () => {
+    if (!formData.writtenContent) {
+      toast({ title: "Error", description: "Please write some content", variant: "destructive" })
+      return
+    }
+
     setAutoSaving(true)
-    setTimeout(() => {
-      setAutoSaving(false)
+    try {
+      await updateCriticReview(id, {
+        title: formData.movieTitle,
+        content: formData.writtenContent,
+        numeric_rating: formData.ratingNumeric,
+        tags: formData.tags,
+        youtube_video_id: formData.youtubeUrl,
+        contains_spoilers: formData.spoilerWarning,
+        is_draft: true,
+      })
       toast({ title: "Draft saved", description: "Your changes have been saved" })
-    }, 1000)
+    } catch (error: any) {
+      console.error("Error saving draft:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save draft",
+        variant: "destructive",
+      })
+    } finally {
+      setAutoSaving(false)
+    }
   }
 
   const handleUpdate = async () => {
-    if (!formData.rating || !formData.writtenContent) {
+    if (!formData.ratingNumeric || !formData.writtenContent) {
       toast({ title: "Error", description: "Please complete all required fields", variant: "destructive" })
       return
     }
 
-    toast({ title: "Success", description: "Review updated successfully!" })
-    router.push("/critic/dashboard")
+    setAutoSaving(true)
+    try {
+      await updateCriticReview(id, {
+        title: formData.movieTitle,
+        content: formData.writtenContent,
+        numeric_rating: formData.ratingNumeric,
+        tags: formData.tags,
+        youtube_video_id: formData.youtubeUrl,
+        contains_spoilers: formData.spoilerWarning,
+        is_draft: false,
+      })
+      toast({ title: "Success", description: "Review updated successfully!" })
+      router.push("/critic/dashboard")
+    } catch (error: any) {
+      console.error("Error updating review:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update review",
+        variant: "destructive",
+      })
+    } finally {
+      setAutoSaving(false)
+    }
   }
 
   const handleDelete = async () => {
-    toast({ title: "Success", description: "Review deleted successfully" })
-    router.push("/critic/dashboard")
+    setAutoSaving(true)
+    try {
+      await deleteCriticReview(id)
+      toast({ title: "Success", description: "Review deleted successfully" })
+      router.push("/critic/dashboard")
+    } catch (error: any) {
+      console.error("Error deleting review:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete review",
+        variant: "destructive",
+      })
+    } finally {
+      setAutoSaving(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
   const letterGrades = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"]
@@ -134,6 +209,7 @@ export default function EditReviewPage({ params }: { params: Promise<{ id: strin
               onClick={() => setShowDeleteConfirm(true)}
               variant="outline"
               className="border-red-500 text-red-500 hover:bg-red-500/10"
+              disabled={autoSaving}
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
@@ -144,12 +220,24 @@ export default function EditReviewPage({ params }: { params: Promise<{ id: strin
               className="border-[#3A3A3A] text-[#E0E0E0]"
               disabled={autoSaving}
             >
-              <Save className="w-4 h-4 mr-2" />
+              {autoSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
               {autoSaving ? "Saving..." : "Save Draft"}
             </Button>
-            <Button onClick={handleUpdate} className="bg-[#00BFFF] hover:bg-[#00A3DD] text-[#1A1A1A]">
-              <Send className="w-4 h-4 mr-2" />
-              Update
+            <Button
+              onClick={handleUpdate}
+              className="bg-[#00BFFF] hover:bg-[#00A3DD] text-[#1A1A1A]"
+              disabled={autoSaving}
+            >
+              {autoSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              {autoSaving ? "Updating..." : "Update"}
             </Button>
           </div>
         </motion.div>

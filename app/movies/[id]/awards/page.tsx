@@ -14,6 +14,8 @@ import { AwardsStatisticsCards } from "@/components/movies/awards-statistics-car
 import { AwardsFilterSidebar, type AwardsFilters } from "@/components/movies/awards-filter-sidebar"
 import { fetchAllAwardCeremonies, type AwardCeremony } from "@/lib/api/award-ceremonies"
 
+import { getApiUrl } from "@/lib/api-config"
+
 interface AwardItem {
   id: string
   name: string
@@ -70,7 +72,7 @@ export default function MovieAwardsPage() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const apiBase = getApiUrl()
 
         // Fetch movie data
         const movieResponse = await fetch(`${apiBase}/api/v1/movies/${movieId}`)

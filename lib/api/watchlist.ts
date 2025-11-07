@@ -4,8 +4,10 @@
  */
 
 import { getAuthHeaders } from "@/lib/auth"
+import { getApiUrl } from "@/lib/api-config"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+// Resolve API base URL via centralized helper with localhost/LAN awareness
+const API_BASE = getApiUrl()
 
 export interface WatchlistItemData {
   userId: string

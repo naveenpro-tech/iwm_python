@@ -1,0 +1,47 @@
+{
+  "timestamp": "2025-11-07T15:17:25.092068",
+  "tests": [
+    {
+      "name": "Login Flow",
+      "status": "PASS",
+      "details": "Successfully logged in, redirected to http://localhost:3000/profile/critic-tester",
+      "timestamp": "2025-11-07T15:17:32.670986"
+    },
+    {
+      "name": "Review Creation",
+      "status": "PASS",
+      "details": "Review submitted successfully",
+      "timestamp": "2025-11-07T15:17:59.720888"
+    },
+    {
+      "name": "Add to Watchlist",
+      "status": "PASS",
+      "details": "Movie added to watchlist",
+      "timestamp": "2025-11-07T15:18:15.069964"
+    },
+    {
+      "name": "Watchlist Display",
+      "status": "PASS",
+      "details": "Watchlist page loaded with content",
+      "timestamp": "2025-11-07T15:18:19.053639"
+    },
+    {
+      "name": "Add to Favorites",
+      "status": "PASS",
+      "details": "Movie added to favorites",
+      "timestamp": "2025-11-07T15:18:34.311821"
+    },
+    {
+      "name": "Favorites Display",
+      "status": "PASS",
+      "details": "Favorites page loaded with content",
+      "timestamp": "2025-11-07T15:18:37.532037"
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "errors": []
+  }
+}

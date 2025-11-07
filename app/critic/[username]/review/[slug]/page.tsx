@@ -11,8 +11,8 @@ import { WhereToWatch } from "@/components/critic/review/where-to-watch"
 import { CriticReviewEngagement } from "@/components/critic/review/critic-review-engagement"
 import { CriticReviewComments } from "@/components/critic/review/critic-review-comments"
 import { CriticAuthorBar } from "@/components/critic/review/critic-author-bar"
-import { generateMockCriticReview, generateMockComments } from "@/lib/critic/mock-critic-review"
-import type { CriticReviewData } from "@/lib/critic/mock-critic-review"
+import { getApiUrl } from "@/lib/api-config"
+import type { CriticReview } from "@/types/critic"
 
 export default function CriticReviewPage({
   params,
@@ -20,7 +20,7 @@ export default function CriticReviewPage({
   params: Promise<{ username: string; slug: string }>
 }) {
   const { username, slug } = usePromise(params)
-  const [review, setReview] = useState<CriticReviewData | null>(null)
+  const [review, setReview] = useState<CriticReview | null>(null)
   const [comments, setComments] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -28,42 +28,31 @@ export default function CriticReviewPage({
 
   useEffect(() => {
     const fetchReview = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-      const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
-
       try {
-        if (useBackend && apiBase) {
-          // Try backend first
-          const response = await fetch(`${apiBase}/api/v1/critic-reviews/slug/${slug}`)
-          if (response.ok) {
-            const data = await response.json()
-            // Verify review belongs to this critic
-            if (data.criticUsername !== username) {
-              throw new Error("Review does not belong to this critic")
-            }
-            setReview(data)
-            // Fetch comments
-            const commentsResponse = await fetch(`${apiBase}/api/v1/critic-reviews/${data.id}/comments`)
-            if (commentsResponse.ok) {
-              const commentsData = await commentsResponse.json()
-              setComments(commentsData)
-            }
-          } else {
-            throw new Error("Review not found in backend")
+        const apiUrl = getApiUrl()
+        // Fetch review from API by username and slug
+        const response = await fetch(`${apiUrl}/critic-reviews/${username}/${slug}`)
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch review")
+        }
+
+        const reviewData = await response.json()
+        setReview(reviewData)
+
+        // Fetch comments if available
+        try {
+          const commentsResponse = await fetch(`${apiUrl}/critic-reviews/${reviewData.id}/comments`)
+          if (commentsResponse.ok) {
+            const commentsData = await commentsResponse.json()
+            setComments(commentsData)
           }
-        } else {
-          throw new Error("Backend not configured")
+        } catch (err) {
+          console.error("Error fetching comments:", err)
         }
       } catch (err) {
-        console.warn("Backend fetch failed, using mock data:", err)
-        // Fallback to mock data
-        const mockReview = generateMockCriticReview(slug)
-        if (mockReview.criticUsername !== username) {
-          setError("Review not found for this critic")
-        } else {
-          setReview(mockReview)
-          setComments(generateMockComments())
-        }
+        console.error("Error fetching review:", err)
+        setError("Review not found")
       } finally {
         setIsLoading(false)
       }

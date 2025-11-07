@@ -6,8 +6,17 @@ import { ArrowUp, MessageCircle, Send } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { generateMockAMA, toggleUpvote, submitQuestion } from "@/lib/critic/mock-ama"
-import type { AMAQuestion } from "@/lib/critic/mock-ama"
+
+interface AMAQuestion {
+  id: string
+  question: string
+  askedBy: string
+  askedAt: string
+  answer?: string
+  answeredAt?: string
+  upvotes: number
+  hasUpvoted: boolean
+}
 
 interface CriticAMASectionProps {
   username: string

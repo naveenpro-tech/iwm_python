@@ -21,6 +21,8 @@ import type {
 import { getMovieReviews, getReviewStats } from "@/lib/api/reviews"
 import { getCurrentUser } from "@/lib/auth"
 
+import { getApiUrl } from "@/lib/api-config"
+
 // Import components (will be created next)
 import ReviewHeader from "@/components/review-page/review-header"
 import VoiceOfSidduSummary from "@/components/review-page/voice-of-siddu-summary"
@@ -89,7 +91,7 @@ export default function ReviewsPage() {
         }
 
         // Fetch movie data first
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const apiBase = getApiUrl()
         const movieResponse = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         let movieData = null
         if (movieResponse.ok) {
@@ -154,8 +156,32 @@ export default function ReviewsPage() {
           // Set official review (none for now)
           setOfficialReview(null)
 
-          // Set critic reviews (none for now)
-          setCriticReviews([])
+          // Fetch critic reviews
+          try {
+            const criticReviewsRes = await fetch(`${apiBase}/api/v1/critic-reviews/movie/${movieId}`)
+            if (criticReviewsRes.ok) {
+              const criticReviewsData = await criticReviewsRes.json()
+              const criticReviewsList = (Array.isArray(criticReviewsData) ? criticReviewsData : []).map((review: any) => ({
+                id: review.id,
+                title: review.title,
+                content: review.content,
+                rating: review.numeric_rating || 0,
+                critic: {
+                  username: review.critic.username,
+                  display_name: review.critic.display_name,
+                  avatar_url: review.critic.logo_url,
+                  is_verified: review.critic.is_verified,
+                },
+                published_at: review.published_at,
+                view_count: review.view_count,
+                like_count: review.like_count,
+              }))
+              setCriticReviews(criticReviewsList)
+            }
+          } catch (err) {
+            console.warn("Failed to fetch critic reviews:", err)
+            setCriticReviews([])
+          }
 
           // Set user reviews
           setAllUserReviews(userReviewsList)

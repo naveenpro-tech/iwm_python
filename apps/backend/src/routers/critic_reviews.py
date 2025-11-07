@@ -319,19 +319,25 @@ async def list_reviews_by_movie(
     offset: int = 0,
     db: AsyncSession = Depends(get_session)
 ):
-    """List all critic reviews for a movie"""
-    review_repo = CriticReviewRepository(db)
+    """List all critic reviews for a movie (by internal ID or external_id)"""
+    from ..repositories.movies import MovieRepository
 
-    # Try to parse as int, otherwise treat as external_id
+    review_repo = CriticReviewRepository(db)
+    movie_repo = MovieRepository(db)
+
+    # Try to parse as int first (internal ID)
     try:
         movie_id_int = int(movie_id)
         reviews = await review_repo.list_reviews_by_movie(movie_id_int, limit=limit, offset=offset)
     except ValueError:
-        # TODO: Add support for external_id lookup
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid movie ID"
-        )
+        # Try to lookup by external_id
+        movie = await movie_repo.get_movie_by_external_id(movie_id)
+        if not movie:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Movie not found: {movie_id}"
+            )
+        reviews = await review_repo.list_reviews_by_movie(movie.id, limit=limit, offset=offset)
 
     return [_review_to_response(review) for review in reviews]
 

@@ -8,10 +8,38 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { CriticRecommendation } from "@/types/critic"
-import { getBadgeLabel, getBadgeColor } from "@/lib/critic/mock-recommendations"
 
 interface RecommendationsTabProps {
   recommendations: CriticRecommendation[]
+}
+
+// Helper functions for badge display
+function getBadgeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    highly_recommended: "Highly Recommended",
+    hidden_gem: "Hidden Gem",
+    classic_must_watch: "Classic Must-Watch",
+    underrated: "Underrated",
+    masterpiece: "Masterpiece",
+    overrated: "Overrated",
+    cult_classic: "Cult Classic",
+    sleeper_hit: "Sleeper Hit",
+  }
+  return labels[type] || type
+}
+
+function getBadgeColor(type: string): string {
+  const colors: Record<string, string> = {
+    highly_recommended: "#00BFFF",
+    hidden_gem: "#FFD700",
+    classic_must_watch: "#8B5CF6",
+    underrated: "#10B981",
+    masterpiece: "#EC4899",
+    overrated: "#EF4444",
+    cult_classic: "#F59E0B",
+    sleeper_hit: "#06B6D4",
+  }
+  return colors[type] || "#A0A0A0"
 }
 
 export default function RecommendationsTab({ recommendations }: RecommendationsTabProps) {

@@ -11,6 +11,8 @@ import { MovieContextCard } from "@/components/review-page/movie-context-card"
 import { CommentsSection } from "@/components/review-page/comments-section"
 import { RelatedReviewsSection } from "@/components/review-page/related-reviews-section"
 
+import { getApiUrl } from "@/lib/api-config"
+
 interface FullReviewDTO {
   id: string
   content: string
@@ -42,10 +44,10 @@ interface FullReviewDTO {
   comments: any[]
 }
 
-export default function MovieReviewDetailPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string; reviewId: string }> 
+export default function MovieReviewDetailPage({
+  params
+}: {
+  params: Promise<{ id: string; reviewId: string }>
 }) {
   const { id: movieId, reviewId } = usePromise(params)
   const [review, setReview] = useState<FullReviewDTO | null>(null)
@@ -54,7 +56,7 @@ export default function MovieReviewDetailPage({
 
   useEffect(() => {
     const fetchReview = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+      const apiBase = getApiUrl()
       const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
 
       if (!useBackend || !apiBase) {
@@ -69,12 +71,12 @@ export default function MovieReviewDetailPage({
           throw new Error(`Failed to fetch review: ${response.statusText}`)
         }
         const data = await response.json()
-        
+
         // Verify the review belongs to this movie
         if (data.movie.id !== movieId) {
           throw new Error("Review does not belong to this movie")
         }
-        
+
         setReview(data)
       } catch (err) {
         console.error("Error fetching review:", err)

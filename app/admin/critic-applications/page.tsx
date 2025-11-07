@@ -78,8 +78,8 @@ export default function CriticApplicationsPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (app) =>
-          app.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.username.toLowerCase().includes(searchQuery.toLowerCase())
+          app.requested_display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          app.requested_username.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 

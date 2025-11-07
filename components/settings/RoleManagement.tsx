@@ -90,10 +90,23 @@ export function RoleManagement() {
       await refreshRoles()
 
       const roleConfig = ROLE_CONFIGS.find((r) => r.id === roleId)
-      toast({
-        title: "Role Activated",
-        description: `${roleConfig?.name} role has been activated. You can now access ${roleConfig?.name} features.`,
-      })
+
+      // For critic role, redirect to application form
+      if (roleId === "critic") {
+        toast({
+          title: "Role Activated",
+          description: "Please complete your critic verification application to access critic features.",
+        })
+        // Redirect to application form
+        if (typeof window !== "undefined") {
+          window.location.href = "/critic/application"
+        }
+      } else {
+        toast({
+          title: "Role Activated",
+          description: `${roleConfig?.name} role has been activated. You can now access ${roleConfig?.name} features.`,
+        })
+      }
     } catch (error: any) {
       console.error("Error activating role:", error)
       toast({

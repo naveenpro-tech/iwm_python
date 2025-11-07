@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-11-07T15:30:12.615441",
+  "tests": [
+    {
+      "name": "Login",
+      "status": "PASS",
+      "details": "Logged in successfully, redirected to http://localhost:3000/profile/critic-tester",
+      "timestamp": "2025-11-07T15:30:21.747259"
+    },
+    {
+      "name": "Enable Critic Role",
+      "status": "FAIL",
+      "details": "Critic role switch not found",
+      "timestamp": "2025-11-07T15:30:29.295758"
+    },
+    {
+      "name": "Critic Tab Visible",
+      "status": "FAIL",
+      "details": "Critic tab not found in settings",
+      "timestamp": "2025-11-07T15:30:53.356532"
+    },
+    {
+      "name": "Review Creation as Critic",
+      "status": "ERROR",
+      "details": "Locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"button:has-text(\\\"Submit\\\")\").first\n    - locator resolved to <button disabled type=\"submit\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 px-4 py-2 flex-1 bg-[#00BFFF] text-[#1A1A1A] hover:bg-[#00A3DD] disabled:opacity-50 disabled:cursor-not-allowed\">Submit Review</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 100ms\n    58 \u00d7 waiting for element to be visible, enabled and stable\n       - element is not enabled\n     - retrying click action\n       - waiting 500ms\n",
+      "timestamp": "2025-11-07T15:31:40.762503"
+    },
+    {
+      "name": "Add to Watchlist (Critic)",
+      "status": "PASS",
+      "details": "Movie added to watchlist",
+      "timestamp": "2025-11-07T15:31:56.554208"
+    },
+    {
+      "name": "Watchlist Display (Critic)",
+      "status": "PASS",
+      "details": "Watchlist page loaded",
+      "timestamp": "2025-11-07T15:31:59.682266"
+    },
+    {
+      "name": "Favorites Display (Critic)",
+      "status": "PASS",
+      "details": "Favorites page loaded",
+      "timestamp": "2025-11-07T15:32:16.337945"
+    }
+  ],
+  "summary": {
+    "total": 7,
+    "passed": 4,
+    "failed": 2,
+    "errors": 1
+  }
+}

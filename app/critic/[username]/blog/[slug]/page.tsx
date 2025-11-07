@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { CriticBlogPost } from "@/types/critic"
-import { generateMockBlogPosts } from "@/lib/critic/mock-blog-posts"
+import { getApiUrl } from "@/lib/api-config"
 
 export default function BlogPostPage() {
   const params = useParams()
@@ -24,18 +24,31 @@ export default function BlogPostPage() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        // In production, fetch from API
-        // For now, use mock data
-        const allPosts = generateMockBlogPosts(username)
-        const foundPost = allPosts.find((p) => p.slug === slug)
+        // Fetch blog post from API
+        const apiUrl = getApiUrl()
+        const response = await fetch(`${apiUrl}/critic-blog/${username}/${slug}`)
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch blog post")
+        }
+
+        const foundPost = await response.json()
 
         if (foundPost) {
           setPost(foundPost)
-          // Get related posts (same tags)
-          const related = allPosts
-            .filter((p) => p.id !== foundPost.id && p.tags.some((tag) => foundPost.tags.includes(tag)))
-            .slice(0, 3)
-          setRelatedPosts(related)
+          // Fetch related posts from API
+          try {
+            const relatedResponse = await fetch(`${apiUrl}/critic-blog/${username}?tags=${foundPost.tags.join(",")}`)
+            if (relatedResponse.ok) {
+              const allBlogPosts = await relatedResponse.json()
+              const related = allBlogPosts
+                .filter((p: CriticBlogPost) => p.id !== foundPost.id)
+                .slice(0, 3)
+              setRelatedPosts(related)
+            }
+          } catch (error) {
+            console.error("Error fetching related posts:", error)
+          }
         }
       } catch (error) {
         console.error("Error fetching blog post:", error)

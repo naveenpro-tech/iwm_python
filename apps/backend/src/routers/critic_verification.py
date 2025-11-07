@@ -202,19 +202,24 @@ async def update_application_status(
             )
         
         # Create critic profile
-        await critic_repo.create_critic_profile(
+        critic_profile = await critic_repo.create_critic_profile(
             user_id=application.user_id,
             username=application.requested_username,
             display_name=application.requested_display_name,
-            bio=application.bio,
+            bio=application.bio
+        )
+
+        # Update profile with verification status
+        await critic_repo.update_critic_profile(
+            critic_profile.id,
             is_verified=True,
             verification_level="verified"
         )
-        
+
         # Add social links
         for link in application.platform_links:
             await critic_repo.add_social_link(
-                critic_id=(await critic_repo.get_critic_by_username(application.requested_username)).id,
+                critic_id=critic_profile.id,
                 platform=link.get('platform'),
                 url=link.get('url')
             )

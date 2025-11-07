@@ -23,7 +23,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
-import { generateMockBadges } from "@/lib/critic/mock-badges"
 import type { CriticProfile } from "@/types/critic"
 
 interface CriticBadgesSectionProps {
@@ -54,17 +53,68 @@ const badgeIcons: Record<string, any> = {
 export default function CriticBadgesSection({ profile }: CriticBadgesSectionProps) {
   const [selectedBadge, setSelectedBadge] = useState<any>(null)
 
-  const badgesData = useMemo(
-    () =>
-      generateMockBadges({
-        totalReviews: profile?.total_reviews ?? 0,
-        totalFollowers: profile?.total_followers ?? 0,
-        totalViews: profile?.total_views ?? 0,
-        avgRating: profile?.avg_rating ?? 0,
-        isVerified: profile?.is_verified ?? false,
-      }),
-    [profile]
-  )
+  const badgesData = useMemo(() => {
+    // Generate badges based on profile stats
+    const badges = []
+    const totalReviews = profile?.total_reviews ?? 0
+    const totalFollowers = profile?.follower_count ?? 0
+    const avgRating = profile?.avg_rating ?? 0
+    const isVerified = profile?.is_verified ?? false
+
+    // Verified badge
+    if (isVerified) {
+      badges.push({
+        id: "verified",
+        name: "Verified Critic",
+        description: "Official verified critic",
+        icon: "badge-check",
+        earned: true,
+        progress: 100,
+      })
+    }
+
+    // Review milestones
+    if (totalReviews >= 10) {
+      badges.push({
+        id: "reviewer_10",
+        name: "Prolific Reviewer",
+        description: "10+ reviews published",
+        icon: "file-text",
+        earned: true,
+        progress: Math.min(100, (totalReviews / 50) * 100),
+      })
+    }
+
+    // Follower milestones
+    if (totalFollowers >= 100) {
+      badges.push({
+        id: "followers_100",
+        name: "Rising Star",
+        description: "100+ followers",
+        icon: "trending-up",
+        earned: true,
+        progress: Math.min(100, (totalFollowers / 1000) * 100),
+      })
+    }
+
+    // Rating quality
+    if (avgRating >= 7.5) {
+      badges.push({
+        id: "quality_rater",
+        name: "Quality Rater",
+        description: "Average rating 7.5+",
+        icon: "star",
+        earned: true,
+        progress: 100,
+      })
+    }
+
+    return {
+      badges,
+      totalEarned: badges.length,
+      totalAvailable: 10,
+    }
+  }, [profile])
 
   return (
     <>

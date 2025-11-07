@@ -8,11 +8,33 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { PinnedContent } from "@/types/critic"
-import { getBadgeLabel, getBadgeColor } from "@/lib/critic/mock-recommendations"
 
 interface PinnedContentSectionProps {
   pinnedContent: PinnedContent[]
   criticUsername: string
+}
+
+// Helper functions for badge display
+function getBadgeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    highly_recommended: "Highly Recommended",
+    hidden_gem: "Hidden Gem",
+    classic_must_watch: "Classic Must-Watch",
+    underrated: "Underrated",
+    masterpiece: "Masterpiece",
+  }
+  return labels[type] || type
+}
+
+function getBadgeColor(type: string): string {
+  const colors: Record<string, string> = {
+    highly_recommended: "#00BFFF",
+    hidden_gem: "#FFD700",
+    classic_must_watch: "#8B5CF6",
+    underrated: "#10B981",
+    masterpiece: "#EC4899",
+  }
+  return colors[type] || "#A0A0A0"
 }
 
 export default function PinnedContentSection({ pinnedContent, criticUsername }: PinnedContentSectionProps) {
