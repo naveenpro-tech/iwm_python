@@ -1,6 +1,7 @@
 // Mock API functions for awards, box office, and movies data
 
 import type { Movie } from "@/components/movies/types" // Assuming Movie type is defined here
+import { getApiUrl } from "@/lib/api-config"
 
 // New/Updated Interfaces
 export interface MovieFilters {
@@ -1172,7 +1173,7 @@ const mockAwardDetailsStore: Record<string, AwardDetails> = {
 }
 
 export async function getGenreDetails(genreId: string): Promise<GenreDetails | null> {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+  const apiBase = getApiUrl()
   const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
   if (useBackend) {
     try {
@@ -1197,7 +1198,7 @@ export async function getMoviesByGenre(
   genreId: string,
   filters: MovieFilters = { page: 1, limit: 20 },
 ): Promise<Movie[]> {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+  const apiBase = getApiUrl()
   const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
   if (useBackend) {
     try {

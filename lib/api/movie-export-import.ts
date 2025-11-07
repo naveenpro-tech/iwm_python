@@ -4,8 +4,9 @@
  */
 
 import { getAuthHeaders } from "@/lib/auth"
+import { getApiUrl } from "@/lib/api-config"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const API_BASE = getApiUrl()
 const API_URL = `${API_BASE}/api/v1`
 
 export type CategoryType =

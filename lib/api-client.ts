@@ -3,7 +3,9 @@
  * Centralized API client with authentication and error handling
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+import { getApiUrl } from "@/lib/api-config"
+
+const API_BASE = getApiUrl()
 
 /**
  * Get access token from localStorage
