@@ -111,7 +111,9 @@ SELECT privacy FROM user_settings WHERE user_id = (SELECT id FROM users WHERE em
 **API Verification**:
 ```bash
 # Get privacy settings via API
-curl -H "Authorization: Bearer YOUR_TOKEN" http://192.168.0.32:8000/api/v1/settings/privacy
+# For local development: http://localhost:8000
+# For LAN access: http://{YOUR_LAN_IP}:8000 (set via CORS_ORIGINS env var)
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/api/v1/settings/privacy
 
 # Expected response:
 {

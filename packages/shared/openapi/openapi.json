@@ -290,6 +290,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Change Password Api V1 Auth Change Password Post"
                 }
@@ -2120,6 +2121,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get All Settings Api V1 Settings  Get"
                 }
@@ -2143,6 +2145,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
               }
@@ -2156,6 +2159,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update All Settings Api V1 Settings  Put"
                 }
@@ -2193,6 +2197,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Account Settings Api V1 Settings Account Get"
                 }
@@ -2216,6 +2221,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
               }
@@ -2229,6 +2235,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update Account Settings Api V1 Settings Account Put"
                 }
@@ -2266,6 +2273,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Profile Settings Api V1 Settings Profile Get"
                 }
@@ -2289,6 +2297,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
               }
@@ -2302,6 +2311,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update Profile Settings Api V1 Settings Profile Put"
                 }
@@ -2339,6 +2349,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Privacy Settings Api V1 Settings Privacy Get"
                 }
@@ -2362,6 +2373,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
               }
@@ -2375,6 +2387,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update Privacy Settings Api V1 Settings Privacy Put"
                 }
@@ -2412,6 +2425,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Display Settings Api V1 Settings Display Get"
                 }
@@ -2435,6 +2449,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
               }
@@ -2448,6 +2463,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update Display Settings Api V1 Settings Display Put"
                 }
@@ -2485,6 +2501,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Preferences Settings Api V1 Settings Preferences Get"
                 }
@@ -2508,6 +2525,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
               }
@@ -2521,6 +2539,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update Preferences Settings Api V1 Settings Preferences Put"
                 }
@@ -2700,6 +2719,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Preferences Api V1 Notifications Preferences Get"
                 }
@@ -2724,6 +2744,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
               }
@@ -2737,6 +2758,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update Preferences Api V1 Notifications Preferences Put"
                 }
@@ -2803,6 +2825,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Mark All Read Api V1 Notifications Mark All Read Post"
                 }
               }
@@ -2918,6 +2941,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Delete Notification Api V1 Notifications  Notificationid  Delete"
                 }
               }
@@ -2977,6 +3001,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Mark Read Api V1 Notifications  Notificationid  Read Post"
                 }
               }
@@ -3036,6 +3061,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Mark Unread Api V1 Notifications  Notificationid  Unread Post"
                 }
               }
@@ -8169,6 +8195,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Bulk Update Feature Flags Api V1 Admin Feature Flags Bulk Put"
                 }
@@ -11518,6 +11545,7 @@
           "metrics": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -11529,6 +11557,7 @@
           "other_platforms": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -11576,6 +11605,7 @@
           },
           "platform_links": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -11591,6 +11621,7 @@
           "metrics": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -11602,6 +11633,7 @@
           "other_platforms": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -14188,6 +14220,7 @@
           },
           "watch_links": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -14840,6 +14873,7 @@
             "description": "ISO timestamp of export"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data",
             "description": "Category-specific data"
@@ -15151,6 +15185,7 @@
             "default": []
           },
           "statistics": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Statistics",
             "default": {}
@@ -15165,6 +15200,7 @@
           },
           "curatedCollections": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -15173,6 +15209,7 @@
           },
           "notableFigures": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -15181,6 +15218,7 @@
           },
           "evolutionTimeline": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -15265,6 +15303,7 @@
             "default": "1.0"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data",
             "description": "Category-specific data"
@@ -15395,6 +15434,7 @@
             "title": "Fields"
           },
           "example": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Example"
           }
@@ -15413,6 +15453,7 @@
         "properties": {
           "template": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -16031,6 +16072,7 @@
           "metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16509,6 +16551,7 @@
       "SettingsUpdateIn": {
         "properties": {
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data"
           }

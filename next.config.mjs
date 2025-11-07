@@ -1,31 +1,43 @@
 /** @type {import('next').NextConfig} */
+
+// Build remote patterns for images
+const remotePatterns = [
+  {
+    protocol: 'https',
+    hostname: '**',
+  },
+  {
+    protocol: 'http',
+    hostname: 'localhost',
+  },
+  {
+    protocol: 'http',
+    hostname: '127.0.0.1',
+  },
+  {
+    protocol: 'https',
+    hostname: 'image.tmdb.org',
+  },
+  {
+    protocol: 'https',
+    hostname: 'api.moviemadders.com',
+  },
+]
+
+// Add LAN IP if provided via environment variable
+if (process.env.NEXT_PUBLIC_LAN_IP) {
+  remotePatterns.push({
+    protocol: 'http',
+    hostname: process.env.NEXT_PUBLIC_LAN_IP,
+  })
+}
+
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-      },
-      {
-        protocol: 'http',
-        hostname: '192.168.0.32',
-      },
-      {
-        protocol: 'https',
-        hostname: 'image.tmdb.org',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.moviemadders.com',
-      },
-    ],
+    remotePatterns,
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [320, 420, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],

@@ -23,7 +23,7 @@
 - **Status**: ✅ RUNNING
 - **Port**: 3000
 - **Local URL**: http://localhost:3000
-- **Network URL**: http://192.168.0.32:3000
+- **Network URL**: http://{YOUR_LAN_IP}:3000 (set via NEXT_PUBLIC_LAN_IP env var)
 - **Startup Time**: 3.5 seconds
 - **Compilation**: ✅ SUCCESS
 - **Errors**: None
