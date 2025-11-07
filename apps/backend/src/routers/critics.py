@@ -82,6 +82,58 @@ class FollowerResponse(BaseModel):
 
 
 # --- Endpoints ---
+@router.get("/me", response_model=CriticProfileResponse)
+async def get_my_critic_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session)
+):
+    """Get current user's critic profile"""
+    repo = CriticRepository(db)
+    critic = await repo.get_critic_by_user_id(current_user.id)
+
+    if not critic:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not have a critic profile"
+        )
+
+    return CriticProfileResponse(
+        **{
+            **critic.__dict__,
+            "created_at": critic.created_at.isoformat(),
+            "social_links": [SocialLinkResponse.from_orm(link) for link in critic.social_links]
+        }
+    )
+
+
+@router.get("/me/stats")
+async def get_my_critic_stats(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session)
+):
+    """Get current user's critic dashboard stats"""
+    repo = CriticRepository(db)
+    critic = await repo.get_critic_by_user_id(current_user.id)
+
+    if not critic:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not have a critic profile"
+        )
+
+    # Return dashboard stats
+    return {
+        "total_reviews": critic.total_reviews or 0,
+        "total_views": critic.total_views or 0,
+        "total_likes": 0,  # TODO: Calculate from reviews
+        "follower_count": critic.follower_count or 0,
+        "avg_engagement": critic.avg_engagement or 0.0,
+        "reviews_this_month": 0,  # TODO: Calculate from reviews
+        "views_this_month": 0,  # TODO: Calculate from analytics
+        "growth_rate": 0.0,  # TODO: Calculate from historical data
+    }
+
+
 @router.get("", response_model=List[CriticProfileResponse])
 async def list_critics(
     is_verified: Optional[bool] = None,
@@ -98,7 +150,7 @@ async def list_critics(
         offset=offset,
         sort_by=sort_by
     )
-    
+
     return [
         CriticProfileResponse(
             **{

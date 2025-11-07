@@ -28,74 +28,35 @@ export default function CriticsDirectoryPage() {
 
   useEffect(() => {
     const fetchCritics = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-      const useBackend = process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true" && !!apiBase
-
       try {
-        if (useBackend && apiBase) {
-          const response = await fetch(`${apiBase}/api/v1/critics`)
-          if (response.ok) {
-            const data = await response.json()
-            setCritics(data)
-            setFilteredCritics(data)
-          } else {
-            throw new Error("Failed to fetch critics")
-          }
-        } else {
-          throw new Error("Backend not configured")
+        // Always fetch from backend - no mock data fallback
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"}/api/v1/critics?is_verified=true&limit=100`)
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch critics: ${response.statusText}`)
         }
+
+        const data = await response.json()
+
+        // Map backend response to frontend Critic interface
+        const mappedCritics: Critic[] = data.map((critic: any) => ({
+          username: critic.username,
+          name: critic.display_name,
+          avatar: critic.logo_url || "/default-avatar.png",
+          verified: critic.is_verified,
+          followers: critic.follower_count || 0,
+          reviewCount: critic.total_reviews || 0,
+          bio: critic.bio || "",
+          userIsFollowing: false, // TODO: Implement follow status check
+        }))
+
+        setCritics(mappedCritics)
+        setFilteredCritics(mappedCritics)
       } catch (err) {
-        console.warn("Backend fetch failed, using mock data:", err)
-        // Mock data
-        const mockCritics: Critic[] = [
-          {
-            username: "siddu",
-            name: "Siddu Kumar",
-            avatar: "/critic-avatar-1.png",
-            verified: true,
-            followers: 125000,
-            reviewCount: 342,
-            bio: "Film critic and cinephile. Passionate about storytelling and visual artistry.",
-          },
-          {
-            username: "rajesh_cinema",
-            name: "Rajesh Menon",
-            avatar: "/critic-avatar-2.png",
-            verified: true,
-            followers: 89000,
-            reviewCount: 215,
-            bio: "Bollywood and Hollywood critic. 15 years of experience in film journalism.",
-          },
-          {
-            username: "priya_reviews",
-            name: "Priya Sharma",
-            avatar: "/critic-avatar-3.png",
-            verified: true,
-            followers: 67000,
-            reviewCount: 178,
-            bio: "Independent film critic. Focus on international cinema and indie films.",
-          },
-          {
-            username: "arjun_movies",
-            name: "Arjun Patel",
-            avatar: "/critic-avatar-4.png",
-            verified: true,
-            followers: 54000,
-            reviewCount: 156,
-            bio: "Action and thriller specialist. Former film school professor.",
-          },
-          {
-            username: "neha_film",
-            name: "Neha Kapoor",
-            avatar: "/critic-avatar-5.png",
-            verified: true,
-            followers: 42000,
-            reviewCount: 134,
-            bio: "Drama and romance expert. Published author and film analyst.",
-          },
-        ]
-        setCritics(mockCritics)
-        setFilteredCritics(mockCritics)
+        console.error("Failed to fetch critics:", err)
+        // Show error state instead of mock data
+        setCritics([])
+        setFilteredCritics([])
       } finally {
         setIsLoading(false)
       }
@@ -205,9 +166,14 @@ export default function CriticsDirectoryPage() {
         </div>
 
         {/* Empty State */}
-        {filteredCritics.length === 0 && (
+        {filteredCritics.length === 0 && !isLoading && (
           <div className="text-center py-20">
-            <p className="text-xl text-[#A0A0A0]">No critics found matching your search.</p>
+            <p className="text-xl text-[#E0E0E0] mb-2">
+              {searchQuery ? "No critics found matching your search." : "No verified critics yet."}
+            </p>
+            <p className="text-[#A0A0A0]">
+              {searchQuery ? "Try a different search term." : "Be the first to become a verified critic!"}
+            </p>
           </div>
         )}
       </div>

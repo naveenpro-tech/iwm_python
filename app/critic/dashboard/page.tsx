@@ -30,25 +30,36 @@ export default function CriticDashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Check verification status
-        const appStatus = await checkApplicationStatus()
-        setVerificationStatus(appStatus.status || "not_applied")
-
-        // If not approved, redirect to application status
-        if (appStatus.status !== "approved") {
-          router.push("/critic/application-status")
-          return
-        }
-
-        // Fetch real data from backend
+        // First, try to fetch critic profile directly
+        // This will fail if user doesn't have a critic profile yet
         try {
           const dashboardStats = await getCriticDashboardStats()
           setStats(dashboardStats)
-        } catch (err) {
-          console.error("Failed to fetch dashboard stats:", err)
-          throw err
+          setVerificationStatus("approved")
+        } catch (statsError: any) {
+          // If 404, user doesn't have critic profile yet
+          if (statsError.message?.includes("404") || statsError.message?.includes("not have a critic profile")) {
+            // Check application status
+            const appStatus = await checkApplicationStatus()
+            setVerificationStatus(appStatus.status || "not_applied")
+
+            // If approved but no profile, there's an issue - redirect to application status
+            if (appStatus.status === "approved") {
+              console.error("Application approved but critic profile not found. Please contact support.")
+              router.push("/critic/application-status?error=profile_not_created")
+              return
+            }
+
+            // If not approved, redirect to application status
+            router.push("/critic/application-status")
+            return
+          }
+
+          // Other errors - rethrow
+          throw statsError
         }
 
+        // Fetch reviews
         try {
           const myReviews = await listMyReviews()
           const draftReviews = myReviews.filter((r) => r.is_draft)
@@ -68,11 +79,13 @@ export default function CriticDashboardPage() {
           setRecentReviews(publishedReviews.slice(0, 5))
         } catch (err) {
           console.error("Failed to fetch reviews:", err)
-          throw err
+          // Don't fail the whole page if reviews fail
+          setDrafts([])
+          setRecentReviews([])
         }
       } catch (error) {
-        console.error("Error checking verification status:", error)
-        // If error checking status, redirect to application status
+        console.error("Error loading critic dashboard:", error)
+        // If error, redirect to application status
         router.push("/critic/application-status")
       } finally {
         setIsLoading(false)

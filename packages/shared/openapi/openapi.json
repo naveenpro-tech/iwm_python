@@ -8309,6 +8309,58 @@
         ]
       }
     },
+    "/api/v1/critics/me": {
+      "get": {
+        "tags": [
+          "critics"
+        ],
+        "summary": "Get My Critic Profile",
+        "description": "Get current user's critic profile",
+        "operationId": "get_my_critic_profile_api_v1_critics_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriticProfileResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/critics/me/stats": {
+      "get": {
+        "tags": [
+          "critics"
+        ],
+        "summary": "Get My Critic Stats",
+        "description": "Get current user's critic dashboard stats",
+        "operationId": "get_my_critic_stats_api_v1_critics_me_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/critics": {
       "get": {
         "tags": [
@@ -8690,6 +8742,114 @@
                   },
                   "title": "Response Get Critic Followers Api V1 Critics  Username  Followers Get"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/critics/{critic_id}/suspend": {
+      "post": {
+        "tags": [
+          "critics"
+        ],
+        "summary": "Suspend Critic",
+        "description": "Suspend a critic (admin only)",
+        "operationId": "suspend_critic_api_v1_critics__critic_id__suspend_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "critic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Critic Id"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reason"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/critics/{critic_id}/activate": {
+      "post": {
+        "tags": [
+          "critics"
+        ],
+        "summary": "Activate Critic",
+        "description": "Activate a suspended critic (admin only)",
+        "operationId": "activate_critic_api_v1_critics__critic_id__activate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "critic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Critic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -13758,6 +13918,11 @@
               }
             ],
             "title": "Verification Level"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
           },
           "follower_count": {
             "type": "integer",
