@@ -312,6 +312,57 @@ async def list_reviews_by_critic(
     return [_review_to_response(review) for review in reviews]
 
 
+@router.get("/me", response_model=List[CriticReviewResponse])
+async def list_my_reviews(
+    status: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session)
+):
+    """List current user's critic reviews (drafts and published)"""
+    # Check if user has a critic profile
+    critic_repo = CriticRepository(db)
+    critic = await critic_repo.get_critic_by_user_id(current_user.id)
+
+    if not critic:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not have a critic profile"
+        )
+
+    review_repo = CriticReviewRepository(db)
+
+    # Determine include_drafts based on status parameter
+    if status == "draft":
+        # Only drafts
+        reviews = await review_repo.list_reviews_by_critic(
+            critic.id,
+            include_drafts=True,
+            limit=limit,
+            offset=offset
+        )
+        reviews = [r for r in reviews if r.is_draft]
+    elif status == "published":
+        # Only published
+        reviews = await review_repo.list_reviews_by_critic(
+            critic.id,
+            include_drafts=False,
+            limit=limit,
+            offset=offset
+        )
+    else:
+        # All reviews (drafts and published)
+        reviews = await review_repo.list_reviews_by_critic(
+            critic.id,
+            include_drafts=True,
+            limit=limit,
+            offset=offset
+        )
+
+    return [_review_to_response(review) for review in reviews]
+
+
 @router.get("/movie/{movie_id}", response_model=List[CriticReviewResponse])
 async def list_reviews_by_movie(
     movie_id: str,

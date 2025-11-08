@@ -1,9 +1,11 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { BadgeCheck, Pause, Play } from "lucide-react"
+import { BadgeCheck, Pause, Play, LayoutDashboard } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import FollowButton from "./follow-button"
 import type { CriticProfile } from "@/types/critic"
 import { generateTrendData } from "@/lib/critic/mock-analytics"
@@ -16,6 +18,32 @@ export default function CriticHeroSection({ profile }: CriticHeroSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isVideoPaused, setIsVideoPaused] = useState(false)
   const [hoveredStat, setHoveredStat] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isOwnProfile, setIsOwnProfile] = useState(false)
+
+  // Check if current user is viewing their own profile
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { me, isAuthenticated } = await import("@/lib/auth")
+        if (!isAuthenticated()) {
+          setCurrentUser(null)
+          setIsOwnProfile(false)
+          return
+        }
+        const userData = await me()
+        setCurrentUser(userData)
+
+        // Check if this is the user's own critic profile
+        // Compare username from profile with current user's username
+        setIsOwnProfile(userData?.username === profile?.username)
+      } catch (error) {
+        setCurrentUser(null)
+        setIsOwnProfile(false)
+      }
+    }
+    checkUser()
+  }, [profile?.username])
 
   // Parallax effect
   const { scrollYProgress } = useScroll({
@@ -177,12 +205,22 @@ export default function CriticHeroSection({ profile }: CriticHeroSectionProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.9 }}
+                className="flex items-center justify-center md:justify-start gap-3"
               >
-                <FollowButton
-                  criticUsername={profile?.username || "critic"}
-                  initialFollowing={false}
-                  initialFollowerCount={profile?.total_followers ?? 0}
-                />
+                {isOwnProfile ? (
+                  <Link href="/critic/dashboard">
+                    <Button className="bg-[#00BFFF] hover:bg-[#00A3DD] text-[#1A1A1A] gap-2">
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <FollowButton
+                    criticUsername={profile?.username || "critic"}
+                    initialFollowing={false}
+                    initialFollowerCount={profile?.total_followers ?? 0}
+                  />
+                )}
               </motion.div>
             </div>
           </div>

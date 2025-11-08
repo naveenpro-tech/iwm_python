@@ -245,7 +245,7 @@
           "auth"
         ],
         "summary": "Me Enhanced",
-        "description": "Get current authenticated user with roles and profile presence information.\n\nReturns:\n- User ID, email, name, avatar\n- Roles from AdminUserMeta.roles JSONB array\n- Profile presence flags (has_critic_profile, has_talent_profile, has_industry_profile)\n- Default role (from user_role_profiles when available)\n\nRequires: Valid JWT access token\nReturns: 401 Unauthorized if token is invalid or missing",
+        "description": "Get current authenticated user with roles and profile presence information.\n\nReturns:\n- User ID, email, name, avatar\n- Roles from AdminUserMeta.roles JSONB array\n- Profile presence flags (has_critic_profile, has_talent_profile, has_industry_profile)\n- Default role (from user_role_profiles when available)\n- Username from critic profile if available, otherwise from email prefix\n\nRequires: Valid JWT access token\nReturns: 401 Unauthorized if token is invalid or missing",
         "operationId": "me_enhanced_api_v1_auth_me_enhanced_get",
         "responses": {
           "200": {
@@ -9111,6 +9111,85 @@
                     "$ref": "#/components/schemas/CriticReviewResponse"
                   },
                   "title": "Response List Reviews By Critic Api V1 Critic Reviews Critic  Username  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/critic-reviews/me": {
+      "get": {
+        "tags": [
+          "critic-reviews"
+        ],
+        "summary": "List My Reviews",
+        "description": "List current user's critic reviews (drafts and published)",
+        "operationId": "list_my_reviews_api_v1_critic_reviews_me_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CriticReviewResponse"
+                  },
+                  "title": "Response List My Reviews Api V1 Critic Reviews Me Get"
                 }
               }
             }

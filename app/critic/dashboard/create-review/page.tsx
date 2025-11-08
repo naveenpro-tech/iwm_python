@@ -45,7 +45,7 @@ export default function CreateReviewPage() {
   }
 
   const handleSaveDraft = async () => {
-    if (!formData.selectedMovie) {
+    if (!selectedMovie) {
       toast({ title: "Error", description: "Please select a movie", variant: "destructive" })
       return
     }
@@ -54,12 +54,12 @@ export default function CreateReviewPage() {
     try {
       const { createCriticReview } = await import("@/lib/api/critic-reviews")
       await createCriticReview({
-        movie_id: formData.selectedMovie.id,
-        title: formData.title || "Untitled Review",
+        movie_id: selectedMovie.id,
+        title: "Untitled Review",
         content: formData.writtenContent,
-        numeric_rating: formData.rating || 0,
+        numeric_rating: formData.ratingNumeric || 0,
         tags: formData.tags,
-        youtube_video_id: formData.youtubeVideoId,
+        youtube_video_id: formData.youtubeUrl ? extractYouTubeId(formData.youtubeUrl) : undefined,
         is_draft: true,
       })
       toast({ title: "Draft saved", description: "Your review has been saved as a draft" })
@@ -81,7 +81,7 @@ export default function CreateReviewPage() {
       return
     }
 
-    if (!formData.selectedMovie) {
+    if (!selectedMovie) {
       toast({ title: "Error", description: "Please select a movie", variant: "destructive" })
       return
     }
@@ -90,12 +90,12 @@ export default function CreateReviewPage() {
     try {
       const { createCriticReview } = await import("@/lib/api/critic-reviews")
       const review = await createCriticReview({
-        movie_id: formData.selectedMovie.id,
-        title: formData.title || "Untitled Review",
+        movie_id: selectedMovie.id,
+        title: `${selectedMovie.title} Review`,
         content: formData.writtenContent,
-        numeric_rating: formData.rating,
+        numeric_rating: formData.ratingNumeric,
         tags: formData.tags,
-        youtube_video_id: formData.youtubeVideoId,
+        youtube_video_id: formData.youtubeUrl ? extractYouTubeId(formData.youtubeUrl) : undefined,
         is_draft: false,
       })
       toast({ title: "Success", description: "Review published successfully!" })
@@ -111,6 +111,12 @@ export default function CreateReviewPage() {
     } finally {
       setIsPublishing(false)
     }
+  }
+
+  // Helper function to extract YouTube video ID from URL
+  const extractYouTubeId = (url: string): string | undefined => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
+    return match ? match[1] : undefined
   }
 
   const letterGrades = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"]
@@ -335,14 +341,33 @@ export default function CreateReviewPage() {
 function MovieSearchStep({ onSelect }: { onSelect: (movie: any) => void }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   const handleSearch = async () => {
-    // Mock search results
-    setSearchResults([
-      { id: "tt0111161", title: "The Shawshank Redemption", year: 1994, poster: "/shawshank-poster.png" },
-      { id: "tt0468569", title: "The Dark Knight", year: 2008, poster: "/dark-knight-poster.png" },
-      { id: "tt1375666", title: "Inception", year: 2010, poster: "/inception-poster.png" },
-    ])
+    if (!searchQuery.trim()) return
+
+    setIsSearching(true)
+    try {
+      // Use real movie search API
+      const { searchMovies } = await import("@/lib/api/search")
+      const response = await searchMovies(searchQuery, 20)
+
+      // Transform backend response to match expected format
+      const movies = response.results.map((movie: any) => ({
+        id: movie.id, // Internal database ID
+        external_id: movie.external_id, // TMDB ID
+        title: movie.title,
+        year: movie.year || (movie.release_date ? new Date(movie.release_date).getFullYear() : null),
+        poster: movie.poster_url || "/placeholder.svg",
+      }))
+
+      setSearchResults(movies)
+    } catch (error) {
+      console.error("Failed to search movies:", error)
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   return (
@@ -380,7 +405,17 @@ function MovieSearchStep({ onSelect }: { onSelect: (movie: any) => void }) {
         </motion.div>
 
         <div className="space-y-4">
-          {searchResults.map((movie, index) => (
+          {isSearching && (
+            <div className="text-center text-[#A0A0A0] py-8">Searching movies...</div>
+          )}
+
+          {!isSearching && searchResults.length === 0 && searchQuery && (
+            <div className="text-center text-[#A0A0A0] py-8">
+              No movies found. Try a different search term.
+            </div>
+          )}
+
+          {!isSearching && searchResults.map((movie, index) => (
             <motion.div
               key={movie.id}
               initial={{ opacity: 0, y: 20 }}
@@ -396,7 +431,7 @@ function MovieSearchStep({ onSelect }: { onSelect: (movie: any) => void }) {
                 />
                 <div>
                   <h3 className="text-lg font-bold text-[#E0E0E0]">{movie.title}</h3>
-                  <p className="text-sm text-[#A0A0A0]">{movie.year}</p>
+                  <p className="text-sm text-[#A0A0A0]">{movie.year || "N/A"}</p>
                 </div>
               </div>
             </motion.div>
