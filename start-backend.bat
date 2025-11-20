@@ -1,4 +1,4 @@
-cd ../
+
 @echo off
 REM Movie Madders Backend Server Start Script (Windows)
 REM This script activates the virtual environment and starts the FastAPI backend server
@@ -52,5 +52,5 @@ echo Press Ctrl+C to stop the server
 echo.
 
 REM Start the server
-hypercorn apps.backend.src.main:app --bind 0.0.0.0:8000 --worker-class asyncio --h2
+hypercorn apps.backend.src.main:app --bind 0.0.0.0:8000 --worker-class asyncio --reload
 

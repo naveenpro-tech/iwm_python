@@ -15,7 +15,9 @@ function getApiBase(): string {
 }
 
 function getUseBackend(): boolean {
-  return (process.env.NEXT_PUBLIC_ENABLE_BACKEND === "true") && !!getApiBase()
+  // Always enable backend if we have an API URL
+  // This fixes the issue where the env var wasn't being picked up
+  return !!getApiBase()
 }
 
 function storage() {

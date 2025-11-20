@@ -1,0 +1,28 @@
+{
+  "name": "Movie Madders",
+  "short_name": "Movie Madders",
+  "description": "Your ultimate movie discovery platform. Discover, review, and share your favorite movies. Currently in BETA.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["entertainment", "movies", "cricket"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/placeholder-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

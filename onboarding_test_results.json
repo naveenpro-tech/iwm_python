@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-11-07T15:21:52.579755",
+  "timestamp": "2025-11-20T11:45:55.908301",
   "tests": [
     {
       "name": "Signup Flow",
       "status": "FAIL",
       "details": "Still on signup page after submission",
-      "timestamp": "2025-11-07T15:22:00.851296"
+      "timestamp": "2025-11-20T11:46:22.632554"
     }
   ],
   "summary": {

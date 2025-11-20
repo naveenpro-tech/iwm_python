@@ -22,6 +22,10 @@ export async function getUserRoles(): Promise<RolesListResponse> {
     },
   })
 
+  if (response.status === 401) {
+    return { roles: [], active_role: null }
+  }
+
   if (!response.ok) {
     throw new Error(`Failed to fetch user roles: ${response.statusText}`)
   }
