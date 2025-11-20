@@ -20,7 +20,7 @@ const remotePatterns = [
   },
   {
     protocol: 'https',
-    hostname: 'api.moviemadders.com',
+    hostname: 'iwm-python.onrender.com',
   },
 ]
 

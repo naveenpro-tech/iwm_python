@@ -12,7 +12,7 @@
   "build": {
     "env": {
       "NEXT_PUBLIC_APP_URL": "https://moviemadders.com",
-      "NEXT_PUBLIC_API_BASE_URL": "https://api.moviemadders.com"
+      "NEXT_PUBLIC_API_BASE_URL": "https://iwm-python.onrender.com"
     }
   },
   "headers": [
@@ -41,9 +41,8 @@
   "redirects": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.moviemadders.com/api/:path*",
+      "destination": "https://iwm-python.onrender.com/api/:path*",
       "permanent": false
     }
   ]
 }
-

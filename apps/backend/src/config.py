@@ -87,11 +87,15 @@ class Settings(BaseSettings):
         origins = [item.strip() for item in raw.split(",") if item.strip()]
 
         # Remove duplicates while preserving order
-        final_origins = list(dict.fromkeys(origins)) if origins else ["http://localhost:3000"]
+        final_origins = list(dict.fromkeys(origins)) if origins else []
         
-        # Always allow localhost:3000 for local development against production
-        if "http://localhost:3000" not in final_origins:
+        # In development, ensure localhost:3000 is allowed
+        if self.env == "development" and "http://localhost:3000" not in final_origins:
             final_origins.append("http://localhost:3000")
+            
+        # Fallback for safety if list is empty
+        if not final_origins:
+             final_origins = ["http://localhost:3000"]
             
         return final_origins
 
