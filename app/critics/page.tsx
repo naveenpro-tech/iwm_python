@@ -24,149 +24,156 @@ export default function CriticsDirectoryPage() {
   const [filteredCritics, setFilteredCritics] = useState<Critic[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const data = await response.json()
+  const [sortBy, setSortBy] = useState("followers")
 
-  // Map backend response to frontend Critic interface
-  const mappedCritics: Critic[] = data.map((critic: any) => ({
-    username: critic.username,
-    name: critic.display_name,
-    avatar: critic.logo_url || "/default-avatar.png",
-    verified: critic.is_verified,
-    followers: critic.follower_count || 0,
-    reviewCount: critic.total_reviews || 0,
-    bio: critic.bio || "",
-    userIsFollowing: false, // TODO: Implement follow status check
-  }))
+  useEffect(() => {
+    const fetchCritics = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"}/api/critics`)
+        if (!response.ok) throw new Error("Failed to fetch")
+        const data = await response.json()
 
-  setCritics(mappedCritics)
-  setFilteredCritics(mappedCritics)
-} catch (err) {
-  console.error("Failed to fetch critics:", err)
-  // Show error state instead of mock data
-  setCritics([])
-  setFilteredCritics([])
-} finally {
-  setIsLoading(false)
-}
+        // Map backend response to frontend Critic interface
+        const mappedCritics: Critic[] = data.map((critic: any) => ({
+          username: critic.username,
+          name: critic.display_name,
+          avatar: critic.logo_url || "/default-avatar.png",
+          verified: critic.is_verified,
+          followers: critic.follower_count || 0,
+          reviewCount: critic.total_reviews || 0,
+          bio: critic.bio || "",
+          userIsFollowing: false, // TODO: Implement follow status check
+        }))
+
+        setCritics(mappedCritics)
+        setFilteredCritics(mappedCritics)
+      } catch (err) {
+        console.error("Failed to fetch critics:", err)
+        // Show error state instead of mock data
+        setCritics([])
+        setFilteredCritics([])
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-fetchCritics()
+    fetchCritics()
   }, [])
 
-useEffect(() => {
-  let filtered = [...critics]
+  useEffect(() => {
+    let filtered = [...critics]
 
-  // Search filter
-  if (searchQuery) {
-    filtered = filtered.filter(
-      (c) =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.username.toLowerCase().includes(searchQuery.toLowerCase())
+    // Search filter
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (c) =>
+          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.username.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "followers":
+          return b.followers - a.followers
+        case "reviews":
+          return b.reviewCount - a.reviewCount
+        case "name":
+          return a.name.localeCompare(b.name)
+        case "newest":
+          return 0 // Would use joinedDate in real implementation
+        default:
+          return 0
+      }
+    })
+
+    setFilteredCritics(filtered)
+  }, [searchQuery, sortBy, critics])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#1A1A1A] py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-64 bg-[#282828] rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
     )
   }
 
-  // Sort
-  filtered.sort((a, b) => {
-    switch (sortBy) {
-      case "followers":
-        return b.followers - a.followers
-      case "reviews":
-        return b.reviewCount - a.reviewCount
-      case "name":
-        return a.name.localeCompare(b.name)
-      case "newest":
-        return 0 // Would use joinedDate in real implementation
-      default:
-        return 0
-    }
-  })
-
-  setFilteredCritics(filtered)
-}, [searchQuery, sortBy, critics])
-
-if (isLoading) {
   return (
     <div className="min-h-screen bg-[#1A1A1A] py-12">
       <div className="max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-5xl font-bold font-inter mb-4 bg-gradient-to-r from-[#00BFFF] to-[#FFD700] bg-clip-text text-transparent">
+            Verified Critics
+          </h1>
+          <p className="text-xl text-[#A0A0A0]">
+            Discover expert film critics and their reviews
+          </p>
+        </motion.div>
+
+        {/* Search and Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="mb-8 flex flex-col md:flex-row gap-4"
+        >
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A0A0A0]" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search critics by name..."
+              className="pl-10 bg-[#282828] border-[#3A3A3A] text-[#E0E0E0] placeholder:text-[#A0A0A0]"
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
+            <SelectTrigger className="w-full md:w-48 bg-[#282828] border-[#3A3A3A] text-[#E0E0E0]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="followers">Most Followers</SelectItem>
+              <SelectItem value="reviews">Most Reviews</SelectItem>
+              <SelectItem value="name">A-Z</SelectItem>
+              <SelectItem value="newest">Newest</SelectItem>
+            </SelectContent>
+          </Select>
+        </motion.div>
+
+        {/* Critics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-64 bg-[#282828] rounded-xl animate-pulse" />
+          {filteredCritics.map((critic, index) => (
+            <CriticCard key={critic.username} critic={critic} index={index} />
           ))}
         </div>
+
+        {/* Empty State */}
+        {filteredCritics.length === 0 && !isLoading && (
+          <div className="text-center py-20">
+            <p className="text-xl text-[#E0E0E0] mb-2">
+              {searchQuery ? "No critics found matching your search." : "No verified critics yet."}
+            </p>
+            <p className="text-[#A0A0A0]">
+              {searchQuery ? "Try a different search term." : "Be the first to become a verified critic!"}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
-}
-
-return (
-  <div className="min-h-screen bg-[#1A1A1A] py-12">
-    <div className="max-w-7xl mx-auto px-4">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="mb-12 text-center"
-      >
-        <h1 className="text-5xl font-bold font-inter mb-4 bg-gradient-to-r from-[#00BFFF] to-[#FFD700] bg-clip-text text-transparent">
-          Verified Critics
-        </h1>
-        <p className="text-xl text-[#A0A0A0]">
-          Discover expert film critics and their reviews
-        </p>
-      </motion.div>
-
-      {/* Search and Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
-        className="mb-8 flex flex-col md:flex-row gap-4"
-      >
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A0A0A0]" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search critics by name..."
-            className="pl-10 bg-[#282828] border-[#3A3A3A] text-[#E0E0E0] placeholder:text-[#A0A0A0]"
-          />
-        </div>
-        <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
-          <SelectTrigger className="w-full md:w-48 bg-[#282828] border-[#3A3A3A] text-[#E0E0E0]">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="followers">Most Followers</SelectItem>
-            <SelectItem value="reviews">Most Reviews</SelectItem>
-            <SelectItem value="name">A-Z</SelectItem>
-            <SelectItem value="newest">Newest</SelectItem>
-          </SelectContent>
-        </Select>
-      </motion.div>
-
-      {/* Critics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCritics.map((critic, index) => (
-          <CriticCard key={critic.username} critic={critic} index={index} />
-        ))}
-      </div>
-
-      {/* Empty State */}
-      {filteredCritics.length === 0 && !isLoading && (
-        <div className="text-center py-20">
-          <p className="text-xl text-[#E0E0E0] mb-2">
-            {searchQuery ? "No critics found matching your search." : "No verified critics yet."}
-          </p>
-          <p className="text-[#A0A0A0]">
-            {searchQuery ? "Try a different search term." : "Be the first to become a verified critic!"}
-          </p>
-        </div>
-      )}
-    </div>
-  </div>
-)
 }
 
 function CriticCard({ critic, index }: { critic: Critic; index: number }) {
@@ -235,8 +242,8 @@ function CriticCard({ critic, index }: { critic: Critic; index: number }) {
       <Button
         onClick={handleFollow}
         className={`w-full ${isFollowing
-            ? "bg-[#282828] hover:bg-[#3A3A3A] text-[#E0E0E0] border border-[#3A3A3A]"
-            : "bg-[#00BFFF] hover:bg-[#00A3DD] text-[#1A1A1A]"
+          ? "bg-[#282828] hover:bg-[#3A3A3A] text-[#E0E0E0] border border-[#3A3A3A]"
+          : "bg-[#00BFFF] hover:bg-[#00A3DD] text-[#1A1A1A]"
           }`}
       >
         {isFollowing ? (
