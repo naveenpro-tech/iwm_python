@@ -18,6 +18,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { AddToCollectionModal } from "@/components/profile/collections/add-to-collection-modal"
 import { addToFavorites, removeFromFavorites, getFavorites } from "@/lib/api/favorites"
 import { getApiUrl } from "@/lib/api-config"
+import { TrailerModal } from "@/components/ui/trailer-modal"
 
 // Fallback mock movie data (used when backend is unavailable)
 const fallbackMovieData = {
@@ -463,6 +464,8 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
   const [isFavorited, setIsFavorited] = useState(false)
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
   const [favoriteId, setFavoriteId] = useState<string | null>(null)
+  const [showTrailerModal, setShowTrailerModal] = useState(false)
+  const [trailerUrl, setTrailerUrl] = useState<string | null>(null)
   const { id: movieId } = usePromise(params)
   const { toast } = useToast()
 
@@ -589,6 +592,27 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
     } finally {
       setIsTogglingFavorite(false)
     }
+  }
+
+  const handlePlayTrailer = () => {
+    // If we have a trailer URL in the movie data, use it
+    if (movieData.trailerUrl) {
+      setTrailerUrl(movieData.trailerUrl)
+      setShowTrailerModal(true)
+      return
+    }
+
+    // Fallback for Inception if no URL in data (for demo purposes)
+    if (movieData.title === "Inception") {
+      setTrailerUrl("https://www.youtube.com/watch?v=YoHD9XEInc0")
+      setShowTrailerModal(true)
+      return
+    }
+
+    // Generic fallback search on YouTube
+    // In a real app, we would fetch this from the API
+    const query = encodeURIComponent(`${movieData.title} ${movieData.year} trailer`)
+    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank')
   }
 
   // Check if movie is already favorited on mount
@@ -733,6 +757,7 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
         onToggleFavorite={handleToggleFavorite}
         isFavorited={isFavorited}
         isTogglingFavorite={isTogglingFavorite}
+        onPlayTrailer={handlePlayTrailer}
       />
 
       {/* Navigation */}
@@ -777,6 +802,14 @@ export default function MovieDetailsPage({ params }: { params: Promise<{ id: str
           onClose={() => setShowCollectionModal(false)}
         />
       )}
+
+      {/* Trailer Modal */}
+      <TrailerModal
+        isOpen={showTrailerModal}
+        onClose={() => setShowTrailerModal(false)}
+        videoUrl={trailerUrl}
+        title={movieData.title}
+      />
     </div>
   )
 }

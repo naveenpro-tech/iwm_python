@@ -26,6 +26,7 @@ interface MovieHeroSectionProps {
   onToggleFavorite?: () => void
   isFavorited?: boolean
   isTogglingFavorite?: boolean
+  onPlayTrailer?: () => void
 }
 
 export function MovieHeroSection({
@@ -35,7 +36,8 @@ export function MovieHeroSection({
   onAddToCollection,
   onToggleFavorite,
   isFavorited = false,
-  isTogglingFavorite = false
+  isTogglingFavorite = false,
+  onPlayTrailer
 }: MovieHeroSectionProps) {
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -197,11 +199,10 @@ export function MovieHeroSection({
                     <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.15 }}>
                       <Button
                         variant="outline"
-                        className={`w-full sm:w-auto font-inter ${
-                          isFavorited
-                            ? "border-[#FF1744] text-[#FF1744] hover:bg-[#FF1744]/10"
-                            : "border-[#E0E0E0] text-[#E0E0E0] hover:bg-[#E0E0E0]/10"
-                        }`}
+                        className={`w-full sm:w-auto font-inter ${isFavorited
+                          ? "border-[#FF1744] text-[#FF1744] hover:bg-[#FF1744]/10"
+                          : "border-[#E0E0E0] text-[#E0E0E0] hover:bg-[#E0E0E0]/10"
+                          }`}
                         onClick={onToggleFavorite}
                         disabled={isTogglingFavorite}
                       >
@@ -209,8 +210,8 @@ export function MovieHeroSection({
                         {isTogglingFavorite
                           ? "Updating..."
                           : isFavorited
-                          ? "Remove from Favorites"
-                          : "Add to Favorites"}
+                            ? "Remove from Favorites"
+                            : "Add to Favorites"}
                       </Button>
                     </motion.div>
                   )}
@@ -232,6 +233,7 @@ export function MovieHeroSection({
                     <Button
                       variant="outline"
                       className="w-full sm:w-auto border-[#A0A0A0] text-[#E0E0E0] hover:bg-[#282828] font-inter"
+                      onClick={onPlayTrailer}
                     >
                       <Play className="mr-2 h-4 w-4 fill-current" />
                       Trailer

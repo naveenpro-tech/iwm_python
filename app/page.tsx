@@ -80,14 +80,36 @@ const TrendingPulseSection = dynamic(
   },
 )
 
+import { getCurrentUser } from "@/lib/auth"
+import { GuestLandingPage } from "@/components/homepage/guest-landing-page"
+
+// ... (keep existing imports)
+
 export default function HomePage() {
+  const [user, setUser] = useState<any>(null)
+  const [isAuthChecking, setIsAuthChecking] = useState(true)
   const [newReleases, setNewReleases] = useState([])
   const [masterpieces, setMasterpieces] = useState([])
   const [siddusPicks, setSiddusPicks] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+      } catch (e) {
+        console.error("Auth check failed", e)
+      } finally {
+        setIsAuthChecking(false)
+      }
+    }
+    checkAuth()
+  }, [])
+
   const fetchData = async () => {
+    // ... (existing fetchData logic)
     setIsLoading(true)
     setError(null)
     try {
@@ -121,8 +143,18 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (user) {
+      fetchData()
+    }
+  }, [user])
+
+  if (isAuthChecking) {
+    return <div className="min-h-screen bg-black" /> // Or a loading spinner
+  }
+
+  if (!user) {
+    return <GuestLandingPage />
+  }
 
   return (
     <div className="bg-black text-white flex flex-col min-h-screen">
