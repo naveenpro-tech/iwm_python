@@ -34,8 +34,8 @@ export default function AdminMoviesSchemaPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-        
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"
+
         const [schemaRes, templateRes] = await Promise.all([
           fetch(`${apiBase}/api/admin/import/schema`),
           fetch(`${apiBase}/api/admin/import/template`),

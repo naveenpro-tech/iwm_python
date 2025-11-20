@@ -143,7 +143,7 @@ export default function MovieTriviaPage({ params }: { params: Promise<{ id: stri
     const fetchMovieAndTrivia = async () => {
       setIsLoading(true)
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"
         const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         if (response.ok) {
           const data = await response.json()
@@ -257,15 +257,18 @@ export default function MovieTriviaPage({ params }: { params: Promise<{ id: stri
         if (item.id === triviaId) {
           let newUpvotes = item.upvotes
           let newDownvotes = item.downvotes
-          let newUserVote: "up" | "down" | null = item.userVote
+          let newUserVote = item.userVote
 
           if (item.userVote === voteType) {
+            // Toggle off
             newUserVote = null
             if (voteType === "up") newUpvotes--
             else newDownvotes--
           } else {
+            // Switch vote or new vote
             if (item.userVote === "up") newUpvotes--
             if (item.userVote === "down") newDownvotes--
+
             newUserVote = voteType
             if (voteType === "up") newUpvotes++
             else newDownvotes++
@@ -448,11 +451,10 @@ export default function MovieTriviaPage({ params }: { params: Promise<{ id: stri
                           variant="outline"
                           size="icon"
                           onClick={() => setShowSpoilers(!showSpoilers)}
-                          className={`border-gray-600 ${
-                            showSpoilers
-                              ? "text-yellow-300 bg-yellow-900/30 hover:bg-yellow-900/40 border-yellow-700"
-                              : "text-gray-300 bg-[#282828] hover:bg-gray-700"
-                          } h-10 w-10`}
+                          className={`border-gray-600 ${showSpoilers
+                            ? "text-yellow-300 bg-yellow-900/30 hover:bg-yellow-900/40 border-yellow-700"
+                            : "text-gray-300 bg-[#282828] hover:bg-gray-700"
+                            } h-10 w-10`}
                           aria-label={showSpoilers ? "Hide Spoilers" : "Show Spoilers"}
                         >
                           {showSpoilers ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -485,11 +487,10 @@ export default function MovieTriviaPage({ params }: { params: Promise<{ id: stri
                         key={category.value}
                         variant={activeCategory === category.value ? "default" : "outline"}
                         className={`cursor-pointer transition-all duration-200 px-3 py-1.5 text-xs sm:text-sm rounded-full
-                        ${
-                          activeCategory === category.value
+                        ${activeCategory === category.value
                             ? "bg-[#00BFFF] text-black border-[#00BFFF] hover:bg-[#33CFFF]"
                             : "bg-[#282828] text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white"
-                        }`}
+                          }`}
                         onClick={() => setActiveCategory(category.value)}
                       >
                         {category.label} ({categoryCounts[category.value] || 0})

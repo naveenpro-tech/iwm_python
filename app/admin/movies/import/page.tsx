@@ -82,7 +82,7 @@ export default function AdminMoviesImportPage() {
     try {
       const payload = JSON.parse(jsonText)
       if (!Array.isArray(payload)) throw new Error("JSON must be an array of movies")
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"
       const authHeaders = getAuthHeaders()
       const res = await fetch(`${apiBase}/api/v1/admin/movies/import`, {
         method: "POST",

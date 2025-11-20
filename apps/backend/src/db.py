@@ -19,7 +19,27 @@ SessionLocal: async_sessionmaker[AsyncSession] | None = None
 async def init_db() -> None:
     global engine, SessionLocal
     if settings.database_url:
-        engine = create_async_engine(settings.database_url, echo=False, pool_pre_ping=True)
+        url = settings.database_url
+        connect_args = {}
+        
+        # Handle SSL for asyncpg if needed (Neon DB support)
+        if "sslmode" in url or "neon.tech" in url:
+            import ssl
+            import re
+            
+            # Create SSL context
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            connect_args["ssl"] = ssl_context
+            
+            # asyncpg doesn't support sslmode in URL, so we need to strip it
+            if "sslmode=" in url:
+                url = re.sub(r'[?&]sslmode=[^&]+', '', url)
+                if "?" not in url and "&" in url:
+                    url = url.replace("&", "?", 1)
+        
+        engine = create_async_engine(url, echo=False, pool_pre_ping=True, connect_args=connect_args)
         SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
     else:
         engine = None

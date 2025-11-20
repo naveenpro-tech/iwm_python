@@ -4,7 +4,7 @@
  * Handles all API calls for movie curation management
  */
 
-import { getAuthToken } from "@/lib/auth/token"
+import { getAccessToken } from "@/lib/auth"
 
 export interface CuratorInfo {
   id: number
@@ -36,15 +36,16 @@ export interface MovieCurationListResponse {
   page: number
   page_size: number
   total_pages: number
+
 }
 
 export interface CurationUpdateRequest {
-  curation_status?: string | null
-  quality_score?: number | null
-  curator_notes?: string | null
+  curation_status?: string
+  quality_score?: number
+  curator_notes?: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"
 
 /**
  * Get paginated movies for curation with filters and sorting
@@ -56,7 +57,7 @@ export async function getMoviesForCuration(params: {
   sort_by?: string
   sort_order?: string
 }): Promise<MovieCurationListResponse> {
-  const token = await getAuthToken()
+  const token = getAccessToken()
   if (!token) {
     throw new Error("Not authenticated")
   }
@@ -99,7 +100,7 @@ export async function updateMovieCuration(
   movieId: number,
   data: CurationUpdateRequest
 ): Promise<MovieCurationResponse> {
-  const token = await getAuthToken()
+  const token = getAccessToken()
   if (!token) {
     throw new Error("Not authenticated")
   }

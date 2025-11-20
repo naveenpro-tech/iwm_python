@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { getAuthHeaders } from '@/lib/auth'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 
 interface TMDBMovie {
   tmdb_id: number
@@ -30,12 +31,12 @@ interface SearchResponse {
   current_page: number
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://iwm-python.onrender.com'
 
-export default function TMDBDashboard() {
+export function TMDBDashboard() {
   const router = useRouter()
   const { toast } = useToast()
-  
+
   const [activeTab, setActiveTab] = useState('new-releases')
   const [category, setCategory] = useState('now_playing')
   const [searchQuery, setSearchQuery] = useState('')
@@ -55,7 +56,7 @@ export default function TMDBDashboard() {
         `${API_BASE}/api/v1/admin/tmdb/new-releases?category=${category}&page=${page}`,
         { headers: authHeaders }
       )
-      
+
       if (!res.ok) {
         if (res.status === 401) {
           toast({ variant: 'destructive', title: 'Authentication required' })
@@ -64,7 +65,7 @@ export default function TMDBDashboard() {
         }
         throw new Error('Failed to fetch movies')
       }
-      
+
       const data: SearchResponse = await res.json()
       setMovies(data.movies)
       setTotalPages(data.total_pages)
@@ -82,7 +83,7 @@ export default function TMDBDashboard() {
       toast({ variant: 'destructive', title: 'Please enter a search query' })
       return
     }
-    
+
     setLoading(true)
     try {
       const authHeaders = getAuthHeaders()
@@ -91,14 +92,14 @@ export default function TMDBDashboard() {
         page: page.toString(),
       })
       if (searchYear) params.append('year', searchYear)
-      
+
       const res = await fetch(
         `${API_BASE}/api/v1/admin/tmdb/search?${params}`,
         { headers: authHeaders }
       )
-      
+
       if (!res.ok) throw new Error('Search failed')
-      
+
       const data: SearchResponse = await res.json()
       setMovies(data.movies)
       setTotalPages(data.total_pages)
@@ -119,23 +120,23 @@ export default function TMDBDashboard() {
         `${API_BASE}/api/v1/admin/tmdb/import/${tmdbId}`,
         { method: 'POST', headers: authHeaders }
       )
-      
+
       if (res.status === 409) {
         toast({ title: 'Already Imported', description: `"${title}" is already in the database` })
         // Update UI to show as imported
-        setMovies(prev => prev.map(m => 
+        setMovies(prev => prev.map(m =>
           m.tmdb_id === tmdbId ? { ...m, already_imported: true } : m
         ))
         return
       }
-      
+
       if (!res.ok) throw new Error('Import failed')
-      
+
       const data = await res.json()
       toast({ title: 'Success', description: `"${title}" imported successfully!` })
-      
+
       // Update UI
-      setMovies(prev => prev.map(m => 
+      setMovies(prev => prev.map(m =>
         m.tmdb_id === tmdbId ? { ...m, already_imported: true, our_movie_id: data.id } : m
       ))
     } catch (error: any) {
@@ -279,63 +280,70 @@ function MovieGrid({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {movies.map((movie) => (
-        <Card key={movie.tmdb_id} className="bg-slate-700 border-slate-600 overflow-hidden hover:shadow-lg transition-shadow">
-          {/* Poster */}
-          <div className="relative h-64 bg-slate-800">
-            {movie.poster_url ? (
-              <Image
-                src={movie.poster_url}
-                alt={movie.title}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-500">
-                No Image
-              </div>
-            )}
-            <Badge className="absolute top-2 right-2 bg-blue-600">
-              ID: {movie.tmdb_id}
-            </Badge>
-          </div>
+      {movies.map((movie) => {
+        const posterSrc = movie.poster_url?.startsWith('/')
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_url}`
+          : movie.poster_url
 
-          {/* Content */}
-          <div className="p-4 space-y-3">
-            <div>
-              <h3 className="font-bold text-white truncate">{movie.title}</h3>
-              <p className="text-sm text-slate-400">
-                {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
-              </p>
+        return (
+          <Card key={movie.tmdb_id} className="bg-slate-700 border-slate-600 overflow-hidden hover:shadow-lg transition-shadow">
+            {/* Poster */}
+            <div className="relative h-64 bg-slate-800">
+              {posterSrc ? (
+                <Image
+                  src={posterSrc}
+                  alt={movie.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-500">
+                  No Image
+                </div>
+              )}
+              <Badge className="absolute top-2 right-2 bg-blue-600">
+                ID: {movie.tmdb_id}
+              </Badge>
             </div>
 
-            {movie.vote_average && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-300">★ {movie.vote_average.toFixed(1)}</span>
+            {/* Content */}
+            <div className="p-4 space-y-3">
+              <div>
+                <h3 className="font-bold text-white truncate">{movie.title}</h3>
+                <p className="text-sm text-slate-400">
+                  {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
+                </p>
               </div>
-            )}
 
-            {movie.overview && (
-              <p className="text-sm text-slate-300 line-clamp-2">{movie.overview}</p>
-            )}
+              {movie.vote_average && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-300">★ {movie.vote_average.toFixed(1)}</span>
+                </div>
+              )}
 
-            {/* Action Button */}
-            {movie.already_imported ? (
-              <Badge className="w-full justify-center bg-green-600">
-                Already Imported
-              </Badge>
-            ) : (
-              <Button
-                onClick={() => onImport(movie.tmdb_id, movie.title)}
-                disabled={importingIds.has(movie.tmdb_id)}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-              >
-                {importingIds.has(movie.tmdb_id) ? 'Importing...' : 'Import'}
-              </Button>
-            )}
-          </div>
-        </Card>
-      ))}
+              {movie.overview && (
+                <p className="text-sm text-slate-300 line-clamp-2">{movie.overview}</p>
+              )}
+
+              {/* Action Button */}
+              {movie.already_imported ? (
+                <Badge className="w-full justify-center bg-green-600">
+                  Already Imported
+                </Badge>
+              ) : (
+                <Button
+                  onClick={() => onImport(movie.tmdb_id, movie.title)}
+                  disabled={importingIds.has(movie.tmdb_id)}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {importingIds.has(movie.tmdb_id) ? 'Importing...' : 'Import'}
+                </Button>
+              )}
+            </div>
+          </Card>
+        )
+      })}
     </div>
   )
 }
@@ -373,4 +381,6 @@ function Pagination({
     </div>
   )
 }
+
+export default dynamic(() => Promise.resolve(TMDBDashboard), { ssr: false })
 

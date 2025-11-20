@@ -111,6 +111,7 @@ export interface SceneItem {
 
 export interface Movie {
   id: string
+  tmdbId?: number
   title: string
   originalTitle?: string
   poster?: string // URL
@@ -154,7 +155,7 @@ export interface Movie {
 
   createdAt: string // ISO Date string
   updatedAt: string // ISO Date string
-  importedFrom?: "TMDB" | "OMDB" | "JSON" | "Manual"
+  importedFrom?: "TMDB" | "OMDB" | "JSON" | "Manual" | "Gemini"
 }
 
 export interface MovieFiltersState {

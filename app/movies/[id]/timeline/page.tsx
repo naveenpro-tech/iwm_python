@@ -236,7 +236,7 @@ export default function MovieTimelinePage({ params }: { params: Promise<{ id: st
     const fetchMovieAndTimeline = async () => {
       setIsLoading(true)
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"
         const response = await fetch(`${apiBase}/api/v1/movies/${movieId}`)
         if (response.ok) {
           const data = await response.json()
@@ -463,8 +463,7 @@ export default function MovieTimelinePage({ params }: { params: Promise<{ id: st
                         </div>
                         <span
                           className={`px-2 py-0.5 text-xs rounded-full font-medium
-                          ${
-                            event.category === "production"
+                          ${event.category === "production"
                               ? "bg-blue-500/20 text-blue-300"
                               : event.category === "release"
                                 ? "bg-green-500/20 text-green-300"
@@ -479,7 +478,7 @@ export default function MovieTimelinePage({ params }: { params: Promise<{ id: st
                                         : event.category === "reception"
                                           ? "bg-teal-500/20 text-teal-300"
                                           : "bg-gray-500/20 text-gray-300"
-                          }`}
+                            }`}
                         >
                           {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
                         </span>

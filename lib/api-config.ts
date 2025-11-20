@@ -12,19 +12,13 @@
  * This allows the app to work both on localhost and network access
  */
 export function getApiUrl(): string {
-  // Client-first rule: if browsing from localhost, force localhost backend
-  if (typeof window !== 'undefined' && window.location) {
-    const hostname = window.location.hostname
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
-      return 'http://localhost:8000'
-    }
-  }
-
-  // Prefer explicit environment override (works both on server and client)
+  // Check for environment override first
   const envOverride = (typeof process !== 'undefined' && process.env && (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL)) || ''
   if (envOverride) {
     return envOverride.replace(/\/+$/, '')
   }
+
+
 
   // Client-side: derive from current hostname for local/LAN dev when no env set
   if (typeof window !== 'undefined' && window.location) {

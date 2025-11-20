@@ -80,11 +80,40 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    configuration = config.get_section(config.config_ini_section, {})
+    
+    # Handle SSL for asyncpg if needed
+    connect_args = {}
+    url = configuration.get("sqlalchemy.url", "")
+    
+    # Check for sslmode in URL (common in Neon/Render connection strings)
+    if "sslmode" in url or "neon.tech" in url:
+        import ssl
+        
+        # Create SSL context
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        connect_args["ssl"] = ssl_context
+        
+        # asyncpg doesn't support sslmode in URL, so we need to strip it
+        if "sslmode=" in url:
+            # Simple string replacement to remove sslmode param
+            # Handles ?sslmode=... and &sslmode=...
+            import re
+            url = re.sub(r'[?&]sslmode=[^&]+', '', url)
+            # If we removed the ? but there are other params, make sure the first one has ?
+            if "?" not in url and "&" in url:
+                url = url.replace("&", "?", 1)
+            
+            # Update the URL in configuration
+            configuration["sqlalchemy.url"] = url
 
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:

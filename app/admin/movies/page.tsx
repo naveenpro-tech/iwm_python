@@ -86,7 +86,7 @@ export default function MovieManagementPage() {
     const fetchMovies = async () => {
       setIsLoading(true)
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"
         const res = await fetch(`${apiBase}/api/v1/movies`)
         if (!res.ok) throw new Error("Failed to fetch movies")
         const data = await res.json()
@@ -190,14 +190,11 @@ export default function MovieManagementPage() {
       if (key === "sidduScore" || key === "runtime" || key === "budget" || key === "boxOffice") {
         aValue = Number(aValue) || 0
         bValue = Number(bValue) || 0
-      } else if (key === "releaseDate" || key === "createdAt" || key === "updatedAt") {
-        return direction === "asc"
-          ? new Date(aValue as string).getTime() - new Date(bValue as string).getTime()
-          : new Date(bValue as string).getTime() - new Date(aValue as string).getTime()
-      } else if (typeof aValue === "string" && typeof bValue === "string") {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
       }
+
+      if (aValue === bValue) return 0
+      if (aValue === undefined || aValue === null) return 1
+      if (bValue === undefined || bValue === null) return -1
 
       if (aValue < bValue) return direction === "asc" ? -1 : 1
       if (aValue > bValue) return direction === "asc" ? 1 : -1
@@ -205,7 +202,7 @@ export default function MovieManagementPage() {
     })
   }, [filteredMovies, sortConfig])
 
-  const totalItems = sortedMovies.length
+  const totalItems = filteredMovies.length
   const totalPages = Math.ceil(totalItems / pageSize)
 
   const paginatedMovies = useMemo(() => {

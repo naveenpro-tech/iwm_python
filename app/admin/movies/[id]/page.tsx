@@ -8,9 +8,9 @@ import { MovieMediaForm } from "@/components/admin/movies/forms/movie-media-form
 import { MovieCastCrewForm } from "@/components/admin/movies/forms/movie-cast-crew-form"
 import { MovieStreamingForm } from "@/components/admin/movies/forms/movie-streaming-form"
 import { MovieAwardsFormEnhanced } from "@/components/admin/movies/forms/movie-awards-form-enhanced"
-import { MovieTriviaForm } from "@/components/admin/movies/forms/movie-trivia-form" // New import
-import { MovieTimelineForm } from "@/components/admin/movies/forms/movie-timeline-form" // New import
-import { MovieScenesForm } from "@/components/admin/movies/forms/movie-scenes-form" // New import
+import { MovieTriviaForm } from "@/components/admin/movies/forms/movie-trivia-form"
+import { MovieTimelineForm } from "@/components/admin/movies/forms/movie-timeline-form"
+import { MovieScenesForm } from "@/components/admin/movies/forms/movie-scenes-form"
 import { JSONImportModal } from "@/components/admin/movies/json-import-modal"
 import { CategoryExportImportButtons } from "@/components/admin/movies/category-export-import-buttons"
 import { ImportCategoryModal } from "@/components/admin/movies/import-category-modal"
@@ -30,7 +30,7 @@ import type {
   TimelineEvent,
   SceneItem,
 } from "@/components/admin/movies/types"
-import { useToast } from "@/hooks/use-toast" // Corrected path
+import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getAuthHeaders } from "@/lib/auth"
 
@@ -48,22 +48,22 @@ export default function MovieEditPage() {
   // Gemini enrichment state
   const [enrichQuery, setEnrichQuery] = useState("")
   const [isEnriching, setIsEnriching] = useState(false)
-
   // JSON import state
   const [showJSONImport, setShowJSONImport] = useState(false)
-
-  // Category import/export state
-  const [importModalOpen, setImportModalOpen] = useState(false)
   const [currentCategory, setCurrentCategory] = useState<CategoryType | null>(null)
+  const [importModalOpen, setImportModalOpen] = useState(false)
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://iwm-python.onrender.com"
 
-  const slugify = (s: string) =>
-    s
+  const slugify = (text: string) => {
+    return text
+      .toString()
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
       .trim()
       .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-")
+  }
 
   const mapBackendToAdminMovie = (data: any): Movie => {
     const streamingLinks = [] as any[]
@@ -116,6 +116,7 @@ export default function MovieEditPage() {
 
     const m: Movie = {
       id: data.id || "",
+      tmdbId: data.tmdb_id || data.tmdbId,
       title: data.title || "",
       originalTitle: data.title || "",
       poster: data.posterUrl || "",
@@ -545,7 +546,7 @@ export default function MovieEditPage() {
     }
   }
 
-  const updateMovieField = (fieldName: keyof Movie, value: any) => {
+  const updateMovieField = (fieldName: string, value: any) => {
     setMovieData((prev) => {
       if (!prev) return null
       const updatedMovie = { ...prev, [fieldName]: value }
@@ -768,7 +769,7 @@ export default function MovieEditPage() {
           </div>
         )}
       </div>
-  
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 w-full max-w-full overflow-x-auto">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -877,7 +878,10 @@ export default function MovieEditPage() {
               </div>
             </div>
           )}
-          <MovieTriviaForm initialTrivia={movieData.trivia || []} onTriviaChange={handleTriviaChange} />
+          <MovieTriviaForm
+            initialTrivia={movieData.trivia || []}
+            onTriviaChange={handleTriviaChange}
+          />
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-6">
