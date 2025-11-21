@@ -1,0 +1,202 @@
+"use client"
+
+import { useState } from "react"
+import { motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
+import { Heart, MoreVertical, Play, Share2, Trash2, Edit, Users, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { deleteCollection } from "@/lib/api/collections"
+import { useToast } from "@/hooks/use-toast"
+import type { Collection } from "./types"
+
+interface CollectionCardProps {
+  collection: Collection
+  variant: "featured" | "popular" | "user"
+  onDelete?: () => void
+  onEdit?: (collection: Collection) => void
+}
+
+export function CollectionCard({ collection, variant, onDelete, onEdit }: CollectionCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
+
+  // Sanitize poster URL
+  const sanitizePosterUrl = (url: string | null | undefined): string => {
+    if (!url) return "/placeholder.svg"
+    if (typeof url === 'string' && url.includes('"')) {
+      const urlMatch = url.match(/["']([^"']+\.(jpg|jpeg|png|webp|gif|svg))["']/i)
+      if (urlMatch) {
+        const extractedUrl = urlMatch[1]
+        if (extractedUrl.startsWith('http://') || extractedUrl.startsWith('https://')) return extractedUrl
+        if (extractedUrl.startsWith('/') && !extractedUrl.startsWith('/mnt') && !extractedUrl.startsWith('/tmp')) return extractedUrl
+        return "/placeholder.svg"
+      }
+      const httpMatch = url.match(/(https?:\/\/[^\s"']+)/i)
+      if (httpMatch) return httpMatch[1]
+      return "/placeholder.svg"
+    }
+    if (url.startsWith('/mnt') || url.startsWith('/tmp')) return "/placeholder.svg"
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url
+    return "/placeholder.svg"
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4 },
+    },
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this collection? This action cannot be undone.")) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deleteCollection(collection.id)
+      toast({
+        title: "Success",
+        description: "Collection deleted successfully",
+      })
+      if (onDelete) {
+        onDelete()
+      }
+    } catch (error: any) {
+      console.error("Error deleting collection:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete collection",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  return (
+    <motion.div
+      variants={itemVariants}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      className="group relative bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#333333] hover:border-[#6e4bbd] transition-all duration-300"
+    >
+      <Link href={`/collections/${collection.id}`}>
+        <div className="relative aspect-[4/3] overflow-hidden">
+          {/* 4-poster collage */}
+          <div className="grid grid-cols-2 h-full">
+            {collection.posterImages.slice(0, 4).map((poster, index) => (
+              <div key={index} className="relative overflow-hidden">
+                <Image
+                  src={sanitizePosterUrl(poster)}
+                  alt=""
+                  fill
+                  className="object-cover transition-transform group-hover:scale-110"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-4 left-4 right-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Play className="h-4 w-4 text-white" />
+                  <span className="text-white text-sm">View Collection</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20">
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Collection type badge */}
+          {variant === "featured" && (
+            <div className="absolute top-2 left-2">
+              <Badge className="bg-[#6e4bbd] text-white">Featured</Badge>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <Link href={`/collections/${collection.id}`}>
+              <h3 className="font-semibold text-white line-clamp-1 hover:text-[#6e4bbd] transition-colors">
+                {collection.title}
+              </h3>
+            </Link>
+            <p className="text-sm text-[#A0A0A0] mt-1 line-clamp-2">{collection.description}</p>
+          </div>
+
+          {variant === "user" && (onDelete || onEdit) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={() => console.log('[CollectionCard] Dropdown menu button clicked, onEdit:', !!onEdit, 'onDelete:', !!onDelete)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-[#A0A0A0] hover:text-white"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MoreVertical className="h-4 w-4" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#2A2A2A] border-[#444444] text-white">
+                {onEdit && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      console.log('[CollectionCard] Edit clicked for:', collection.title)
+                      onEdit(collection)
+                    }}
+                    className="cursor-pointer hover:bg-[#333333]"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <DropdownMenuItem
+                    className="text-red-400 hover:text-red-300 cursor-pointer hover:bg-[#333333]"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {isDeleting ? "Deleting..." : "Delete Collection"}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center space-x-4 text-xs text-[#A0A0A0]">
+            <span>{collection.movieCount} movies</span>
+            <div className="flex items-center">
+              <Users className="h-3 w-3 mr-1" />
+              <span>{collection.followers}</span>
+            </div>
+          </div>
+          <div className="text-xs text-[#A0A0A0]">By {collection.creator}</div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}

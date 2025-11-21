@@ -20,7 +20,7 @@ services:
     region: oregon
     plan: free
     branch: main
-    rootDir: apps/backend
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: hypercorn src.main:app --bind 0.0.0.0:$PORT
     healthCheckPath: /api/v1/health
@@ -53,4 +53,3 @@ services:
         sync: false
       - key: GEMINI_MODEL
         value: gemini-2.5-flash
-
