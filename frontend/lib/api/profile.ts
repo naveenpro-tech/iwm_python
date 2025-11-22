@@ -37,6 +37,54 @@ export async function getUserProfile(username: string) {
 }
 
 /**
+ * Upload avatar image file
+ */
+export async function uploadAvatar(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const response = await fetch(`${API_BASE}/api/v1/upload/avatar`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to upload avatar: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data.url
+}
+
+/**
+ * Upload banner/cover image file
+ */
+export async function uploadBanner(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const response = await fetch(`${API_BASE}/api/v1/upload/banner`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to upload banner: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data.url
+}
+
+/**
  * Update user profile
  */
 export async function updateUserProfile(userId: string, data: {
@@ -44,11 +92,20 @@ export async function updateUserProfile(userId: string, data: {
   bio?: string
   location?: string
   website?: string
+  avatarUrl?: string
+  bannerUrl?: string
 }) {
-  const response = await fetch(`${API_BASE}/api/v1/users/${userId}`, {
-    method: "PATCH",
+  const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+    method: "PUT",
     headers: getAuthHeaders(),
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      name: data.name,
+      bio: data.bio,
+      location: data.location,
+      website: data.website,
+      avatar_url: data.avatarUrl,
+      banner_url: data.bannerUrl,
+    }),
   })
 
   if (!response.ok) {
@@ -58,6 +115,7 @@ export async function updateUserProfile(userId: string, data: {
 
   return response.json()
 }
+
 
 /**
  * Get user's watchlist

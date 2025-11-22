@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = Field(default=None)
     gemini_model: str = Field(default="gemini-2.5-flash")
 
+    # Cloudinary
+    cloudinary_cloud_name: str | None = Field(default=None)
+    cloudinary_api_key: str | None = Field(default=None)
+    cloudinary_api_secret: str | None = Field(default=None)
+
     # Pydantic v2: load .env from backend app folder regardless of cwd
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parent.parent / ".env"),

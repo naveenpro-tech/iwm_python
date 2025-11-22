@@ -113,7 +113,7 @@ async def get_user_by_username(
         email=user.email,
         bio=None,  # TODO: Add bio field to User model
         avatarUrl=user.avatar_url,
-        bannerUrl=None,  # TODO: Add banner_url field to User model
+        bannerUrl=user.banner_url,
         joinedDate=user.created_at.strftime("%B %Y"),
         location=None,  # TODO: Add location field to User model
         website=None,  # TODO: Add website field to User model

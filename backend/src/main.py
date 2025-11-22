@@ -79,6 +79,8 @@ from .routers import tmdb_admin as tmdb_admin_router  # TMDB Admin - Browse and 
 from .routers import movie_export_import as movie_export_import_router  # Movie Export/Import - Categorized data enrichment
 from .routers import award_ceremonies as award_ceremonies_router  # Award Ceremonies - Indian and international awards
 from .routers import feature_flags as feature_flags_router  # Feature Flags - Admin feature toggle system
+from .routers import upload as upload_router  # File Upload - Avatar and banner images
+
 
 
 """
@@ -303,6 +305,8 @@ api.include_router(settings_router.router)  # GET /api/v1/settings - User settin
 api.include_router(notifications_router.router)  # GET /api/v1/notifications - Notifications
 api.include_router(roles_router.router)  # GET/PUT /api/v1/roles - Role management
 api.include_router(user_roles_router.router)  # GET/POST /api/v1/users/me/roles - Role switcher
+api.include_router(upload_router.router)  # POST /api/v1/upload/avatar - File uploads
+
 
 # Industry Features
 api.include_router(box_office_router.router)  # GET /api/v1/box-office - Box office data

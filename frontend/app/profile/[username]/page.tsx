@@ -59,6 +59,9 @@ export default function UserProfilePage() {
     bio: string
     location?: string
     website?: string
+    website?: string
+    avatarUrl?: string
+    bannerUrl?: string
   }) => {
     if (!userData) return
 
@@ -70,9 +73,43 @@ export default function UserProfilePage() {
         ...userData,
         name: data.name,
         bio: data.bio,
-        location: data.location,
-        website: data.website,
+        location: data.location || "",
+        website: data.website || "",
+        avatarUrl: data.avatarUrl || userData.avatarUrl,
+        bannerUrl: data.bannerUrl || userData.bannerUrl,
       })
+
+      // Refresh the full profile data from server after avatar or banner upload
+      if (data.avatarUrl || data.bannerUrl) {
+        const apiBase = getApiUrl()
+        const response = await fetch(`${apiBase}/api/v1/users/${username}`, {
+          cache: "no-store",
+        })
+        if (response.ok) {
+          const freshData = await response.json()
+          const transformedUserData: UserData = {
+            id: freshData.id || freshData.external_id,
+            username: freshData.username || username,
+            name: freshData.name || freshData.display_name || username,
+            email: freshData.email || "",
+            bio: freshData.bio || "",
+            avatarUrl: freshData.avatar_url || freshData.avatarUrl || "/placeholder.svg?height=120&width=120",
+            bannerUrl: freshData.banner_url || freshData.bannerUrl || "/movie-backdrop.png",
+            joinedDate: freshData.joined_date || freshData.created_at || "",
+            location: freshData.location || "",
+            website: freshData.website || "",
+            stats: {
+              reviews: freshData.stats?.reviews || freshData.review_count || 0,
+              watchlist: freshData.stats?.watchlist || freshData.watchlist_count || 0,
+              favorites: freshData.stats?.favorites || freshData.favorites_count || 0,
+              collections: freshData.stats?.collections || freshData.collections_count || 0,
+              following: freshData.stats?.following || freshData.following_count || 0,
+              followers: freshData.stats?.followers || freshData.followers_count || 0,
+            },
+          }
+          setUserData(transformedUserData)
+        }
+      }
     } catch (error) {
       console.error("Error updating profile:", error)
       throw error
@@ -146,12 +183,19 @@ export default function UserProfilePage() {
     const checkOwnership = async () => {
       try {
         const currentUser = await getCurrentUser()
+        console.log("Profile Ownership Check:", {
+          currentUsername: currentUser?.username,
+          pageUsername: username,
+          match: currentUser && currentUser.username === username
+        })
+
         if (currentUser && currentUser.username === username) {
           setIsOwnProfile(true)
         } else {
           setIsOwnProfile(false)
         }
       } catch (error) {
+        console.error("Ownership check failed:", error)
         // User not logged in
         setIsOwnProfile(false)
       }

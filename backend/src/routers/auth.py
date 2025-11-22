@@ -36,7 +36,9 @@ class MeResponse(BaseModel):
     id: str
     email: EmailStr
     name: str
+    username: str
     avatarUrl: str | None = None
+    bannerUrl: str | None = None
     is_admin: bool = False
 
 
@@ -203,10 +205,14 @@ async def me(user: User = Depends(get_current_user)) -> Any:
         role_profile.role_type == "admin" and role_profile.enabled
         for role_profile in user.role_profiles
     )
+    # Extract username from email
+    username = user.email.split('@')[0] if '@' in user.email else user.email
+
     return MeResponse(
         id=user.external_id,
         email=user.email,
         name=user.name,
+        username=username,
         avatarUrl=user.avatar_url,
         is_admin=is_admin
     )
@@ -259,6 +265,7 @@ async def me_enhanced(
         username=username,
         name=user.name,
         avatar_url=user.avatar_url,
+        banner_url=user.banner_url,
         roles=roles,
         has_critic_profile=has_critic_profile,
         has_talent_profile=has_talent_profile,
@@ -270,6 +277,7 @@ async def me_enhanced(
 class UpdateProfileBody(BaseModel):
     name: str | None = None
     avatar_url: str | None = None
+    banner_url: str | None = None
     bio: str | None = None
     location: str | None = None
     website: str | None = None
@@ -286,6 +294,8 @@ async def update_me(
         user.name = body.name
     if body.avatar_url is not None:
         user.avatar_url = body.avatar_url
+    if body.banner_url is not None:
+        user.banner_url = body.banner_url
     if body.bio is not None:
         user.bio = body.bio
     if body.location is not None:
@@ -296,7 +306,17 @@ async def update_me(
     await session.commit()
     await session.refresh(user)
 
-    return MeResponse(id=user.external_id, email=user.email, name=user.name, avatarUrl=user.avatar_url)
+    # Extract username from email
+    username = user.email.split('@')[0] if '@' in user.email else user.email
+
+    return MeResponse(
+        id=user.external_id, 
+        email=user.email, 
+        name=user.name, 
+        username=username,
+        avatarUrl=user.avatar_url,
+        bannerUrl=user.banner_url
+    )
 
 
 class ChangePasswordBody(BaseModel):

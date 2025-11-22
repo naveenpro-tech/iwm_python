@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useMobile } from "@/hooks/use-mobile"
 import { EditProfileModal } from "./edit-profile-modal"
 import { useToast } from "@/hooks/use-toast"
+import { cn, formatDate, resolveImageUrl } from "@/lib/utils"
 
 interface ProfileHeaderProps {
   name: string
@@ -28,7 +29,7 @@ interface ProfileHeaderProps {
   }
   isVerified?: boolean
   isOwnProfile?: boolean
-  onProfileUpdate?: (data: { name: string; bio: string; location?: string; website?: string }) => Promise<void>
+  onProfileUpdate?: (data: { name: string; bio: string; location?: string; website?: string; avatarUrl?: string; bannerUrl?: string }) => Promise<void>
 }
 
 export function ProfileHeader({
@@ -107,7 +108,7 @@ export function ProfileHeader({
       {/* Cover Photo */}
       <div className="relative w-full h-40 md:h-64 lg:h-80 overflow-hidden">
         <Image
-          src={bannerUrl || "/movie-backdrop.png"}
+          src={resolveImageUrl(bannerUrl, "banner")}
           alt="Profile cover"
           fill
           className="object-cover"
@@ -124,7 +125,7 @@ export function ProfileHeader({
           <motion.div className="relative z-10" variants={itemVariants}>
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-[#1A1A1A] bg-[#282828]">
               <Image
-                src={avatarUrl || "/placeholder.svg?height=160&width=160&query=person+silhouette"}
+                src={resolveImageUrl(avatarUrl, "avatar")}
                 alt={name}
                 width={160}
                 height={160}
@@ -201,7 +202,7 @@ export function ProfileHeader({
       {/* Edit Profile Modal */}
       {isEditing && onProfileUpdate && (
         <EditProfileModal
-          currentData={{ name, bio, location, website, avatarUrl }}
+          currentData={{ name, bio, location, website, avatarUrl, bannerUrl }}
           onClose={() => setIsEditing(false)}
           onSave={onProfileUpdate}
         />
