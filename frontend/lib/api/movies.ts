@@ -155,12 +155,155 @@ export async function getMovieById(id: string) {
 }
 
 /**
- * Search movies
+ * Search movies using the dedicated search endpoint
  */
 export async function searchMovies(query: string, limit: number = 20) {
-  return getMovies({
-    search: query,
-    limit,
-  })
+  try {
+    const queryParams = new URLSearchParams()
+    queryParams.set("q", query)
+    queryParams.set("limit", String(limit))
+
+    const response = await fetch(`${API_BASE}/api/v1/movies/search?${queryParams}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to search movies: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // The search endpoint returns { results: [...], total: number }
+    if (data.results && Array.isArray(data.results)) {
+      return data.results.map(sanitizeMovie)
+    }
+
+    return []
+  } catch (error) {
+    console.error("Error searching movies:", error)
+    throw error
+  }
+}
+
+export interface ExploreMoviesParams {
+  page?: number
+  limit?: number
+  category?: "trending" | "topRated" | "newReleases" | "visualTreats" | "globalCinema"
+  genres?: string[]
+  yearMin?: number
+  yearMax?: number
+  languages?: string[]
+  countries?: string[]
+  ratingMin?: number
+  ratingMax?: number
+  sortBy?: string
+}
+
+/**
+ * Get movies for the explore page with comprehensive filtering
+ */
+export async function getExploreMovies(params: ExploreMoviesParams = {}) {
+  try {
+    const queryParams = new URLSearchParams()
+
+    // Add pagination
+    if (params.page) queryParams.set("page", String(params.page))
+    if (params.limit) queryParams.set("limit", String(params.limit))
+
+    // Handle category-based filtering
+    let sortBy = params.sortBy
+    if (params.category) {
+      switch (params.category) {
+        case "trending":
+          // For trending, get recent movies sorted by popularity
+          sortBy = "popular"
+          const currentYear = new Date().getFullYear()
+          if (!params.yearMin) queryParams.set("yearMin", String(currentYear - 2))
+          break
+        case "topRated":
+          sortBy = "score"
+          break
+        case "newReleases":
+          sortBy = "latest"
+          break
+        case "globalCinema":
+          // Filter out English movies
+          if (!params.languages || params.languages.length === 0) {
+            // Get all non-English movies - we'll handle this by not setting English as language
+            // The backend will return all languages, and we'll filter client-side if needed
+          }
+          break
+        case "visualTreats":
+          // Visual treats will need client-side filtering by tags
+          // For now, get high-rated movies
+          sortBy = "score"
+          if (!params.ratingMin) queryParams.set("ratingMin", "7.5")
+          break
+      }
+    }
+
+    // Add sorting
+    if (sortBy) queryParams.set("sortBy", sortBy)
+
+    // Add genre filter (backend accepts single genre via 'genre' param)
+    if (params.genres && params.genres.length > 0) {
+      // For now, use the first genre. Backend supports single genre filtering
+      queryParams.set("genre", params.genres[0].toLowerCase())
+    }
+
+    // Add year range
+    if (params.yearMin) queryParams.set("yearMin", String(params.yearMin))
+    if (params.yearMax) queryParams.set("yearMax", String(params.yearMax))
+
+    // Add languages (comma-separated)
+    if (params.languages && params.languages.length > 0) {
+      queryParams.set("languages", params.languages.join(","))
+    }
+
+    // Add countries (comma-separated)
+    if (params.countries && params.countries.length > 0) {
+      queryParams.set("countries", params.countries.join(","))
+    }
+
+    // Add rating range
+    if (params.ratingMin !== undefined) queryParams.set("ratingMin", String(params.ratingMin))
+    if (params.ratingMax !== undefined) queryParams.set("ratingMax", String(params.ratingMax))
+
+    const response = await fetch(`${API_BASE}/api/v1/movies?${queryParams}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch explore movies: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Sanitize movie data
+    if (Array.isArray(data)) {
+      let movies = data.map(sanitizeMovie)
+
+      // Client-side filtering for special cases
+      if (params.category === "globalCinema") {
+        movies = movies.filter(m => m.language && m.language.toLowerCase() !== "english")
+      }
+
+      // For visual treats, we'd filter by tags here if available
+      // Since tags aren't in the backend response yet, we rely on high ratings
+
+      return movies
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error fetching explore movies:", error)
+    throw error
+  }
 }
 

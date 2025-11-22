@@ -7,7 +7,7 @@ import { CategoryTabs } from "./category-tabs"
 import { FilterPanel } from "./filter-panel"
 import { ActiveFilters } from "./active-filters"
 import { ContentGrid } from "./content-grid"
-import { mockMovies } from "./mock-data"
+import { getExploreMovies, searchMovies } from "@/lib/api/movies"
 import type { MovieType, FilterState, CategoryType } from "./types"
 import { useMobile } from "@/hooks/use-mobile"
 
@@ -30,82 +30,80 @@ export function ExploreContainer() {
   const isMobile = useMobile()
 
   useEffect(() => {
-    // Simulate API fetch with delay
-    const timer = setTimeout(() => {
-      let filteredResults = [...mockMovies]
+    // Fetch movies from API based on active category
+    const fetchMovies = async () => {
+      setIsLoading(true)
+      try {
+        const data = await getExploreMovies({
+          category: activeCategory,
+          limit: 50, // Fetch more movies for better filtering
+        })
 
-      // Apply category filter
-      if (activeCategory === "trending") {
-        filteredResults = filteredResults.filter((movie) => movie.trending)
-      } else if (activeCategory === "topRated") {
-        filteredResults = filteredResults.filter((movie) => movie.rating >= 8.0).sort((a, b) => b.rating - a.rating)
-      } else if (activeCategory === "newReleases") {
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-        filteredResults = filteredResults
-          .filter((movie) => {
-            const releaseDate = new Date(movie.releaseDate)
-            return releaseDate >= thirtyDaysAgo
-          })
-          .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
-      } else if (activeCategory === "visualTreats") {
-        filteredResults = filteredResults.filter((movie) => movie.tags?.includes("visual_treat"))
-      } else if (activeCategory === "globalCinema") {
-        filteredResults = filteredResults.filter((movie) => movie.language !== "English")
+        setMovies(data)
+        setFilteredMovies(data)
+      } catch (error) {
+        console.error("Failed to fetch movies:", error)
+        setMovies([])
+        setFilteredMovies([])
+      } finally {
+        setIsLoading(false)
       }
+    }
 
-      setMovies(filteredResults)
-      setFilteredMovies(filteredResults)
-      setIsLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
+    fetchMovies()
   }, [activeCategory])
 
   useEffect(() => {
-    // Apply filters whenever they change
-    if (movies.length > 0) {
-      let results = [...movies]
-
-      // Apply search filter
+    // Apply search and filters
+    const applyFiltersAndSearch = async () => {
       if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        results = results.filter(
-          (movie) =>
-            movie.title.toLowerCase().includes(query) ||
-            movie.director?.toLowerCase().includes(query) ||
-            movie.cast?.some((actor) => actor.toLowerCase().includes(query)),
-        )
+        // Use search API when there's a search query
+        try {
+          const searchResults = await searchMovies(searchQuery, 50)
+          setFilteredMovies(searchResults)
+        } catch (error) {
+          console.error("Failed to search movies:", error)
+          setFilteredMovies([])
+        }
+        return
       }
 
-      // Apply genre filter
-      if (filters.genres.length > 0) {
-        results = results.filter((movie) => movie.genres.some((genre) => filters.genres.includes(genre)))
+      // Apply client-side filters when no search query
+      if (movies.length > 0) {
+        let results = [...movies]
+
+        // Apply genre filter
+        if (filters.genres.length > 0) {
+          results = results.filter((movie) => movie.genres.some((genre) => filters.genres.includes(genre)))
+        }
+
+        // Apply year range filter
+        results = results.filter((movie) => {
+          const year = Number.parseInt(movie.year)
+          return year >= filters.yearRange[0] && year <= filters.yearRange[1]
+        })
+
+        // Apply language filter
+        if (filters.languages.length > 0) {
+          results = results.filter((movie) => filters.languages.includes(movie.language))
+        }
+
+        // Apply country filter
+        if (filters.countries.length > 0) {
+          results = results.filter((movie) => filters.countries.includes(movie.country))
+        }
+
+        // Apply rating filter - use sidduScore with fallback to rating
+        results = results.filter((movie) => {
+          const score = movie.sidduScore ?? movie.rating ?? 0
+          return score >= filters.ratingRange[0] && score <= filters.ratingRange[1]
+        })
+
+        setFilteredMovies(results)
       }
-
-      // Apply year range filter
-      results = results.filter((movie) => {
-        const year = Number.parseInt(movie.year)
-        return year >= filters.yearRange[0] && year <= filters.yearRange[1]
-      })
-
-      // Apply language filter
-      if (filters.languages.length > 0) {
-        results = results.filter((movie) => filters.languages.includes(movie.language))
-      }
-
-      // Apply country filter
-      if (filters.countries.length > 0) {
-        results = results.filter((movie) => filters.countries.includes(movie.country))
-      }
-
-      // Apply rating filter
-      results = results.filter(
-        (movie) => movie.rating >= filters.ratingRange[0] && movie.rating <= filters.ratingRange[1],
-      )
-
-      setFilteredMovies(results)
     }
+
+    applyFiltersAndSearch()
   }, [movies, searchQuery, filters])
 
   const handleCategoryChange = (category: CategoryType) => {

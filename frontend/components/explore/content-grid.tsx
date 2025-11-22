@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Star } from "lucide-react"
+import { useRouter } from "next/navigation"
 import type { MovieType } from "./types"
 import { ContentSkeleton } from "./content-skeleton"
 
@@ -12,6 +13,11 @@ interface ContentGridProps {
 }
 
 export function ContentGrid({ movies, isLoading, viewMode }: ContentGridProps) {
+  const router = useRouter()
+
+  const handleMovieClick = (movieId: string) => {
+    router.push(`/movies/${movieId}`)
+  }
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -67,6 +73,7 @@ export function ContentGrid({ movies, isLoading, viewMode }: ContentGridProps) {
               className="bg-[#282828] rounded-lg overflow-hidden cursor-pointer group"
               variants={itemVariants}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              onClick={() => handleMovieClick(movie.id)}
             >
               <div className="relative">
                 <img
@@ -75,7 +82,15 @@ export function ContentGrid({ movies, isLoading, viewMode }: ContentGridProps) {
                   className="w-full aspect-[2/3] object-cover"
                 />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button className="bg-[#00BFFF] text-black font-medium px-4 py-2 rounded-full">View Details</button>
+                  <button
+                    className="bg-[#00BFFF] text-black font-medium px-4 py-2 rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleMovieClick(movie.id)
+                    }}
+                  >
+                    View Details
+                  </button>
                 </div>
               </div>
 
@@ -85,7 +100,7 @@ export function ContentGrid({ movies, isLoading, viewMode }: ContentGridProps) {
                 <div className="flex items-center justify-between mt-1">
                   <div className="flex items-center">
                     <Star className="h-3 w-3 text-[#FFD700] mr-1" />
-                    <span className="text-xs text-[#A0A0A0]">{movie.rating.toFixed(1)}</span>
+                    <span className="text-xs text-[#A0A0A0]">{(movie.sidduScore ?? movie.rating ?? 0).toFixed(1)}</span>
                   </div>
 
                   <span className="text-xs text-[#A0A0A0]">{movie.year}</span>
@@ -109,6 +124,7 @@ export function ContentGrid({ movies, isLoading, viewMode }: ContentGridProps) {
               className="bg-[#282828] rounded-lg overflow-hidden cursor-pointer group flex"
               variants={itemVariants}
               whileHover={{ y: -2, transition: { duration: 0.2 } }}
+              onClick={() => handleMovieClick(movie.id)}
             >
               <div className="w-24 sm:w-32 flex-shrink-0">
                 <img
@@ -124,7 +140,7 @@ export function ContentGrid({ movies, isLoading, viewMode }: ContentGridProps) {
 
                   <div className="flex items-center">
                     <Star className="h-4 w-4 text-[#FFD700] mr-1" />
-                    <span className="text-sm text-[#A0A0A0]">{movie.rating.toFixed(1)}</span>
+                    <span className="text-sm text-[#A0A0A0]">{(movie.sidduScore ?? movie.rating ?? 0).toFixed(1)}</span>
                   </div>
                 </div>
 

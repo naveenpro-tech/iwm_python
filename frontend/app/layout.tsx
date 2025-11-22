@@ -5,7 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TopNavigation } from "@/components/navigation/top-navigation"
-import { BottomNavigation } from "@/components/navigation/bottom-navigation"
+import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav"
 import { Footer } from "@/components/navigation/footer"
 import { RoleProvider } from "@/context/RoleContext"
 // import { MotionLazyContainer } from "@/components/animate/motion-lazy-container" // Optional
@@ -74,7 +74,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
-            <BottomNavigation />
+            <MobileBottomNav />
             <Toaster />
             {/* <InstallPrompt /> */}
             {/* <OfflineBanner /> */}

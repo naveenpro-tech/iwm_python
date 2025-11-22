@@ -28,10 +28,10 @@ export function GuestLandingPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
-                        className="text-5xl md:text-7xl font-bold font-inter mb-6 tracking-tight"
+                        className="text-4xl md:text-7xl font-bold font-inter mb-6 tracking-tight"
                     >
                         Discover Your Next <br />
-                        <span className="text-[#00BFFF]">Cinematic Obsession</span>
+                        <span className="text-[#00BFFF] drop-shadow-[0_0_15px_rgba(0,191,255,0.5)]">Cinematic Obsession</span>
                     </motion.h1>
 
                     <motion.p
@@ -72,22 +72,28 @@ export function GuestLandingPage() {
                         <p className="text-gray-400 max-w-2xl mx-auto">More than just a database. It's a home for your movie life.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                        <FeatureCard
-                            icon={<Film className="w-10 h-10 text-[#00BFFF]" />}
-                            title="Track Your Journey"
-                            description="Keep a diary of every film you watch. Rate, review, and build your personal collection."
-                        />
-                        <FeatureCard
-                            icon={<TrendingUp className="w-10 h-10 text-[#FFD700]" />}
-                            title="Discover Gems"
-                            description="Get personalized recommendations based on your taste, not just what's popular."
-                        />
-                        <FeatureCard
-                            icon={<Users className="w-10 h-10 text-[#FF1744]" />}
-                            title="Join the Community"
-                            description="Follow friends, read reviews from trusted critics, and discuss your favorite scenes."
-                        />
+                    <div className="flex md:grid md:grid-cols-3 gap-6 md:gap-12 overflow-x-auto snap-x snap-mandatory pb-8 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+                        <div className="snap-center shrink-0 w-[85vw] md:w-auto">
+                            <FeatureCard
+                                icon={<Film className="w-10 h-10 text-[#00BFFF]" />}
+                                title="Track Your Journey"
+                                description="Keep a diary of every film you watch. Rate, review, and build your personal collection."
+                            />
+                        </div>
+                        <div className="snap-center shrink-0 w-[85vw] md:w-auto">
+                            <FeatureCard
+                                icon={<TrendingUp className="w-10 h-10 text-[#FFD700]" />}
+                                title="Discover Gems"
+                                description="Get personalized recommendations based on your taste, not just what's popular."
+                            />
+                        </div>
+                        <div className="snap-center shrink-0 w-[85vw] md:w-auto">
+                            <FeatureCard
+                                icon={<Users className="w-10 h-10 text-[#FF1744]" />}
+                                title="Join the Community"
+                                description="Follow friends, read reviews from trusted critics, and discuss your favorite scenes."
+                            />
+                        </div>
                     </div>
                 </div>
             </section>

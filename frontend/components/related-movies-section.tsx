@@ -116,9 +116,8 @@ export function RelatedMoviesSection({ movies }: RelatedMoviesSectionProps) {
         {!isMobile && (
           <>
             <motion.button
-              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-[#282828]/80 backdrop-blur-sm rounded-full p-2 text-[#E0E0E0] shadow-md ${
-                !canScrollLeft ? "opacity-0 pointer-events-none" : "opacity-100"
-              } transition-opacity duration-200 hidden md:flex items-center justify-center`}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-[#282828]/80 backdrop-blur-sm rounded-full p-2 text-[#E0E0E0] shadow-md ${!canScrollLeft ? "opacity-0 pointer-events-none" : "opacity-100"
+                } transition-opacity duration-200 hidden md:flex items-center justify-center`}
               onClick={() => scroll("left")}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -128,9 +127,8 @@ export function RelatedMoviesSection({ movies }: RelatedMoviesSectionProps) {
               <ChevronLeft className="w-6 h-6" />
             </motion.button>
             <motion.button
-              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-[#282828]/80 backdrop-blur-sm rounded-full p-2 text-[#E0E0E0] shadow-md ${
-                !canScrollRight ? "opacity-0 pointer-events-none" : "opacity-100"
-              } transition-opacity duration-200 hidden md:flex items-center justify-center`}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-[#282828]/80 backdrop-blur-sm rounded-full p-2 text-[#E0E0E0] shadow-md ${!canScrollRight ? "opacity-0 pointer-events-none" : "opacity-100"
+                } transition-opacity duration-200 hidden md:flex items-center justify-center`}
               onClick={() => scroll("right")}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

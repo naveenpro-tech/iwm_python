@@ -15,9 +15,10 @@ export interface MovieType {
   releaseDate: string
   posterUrl: string
   backdropUrl?: string
-  rating: number
+  sidduScore?: number  // Backend uses sidduScore instead of rating
+  rating?: number      // Keep for backward compatibility
   runtime: number
-  overview: string
+  overview?: string
   genres: string[]
   language: string
   country: string
